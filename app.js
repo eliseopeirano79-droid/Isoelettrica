@@ -6,6 +6,7 @@ const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G } = window.ISO_DATA;
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const FIRMA = '<p class="foot">Isoelettrica — App made by Eliseo Peirano · 2026</p>';
 const DEG = Math.PI / 180;
 const LIDX = {}; LEADS.forEach((L, i) => { LIDX[L.id] = i; });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -204,6 +205,7 @@ function makeLabel(text, o) {
   s.scale.set(o.h * cv.width / cv.height, o.h, 1); s.renderOrder = 30; return s;
 }
 function glowTex() { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,230,170,.55)'); g.addColorStop(1, 'rgba(255,200,120,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); }
+const ANAT_M = [0.5956, -0.7712, -0.2249, 0.2255, 0.4292, -0.8746, 0.771, 0.4702, 0.4295];
 function cyl(a, b, r, mat) { const d = new THREE.Vector3().subVectors(b, a); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 8, 1, true), mat); m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(V3(0, 1, 0), d.clone().normalize()); return m; }
 
 const FOCI = { rvot: V3(0.1, 0.12, 0.42), lvLat: V3(0.7, -0.3, 0), lvInf: V3(0.42, -0.72, -0.12), rvApex: V3(0.32, -0.8, 0.42) };
@@ -221,7 +223,7 @@ class Scene3D {
     const l2 = new THREE.DirectionalLight(0x9fb4ff, 0.3); l2.position.set(-3, -1, -3); sc.add(l2);
     this.orbit = { theta: 0.62, phi: 1.16, r: 7.0, target: V3(0.15, -0.15, 0) }; this.anim = null;
     this.initControls();
-    this.G = {}; ['leads', 'heart', 'cond', 'fx', 'orb', 'dyn', 'proj'].forEach(k => { this.G[k] = new THREE.Group(); sc.add(this.G[k]); });
+    this.G = {}; ['leads', 'heart', 'anat', 'cond', 'fx', 'orb', 'dyn', 'proj'].forEach(k => { this.G[k] = new THREE.Group(); sc.add(this.G[k]); });
     this.GLOW = glowTex();
     this.buildLeads(); this.buildHeart(); this.buildConduction(); this.buildOrbitals(); this.buildDynamic();
     this.sel = null; this.cfg = {};
@@ -347,7 +349,42 @@ class Scene3D {
     this.ring.visible = this.ringPart.visible = cfg.cont === 'flutter';
   }
   selectLead(id) { this.sel = id; Object.keys(this.leadObj).forEach(k => { const o = this.leadObj[k]; const on = k === id; o.pos.scale.set(on ? 2.8 : 1, 1, on ? 2.8 : 1); o.mat.opacity = id && !on ? 0.28 : 0.8; o.mat.color.set(on ? '#ffffff' : o.col); o.lab.material.opacity = id && !on ? 0.45 : 1; }); }
-  toggle(k, on) { ({ orb: this.G.orb, heart: this.G.heart, leads: this.G.leads })[k].visible = on; }
+  toggle(k, on) {
+    const g = { orb: this.G.orb, heart: this.G.heart, leads: this.G.leads, anat: this.G.anat }[k];
+    if (g) g.visible = on;
+    if (k === 'anat' && on) this.loadAnat();
+  }
+  loadAnat() {
+    if (this._anatReq) return; this._anatReq = true;
+    if (!THREE.GLTFLoader) return;
+    this.anatMats = [];
+    new THREE.GLTFLoader().load(window.ISO_GLB || 'cuore.glb', gl => {
+      const root = gl.scene;
+      root.traverse(o => {
+        if (!o.isMesh) return;
+        if (o.geometry && !o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+        o.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0.02, transparent: true, opacity: this._anatOp == null ? 0.6 : this._anatOp, depthWrite: false, side: THREE.DoubleSide });
+        this.anatMats.push(o.material);
+      });
+      const box = new THREE.Box3().setFromObject(root);
+      const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+      const k = 1.75 / Math.max(0.001, Math.max(size.x, size.y, size.z));
+      root.scale.setScalar(k);
+      root.position.set(-c.x * k, -c.y * k, -c.z * k);
+      const holder = new THREE.Group(); holder.add(root);
+      const m = ANAT_M;
+      holder.setRotationFromMatrix(new THREE.Matrix4().set(m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, 0, 0, 0, 1));
+      holder.position.set(0.05, -0.12, -0.02);
+      this.G.anat.add(holder);
+      this.anatRoot = root;
+      this.setHeartOpacity(this._anatOp == null ? 0.6 : this._anatOp);
+    }, null, () => { this._anatReq = false; });
+  }
+  setHeartOpacity(v) {
+    this._anatOp = v;
+    (this.anatMats || []).forEach(m => { m.opacity = v; m.needsUpdate = true; });
+    this.G.heart.traverse(o => { if (o.isMesh && o.material && o.material.transparent && o.material.userData.op0 !== false) { if (o.material.userData.base == null) o.material.userData.base = o.material.opacity; o.material.opacity = o.material.userData.base * (0.3 + 1.2 * v); } });
+  }
   resize() { const w = this.el.clientWidth, h = this.el.clientHeight; if (!w || !h) return; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.fov = w < h ? 50 : 38; this.camera.updateProjectionMatrix(); }
   lightPath(name, u, fade) { (this.paths[name] || []).forEach(p => { if (u < 0) { p.og.setDrawRange(0, 0); if (p.part) p.part.visible = false; return; } const uu = Math.min(1, u); p.og.setDrawRange(0, Math.floor(uu * p.seg) * p.rad * 6); p.om.opacity = u <= 1 ? 1 : Math.max(0, 1 - fade); if (p.part) { p.part.visible = u <= 1; if (u <= 1) p.curve.getPointAt(uu, p.part.position); } }); }
   update(t, st) {
@@ -426,12 +463,13 @@ const S = {
   sc: byId[store.sc] ? store.sc : 'normale',
   mode: store.mode || 'print', speed: store.speed || 25, gain: store.gain || 10, slow: 1,
   playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  sel: null, noise: store.noise == null ? 0.35 : store.noise, view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true }, store.tgl || {})
+  sel: null, noise: store.noise == null ? 0.35 : store.noise, view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 0.6 : store.opac
 };
 let stream = null, curCfg = null, seed = 1;
 const mon = new Monitor($('#ecg'), $('#ecgOv'), { onSelect: id => { S.sel = S.sel === id ? null : id; mon.setSelected(S.sel); scene.selectLead(S.sel); $$('#p-card .chip').forEach(c => c.classList.toggle('on', c.dataset.l === S.sel)); } });
 mon.mode = S.mode; mon.speed = S.speed; mon.gain = S.gain;
 const scene = new Scene3D($('#stage'));
+if (S.tgl.anat && S.tgl.heart) S.tgl.anat = false;
 Object.keys(S.tgl).forEach(k => { scene.toggle(k, S.tgl[k]); const b = $('#hud3d [data-tg="' + k + '"]'); if (b) b.classList.toggle('on', S.tgl[k]); });
 
 function paramsFor(sc) { const p = {}; sc.params.forEach(q => { p[q.k] = q.def; }); Object.assign(p, store.params[sc.id] || {}); return p; }
@@ -474,7 +512,7 @@ function renderCard(sc) {
     '<div class="sec"><h3>Trappole</h3><p>' + esc(c.trappole) + '</p></div>' +
     (c.corso ? '<div class="sec corso"><h3>Criteri del corso</h3><ul class="crit">' + c.corso.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '') +
     (c.diff ? '<div class="sec"><h3>Rispetto al manuale</h3><p>' + esc(c.diff) + '</p></div>' : '') +
-    '<div class="sec"><p class="src"><b>Criteri:</b> ' + esc(c.fonte) + '</p>' + (c.manuale ? '<p class="src"><b>Sul manuale:</b> ' + esc(c.libro || '') + ' — ' + esc(c.manuale) + '</p>' : '') + (c.slide ? '<p class="src"><b>A lezione:</b> ' + esc(c.corsoFonte || '') + ' — ' + esc(c.slide) + '</p>' : '') + '</div>';
+    '<div class="sec"><p class="src"><b>Criteri:</b> ' + esc(c.fonte) + '</p>' + (c.manuale ? '<p class="src"><b>Sul manuale:</b> ' + esc(c.libro || '') + ' — ' + esc(c.manuale) + '</p>' : '') + (c.slide ? '<p class="src"><b>A lezione:</b> ' + esc(c.corsoFonte || '') + ' — ' + esc(c.slide) + '</p>' : '') + '</div>' + FIRMA;
   $$('#p-card .chip').forEach(b => b.addEventListener('click', () => mon.opts.onSelect(b.dataset.l)));
 }
 let rebuildT = null;
@@ -522,7 +560,13 @@ segInit('#slowSeg', 't', 1, v => { S.slow = +v; });
 $('#calBtn').addEventListener('click', () => { mon.calOn = !mon.calOn; mon.cal = []; $('#calBtn').classList.toggle('on', mon.calOn); $('#calBtn').setAttribute('aria-pressed', mon.calOn); if (mon.calOn) setPlaying(false); mon.drawOverlay(); });
 $$('#cardTabs button').forEach(b => b.addEventListener('click', () => { $$('#cardTabs button').forEach(x => x.classList.toggle('on', x === b)); $$('.card .pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p)); }));
 $$('#hud3d [data-cam]').forEach(b => b.addEventListener('click', () => { $$('#hud3d [data-cam]').forEach(x => x.classList.toggle('on', x === b)); scene.cam(b.dataset.cam); }));
-$$('#hud3d [data-tg]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.tg; S.tgl[k] = !S.tgl[k]; b.classList.toggle('on', S.tgl[k]); scene.toggle(k, S.tgl[k]); store.tgl = S.tgl; save(); }));
+$$('#hud3d [data-tg]').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.tg; S.tgl[k] = !S.tgl[k];
+  if (S.tgl[k] && (k === 'anat' || k === 'heart')) { const altro = k === 'anat' ? 'heart' : 'anat'; if (S.tgl[altro]) { S.tgl[altro] = false; scene.toggle(altro, false); const ab = $('#hud3d [data-tg="' + altro + '"]'); if (ab) ab.classList.remove('on'); } }
+  b.classList.toggle('on', S.tgl[k]); scene.toggle(k, S.tgl[k]); store.tgl = S.tgl; save();
+}));
+$('#hOpac').value = Math.round(S.opac * 100);
+$('#hOpac').addEventListener('input', e => { S.opac = +e.target.value / 100; scene.setHeartOpacity(S.opac); store.opac = S.opac; save(); });
 
 /* misure dal tracciato */
 function measure(st, t) {
@@ -559,7 +603,7 @@ function renderTheory() {
   const toc = $('#toc'); toc.innerHTML = '';
   THEORY.forEach(ch => { const b = document.createElement('button'); b.textContent = ch.title; b.classList.toggle('on', ch.id === theoryId); b.addEventListener('click', () => { theoryId = ch.id; store.theory = ch.id; save(); renderTheory(); $('#article').scrollTop = 0; }); toc.appendChild(b); });
   const ch = THEORY.find(c => c.id === theoryId) || THEORY[0];
-  $('#article').innerHTML = '<h1>' + esc(ch.title) + '</h1>' + ch.html;
+  $('#article').innerHTML = '<h1>' + esc(ch.title) + '</h1>' + ch.html + FIRMA;
   if ($('#w-fc')) widgetFC($('#w-fc'));
   if ($('#w-asse')) widgetAxis($('#w-asse'));
 }
@@ -607,6 +651,11 @@ function widgetAxis(el) {
    ===================================================================== */
 const qmon = new Monitor($('#qEcg'), $('#qEcgOv'), {});
 const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null };
+$('#qPause').addEventListener('click', () => {
+  Q.playing = !Q.playing;
+  $('#qPause').textContent = Q.playing ? 'Pausa' : 'Riprendi';
+  $('#qPause').classList.toggle('on', !Q.playing);
+});
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function renderQFilter() {
   const box = $('#qFilter'); box.innerHTML = '';
@@ -778,7 +827,8 @@ function loop(now) {
     if (now - mT > 500) { mT = now; $('#measures').innerHTML = measure(stream, mon.t); }
     if (now - phT > 120) { phT = now; $('#phase3d').textContent = scene.phase; }
   } else if (S.view === 'quiz' && Q.stream) {
-    qmon.t += dt; qmon.draw();
+    if (Q.playing) qmon.t += dt;
+    qmon.draw();
   }
   requestAnimationFrame(loop);
 }

@@ -189,6 +189,7 @@ function buildA(ta, comps, meta) {
 function* rhythm(cfg, R) {
   const S = cfg;
   const pComps = S.pComps || M.pSinus(S.pAmp == null ? 1 : S.pAmp);
+  const pVar = S.pVar || null;
   const vOpt = { qtc: S.qtc, T: S.T, st: S.st, u: S.u, peaked: S.peaked, qrsScale: S.qrsScale, extra: S.extra, tShape: S.tShape };
   const qrs = S.qrs || M.qrsNormal();
   let t = (S.t0 || 0) + 400;
@@ -240,7 +241,7 @@ function* rhythm(cfg, R) {
     let tv = t; const rr = 60000 / S.vRate;
     for (;;) {
       const out = [buildV(tv, qrs, rr, Object.assign({}, vOpt, { meta: { type: 'conducted', reentry: 'avnrt' } }))];
-      out.push(buildA(tv + 58, M.pRetro(0.8), { type: 'retro' }));
+      if (S.rp !== 0) out.push(buildA(tv + (S.rp || 58), M.pRetro(S.rpAmp == null ? 0.8 : S.rpAmp), { type: 'retro' }));
       tv += rr; yield out;
     }
   }
@@ -250,20 +251,20 @@ function* rhythm(cfg, R) {
   const PR = S.pr || 160;
   const av = S.av || 'normal';
 
-  if (av === 'III') {
+  if (av === 'III' || av === 'dissoc') {
     let ta = t, tv = t + 520, kb = 0;
     const rra = baseRR, rrv = 60000 / S.escRate;
-    const eq = S.escape === 'ventricolare' ? M.qrsEscapeV() : qrs;
+    const eq = S.escQrs ? S.escQrs : (S.escape === 'ventricolare' ? M.qrsEscapeV() : qrs);
     const eT = S.escape === 'ventricolare' ? { a: 150, g: 30, amp: 0.38 } : S.T;
     for (;;) {
       const out = [];
-      if (ta < tv) { out.push(buildA(ta, pComps, { type: 'sinus', blocked: true })); ta += rra * (1 + 0.03 * (R() - 0.5)); }
+      if (ta < tv) { out.push(buildA(ta, pComps, { type: 'sinus', blocked: av !== 'dissoc' })); ta += rra * (1 + 0.03 * (R() - 0.5)); }
       else { out.push(buildV(tv, eq, rrv, Object.assign({}, vOpt, { T: eT, meta: { type: S.escape === 'ventricolare' ? 'escape-v' : 'escape-j' } }))); tv += rrv; }
       yield out; kb++;
     }
   }
 
-  let ta = t, beat = 0, wk = 0, lastV = t - baseRR;
+  let ta = t, beat = 0, wk = 0, sk = 0, lastV = t - baseRR;
   const ect = S.ectopy || null; // {type:'pvc'|'pac', pattern:'isolate'|'bigeminismo'|'trigeminismo'|'coppie', prob}
   let skipNextConduction = false;
   for (;;) {
@@ -272,13 +273,42 @@ function* rhythm(cfg, R) {
     let rr = baseRR * (1 + resp) + (S.jit || 12) * (R() - 0.5);
     const tvNormal = ta + PR;
 
+    // blocco seno-atriale in uscita: salta un intero ciclo, P compresa
+    if (S.saBlock && beat > 1) {
+      const n = S.saBlock.ratio || 4;
+      if (S.saBlock.type === 'wenck') {
+        const shr = [1, 0.93, 0.89, 0.87, 0.86];
+        if (sk === n - 1) { sk = 0; beat++; ta += rr * 0.74; continue; }
+        rr = rr * shr[Math.min(sk, shr.length - 1)]; sk++;
+      } else {
+        if (sk === n - 1) { sk = 0; beat++; ta += rr; continue; }
+        sk++;
+      }
+    }
+
+    // arresto sinusale: pausa lunga, con o senza battito di scappamento
+    if (S.pause && beat > 0 && beat % (S.pause.after || 5) === 0) {
+      const ms = S.pause.ms || 2600;
+      if (S.pause.escape) {
+        const teq = lastV + ms * 0.62;
+        const eq = S.pause.escape === 'v' ? M.qrsEscapeV() : qrs;
+        const eT = S.pause.escape === 'v' ? { a: 150, g: 30, amp: 0.38 } : S.T;
+        out.push(buildV(teq, eq, ms * 0.62, Object.assign({}, vOpt, { T: eT, meta: { type: S.pause.escape === 'v' ? 'escape-v' : 'escape-j' } })));
+        lastV = teq;
+      }
+      beat++; ta += Math.max(320, ms - rr);
+      if (out.length) { yield out; }
+      continue;
+    }
+
     // ectopia: decide se questo ciclo contiene un battito prematuro dopo il QRS
     let ectHere = false;
     if (ect) {
       const k = beat + 1;
       if (ect.pattern === 'bigeminismo') ectHere = k % 2 === 0;
       else if (ect.pattern === 'trigeminismo') ectHere = k % 3 === 0;
-      else if (ect.pattern === 'coppie') ectHere = k % 5 === 0;
+      else if (ect.pattern === 'quadrigeminismo') ectHere = k % 4 === 0;
+      else if (ect.pattern === 'coppie' || ect.pattern === 'triplette' || ect.pattern === 'salve') ectHere = k % 5 === 0;
       else ectHere = R() < (ect.prob || 0.14);
       if (beat < 2) ectHere = false;
     }
@@ -300,11 +330,15 @@ function* rhythm(cfg, R) {
     } else if (av === 'mobitz2') {
       const n = S.ratio || 4;
       if (wk === n - 1) { conducted = false; wk = 0; } else wk++;
+    } else if (av === 'adv') {
+      const n = S.ratio || 3;            // conduce una P ogni n: blocco avanzato
+      if (wk % n !== 0) conducted = false;
+      wk++;
     } else if (av === '2to1') {
       if (wk === 1) { conducted = false; wk = 0; } else wk++;
     }
 
-    out.push(buildA(ta, pComps, { type: 'sinus', blocked: !conducted }));
+    out.push(buildA(ta, pVar ? pVar[beat % pVar.length] : pComps, { type: 'sinus', blocked: !conducted }));
     if (conducted) {
       const tv = ta + pr;
       out.push(buildV(tv, qrs, tv - lastV, Object.assign({}, vOpt, { meta: { type: 'conducted', pr, via: S.via } })));
@@ -313,12 +347,18 @@ function* rhythm(cfg, R) {
         const coup = (ect.coupling || 0.52) * rr;
         const te = tv + coup;
         if (ect.type === 'pvc') {
-          const eq = ect.qrs || M.qrsPVC_RVOT();
+          const eq = (ect.alt && (beat >> 1) % 2 === 1) ? ect.alt : (ect.qrs || M.qrsPVC_RVOT());
           out.push(buildV(te, eq, coup, Object.assign({}, vOpt, { T: ect.T || { a: -95, g: 35, amp: 0.45 }, st: null, meta: { type: 'pvc' } })));
-          if (ect.pattern === 'coppie') {
-            const te2 = te + 0.5 * rr;
-            out.push(buildV(te2, eq, 0.5 * rr, Object.assign({}, vOpt, { T: ect.T || { a: -95, g: 35, amp: 0.45 }, st: null, meta: { type: 'pvc' } })));
+          const extraN = ect.pattern === 'coppie' ? 1 : ect.pattern === 'triplette' ? 2 : ect.pattern === 'salve' ? 5 : 0;
+          let tp = te;
+          for (let z = 0; z < extraN; z++) {
+            const gap = (ect.pattern === 'salve' ? 0.38 : 0.5) * rr;
+            tp += gap;
+            const qz = (ect.alt && z % 2 === 0) ? ect.alt : eq;
+            const tz = (ect.alt && z % 2 === 0) ? (ect.altT || ect.T) : ect.T;
+            out.push(buildV(tp, qz, gap, Object.assign({}, vOpt, { T: tz || { a: -95, g: 35, amp: 0.45 }, st: null, meta: { type: 'pvc' } })));
           }
+          lastV = tp;
           // pausa compensatoria: la P successiva cade nella refrattarietà
           skipNextConduction = true;
           lastV = te;

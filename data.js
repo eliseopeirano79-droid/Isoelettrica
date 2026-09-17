@@ -335,11 +335,20 @@ add({
 /* ================= VENTRICOLARI ================= */
 add({
   id: 'esv', cat: 'Ventricolari', name: 'Extrasistoli ventricolari', quiz: true,
-  params: [F.hr(72, 50, 100), { k: 'pat', label: 'Schema', type: 'select', def: 'isolate', opts: [['isolate', 'Isolate'], ['bigeminismo', 'Bigeminismo'], ['trigeminismo', 'Trigeminismo'], ['coppie', 'Coppie']] }, { k: 'orig', label: 'Origine', type: 'select', def: 'rvot', opts: [['rvot', 'Tratto di efflusso destro'], ['lv', 'Ventricolo sinistro laterale']] }],
-  build: p => ({ rate: p.hr, pr: 160, qtc: 410, ectopy: { type: 'pvc', pattern: p.pat, prob: 0.18, qrs: p.orig === 'rvot' ? M.qrsPVC_RVOT() : M.qrsPVC_LV(), T: p.orig === 'rvot' ? { a: -95, g: 35, amp: 0.45 } : { a: -30, g: -50, amp: 0.45 } } }), look: ['II', 'V1'],
+  params: [F.hr(72, 50, 100),
+    { k: 'pat', label: 'Schema', type: 'select', def: 'isolate', opts: [['isolate', 'Isolate'], ['bigeminismo', 'Bigeminismo'], ['trigeminismo', 'Trigeminismo'], ['quadrigeminismo', 'Quadrigeminismo'], ['coppie', 'Coppie (doppiette)'], ['triplette', 'Triplette'], ['salve', 'Salve: TV non sostenuta']] },
+    { k: 'prob', label: 'Quante ne compaiono', unit: '%', min: 5, max: 60, step: 1, def: 18 },
+    { k: 'orig', label: 'Origine', type: 'select', def: 'rvot', opts: [['rvot', 'Tratto di efflusso destro'], ['lv', 'Ventricolo sinistro laterale'], ['multi', 'Multifocali: due morfologie']] },
+    { k: 'coup', label: 'Intervallo di accoppiamento', unit: '% del RR', min: 28, max: 85, step: 1, def: 52 }],
+  build: p => {
+    const rvot = { q: M.qrsPVC_RVOT(), T: { a: -95, g: 35, amp: 0.45 } };
+    const lv = { q: M.qrsPVC_LV(), T: { a: -30, g: -50, amp: 0.45 } };
+    const s = p.orig === 'lv' ? lv : rvot;
+    return { rate: p.hr, pr: 160, qtc: 410, ectopy: { type: 'pvc', pattern: p.pat, prob: p.prob / 100, coupling: p.coup / 100, qrs: s.q, T: s.T, alt: p.orig === 'multi' ? lv.q : null, altT: p.orig === 'multi' ? lv.T : null } };
+  }, look: ['II', 'V1'],
   card: {
     def: 'Battiti prematuri originati nel miocardio ventricolare, al di fuori del sistema di conduzione.',
-    criteri: ['QRS prematuro, largo (di solito ≥ 120 ms) e di morfologia diversa', 'Nessuna P prematura prima del QRS', 'ST e T discordanti con il QRS', 'Pausa di solito compensatoria completa: l\u2019intervallo che contiene l\u2019extrasistole è il doppio del ciclo sinusale'],
+    criteri: ['QRS largo e prematuro, non preceduto da P', 'T opposta alla parte principale del QRS', 'Pausa compensatoria completa: l\u2019intervallo fra i due battiti sinusali che la racchiudono vale il doppio del ciclo di base', 'Monomorfe se hanno tutte la stessa forma, polimorfe o multifocali se le forme sono diverse', 'Il linguaggio: due di fila sono una coppia o doppietta, tre di fila una tripletta, da tre in su a oltre 100/min è una tachicardia ventricolare non sostenuta se dura meno di 30 secondi', 'Bigeminismo, trigeminismo e quadrigeminismo quando l\u2019extrasistole segue ogni battito, ogni due o ogni tre', 'Fenomeno R su T: accoppiamento cortissimo, l\u2019extrasistole cade sulla T precedente e può innescare una torsione di punta o una fibrillazione ventricolare'],
     meccanismo: 'Automatismo, attività triggerata o microrientro in un focus ventricolare. L\u2019attivazione si propaga lentamente attraverso il miocardio.',
     vettori: 'Il vettore parte dal focus e si allontana da esso. Dal tratto di efflusso destro va verso il basso e indietro: QRS positivo nelle inferiori, negativo in V1 (morfologia tipo BBSx con asse inferiore). Dal ventricolo sinistro laterale va verso destra: QRS positivo in V1 e negativo in DI e V6.',
     guarda: 'DII e V1: la morfologia in V1 e l\u2019asse frontale indicano l\u2019origine.',
@@ -744,7 +753,7 @@ const UPD = {
   },
   esv: {
     manuale: 'Cap. 6, ECG N° 69 e 72',
-    criteri: ['Battito prematuro con QRS largo, di solito ≥ 120 ms, e morfologia diversa', 'Nessuna P prematura prima del QRS', 'ST e T discordanti con il QRS', 'Pausa di solito compensatoria: accoppiamento più pausa ≥ 2 cicli sinusali', 'Focus nel ventricolo destro: morfologia tipo BBS; focus nel ventricolo sinistro: morfologia tipo BBD'],
+    criteri: ['Battito prematuro con QRS largo, di solito ≥ 120 ms, e morfologia diversa', 'Nessuna P prematura prima del QRS', 'ST e T discordanti con il QRS', 'Pausa di solito compensatoria: accoppiamento più pausa ≥ 2 cicli sinusali', 'Focus nel ventricolo destro: morfologia tipo BBS; focus nel ventricolo sinistro: morfologia tipo BBD', 'Monomorfe se hanno tutte la stessa forma, polimorfe o multifocali se le forme sono diverse', 'Il linguaggio: due di fila sono una coppia o doppietta, tre di fila una tripletta; da tre battiti in su sopra i 100/min si parla di tachicardia ventricolare, non sostenuta se dura meno di 30 secondi', 'Bigeminismo, trigeminismo, quadrigeminismo quando l\u2019extrasistole segue ogni battito, ogni due, ogni tre', 'Fenomeno R su T: accoppiamento cortissimo, l\u2019extrasistole cade sulla T precedente e può innescare torsione di punta o fibrillazione ventricolare'],
     meccanismo: `L'impulso ectopico cattura solo i ventricoli, di solito senza risalire agli atri: il nodo del seno continua il suo ritmo e la P successiva cade nel periodo refrattario, da cui la pausa compensatoria. Le forme dal tratto di efflusso destro (BBS con asse inferiore, QS in V1) sono in genere benigne, da automatismo, e scompaiono con l'aumento della frequenza.`
   },
   tv: {
@@ -1000,7 +1009,715 @@ THEORY_14: {
 const ATLAS_G = [{"id": "basi", "nome": "Basi, derivazioni e asse"}, {"id": "normali", "nome": "Tracciati normali e varianti"}, {"id": "fa", "nome": "Fibrillazione atriale"}, {"id": "flutter", "nome": "Flutter atriale"}, {"id": "sopraventricolari", "nome": "Altre sopraventricolari ed extrasistoli"}, {"id": "ventricolari", "nome": "Aritmie ventricolari"}, {"id": "vagali", "nome": "Manovre vagali e pre-eccitazione in tachicardia"}, {"id": "bav", "nome": "Blocchi atrio-ventricolari"}, {"id": "branca", "nome": "Blocchi di branca ed emiblocchi"}, {"id": "seno", "nome": "Nodo del seno e ritmi di scappamento"}, {"id": "wpw", "nome": "Pre-eccitazione"}, {"id": "ischemia", "nome": "Cardiopatia ischemica"}, {"id": "ipertrofia", "nome": "Ipertrofia ventricolare sinistra"}, {"id": "embolia", "nome": "Embolia polmonare"}, {"id": "casi", "nome": "Casi clinici"}];
 const ATLAS = [{"id": "lett020", "g": "basi", "t": "Le cinque fasi della depolarizzazione ventricolare", "q": "normale", "n": "", "f": "Lettura ECG, slide 20", "w": 1400, "h": 769}, {"id": "lett021", "g": "basi", "t": "Vettori istantanei e loro proiezione sulle derivazioni", "q": "normale", "n": "", "f": "Lettura ECG, slide 21", "w": 1400, "h": 1216}, {"id": "lett023", "g": "basi", "t": "Posizione degli elettrodi precordiali", "q": null, "n": "Derivazioni precordiali", "f": "Lettura ECG, slide 23", "w": 1400, "h": 609}, {"id": "lett047", "g": "basi", "t": "Asse normale: DI, DII e aVF", "q": null, "n": "Asse Normale DI aVF DII", "f": "Lettura ECG, slide 47", "w": 1327, "h": 1277}, {"id": "lett048", "g": "basi", "t": "Asse deviato a destra: DI, DIII, aVR", "q": null, "n": "Asse Deviato a Destra DI DIII aVR", "f": "Lettura ECG, slide 48", "w": 1396, "h": 1299}, {"id": "lett049", "g": "basi", "t": "Asse deviato a sinistra: DII, DIII, aVR", "q": null, "n": "Asse Deviato a Sinistra DIII DII aVR", "f": "Lettura ECG, slide 49", "w": 1400, "h": 1160}, {"id": "lett050", "g": "basi", "t": "Correzione dell’asse di 15° sul sistema esassiale", "q": null, "n": "+30° -15° -60° -45°", "f": "Lettura ECG, slide 50", "w": 929, "h": 1301}, {"id": "lett051", "g": "normali", "t": "Tracciato normale", "q": "normale", "n": "Tracciato normale", "f": "Lettura ECG, slide 51", "w": 1400, "h": 786}, {"id": "lett057", "g": "normali", "t": "Tracciato normale", "q": "normale", "n": "Tracciato normale", "f": "Lettura ECG, slide 57", "w": 1400, "h": 820}, {"id": "lett058", "g": "normali", "t": "Variante normale: wandering pacemaker", "q": "aritmiasinusale", "n": "VARIANTI NORMALI Wandering pacemaker", "f": "Lettura ECG, slide 58", "w": 1400, "h": 753}, {"id": "ari023", "g": "normali", "t": "Aritmia sinusale: variabilità del ciclo con il respiro", "q": "aritmiasinusale", "n": "", "f": "Aritmie, slide 23", "w": 1400, "h": 277}, {"id": "ari026", "g": "fa", "t": "Fibrillazione atriale", "q": "fa", "n": "Fibrillazione Atriale", "f": "Aritmie, slide 26", "w": 1400, "h": 786}, {"id": "ari027", "g": "fa", "t": "Fibrillazione atriale", "q": "fa", "n": "Fibrillazione Atriale", "f": "Aritmie, slide 27", "w": 1400, "h": 1229}, {"id": "ari028", "g": "fa", "t": "Fenomeno di Ashman", "q": "fa", "n": "Fenomeno di Ashman", "f": "Aritmie, slide 28", "w": 1400, "h": 1213}, {"id": "ari029", "g": "fa", "t": "Fibrillazione atriale", "q": "fa", "n": "Fibrillazione Atriale", "f": "Aritmie, slide 29", "w": 1400, "h": 1160}, {"id": "ari030", "g": "fa", "t": "Fibrillazione atriale", "q": "fa", "n": "Fibrillazione Atriale", "f": "Aritmie, slide 30", "w": 1400, "h": 911}, {"id": "ari031", "g": "fa", "t": "Fibrillazione atriale", "q": "fa", "n": "Fibrillazione Atriale", "f": "Aritmie, slide 31", "w": 1400, "h": 716}, {"id": "ari032", "g": "fa", "t": "Fibrillazione atriale ad alta risposta ventricolare", "q": "fa", "n": "Fibrillazione Atriale", "f": "Aritmie, slide 32", "w": 1400, "h": 1005}, {"id": "ari071", "g": "fa", "t": "Fibrillazione atriale", "q": "fa", "n": "Fibrillazione atriale", "f": "Aritmie, slide 71", "w": 1400, "h": 551}, {"id": "ari072", "g": "fa", "t": "Fibrillazione atriale, anche con blocco di branca sinistra", "q": "fa", "n": "Fibrillazione atriale Fibrillazione atriale + BBSx", "f": "Aritmie, slide 72", "w": 1400, "h": 784}, {"id": "ari078", "g": "fa", "t": "FA con battito di scappamento, flutter a blocco variabile, TPSV nodale", "q": "fa", "n": "Fibrillazione atriale con un battito di scappamento Flutter Atriale con blocco variabile Tachicardia SV (nodale AV da rientro)", "f": "Aritmie, slide 78", "w": 1400, "h": 871}, {"id": "ari079", "g": "fa", "t": "Fibrillazione atriale con un complesso condotto con aberranza", "q": "fa", "n": "Tracciato 111 Fibrillazione atriale con un unico complesso condotto con aberranza", "f": "Aritmie, slide 79", "w": 1400, "h": 369}, {"id": "ari033", "g": "flutter", "t": "Flutter atriale", "q": "flutter", "n": "Flutter Atriale", "f": "Aritmie, slide 33", "w": 1400, "h": 865}, {"id": "ari034", "g": "flutter", "t": "Flutter atriale: onde F nelle derivazioni inferiori", "q": "flutter", "n": "Flutter Atriale: la frequenza atriale è di solito compresa tra 220 e 350 bpm, origina da un focus atriale e si automantiene con meccanismo di rientro. Onde F a caratteristica forma di dente di sega (DII, DIII, aVF, V1, V2).", "f": "Aritmie, slide 34", "w": 1400, "h": 514}, {"id": "ari035", "g": "flutter", "t": "Flutter atriale", "q": "flutter", "n": "Flutter Atriale", "f": "Aritmie, slide 35", "w": 1400, "h": 870}, {"id": "ari036", "g": "flutter", "t": "Flutter atriale e circuito di rientro", "q": "flutter", "n": "Flutter Atriale", "f": "Aritmie, slide 36", "w": 1400, "h": 724}, {"id": "ari077", "g": "flutter", "t": "Flutter atriale", "q": "flutter", "n": "Flutter Atriale", "f": "Aritmie, slide 77", "w": 1400, "h": 483}, {"id": "ari037", "g": "sopraventricolari", "t": "Tachicardia atriale multifocale", "q": null, "n": "Tachicardia Atriale Multifocale", "f": "Aritmie, slide 37", "w": 1400, "h": 735}, {"id": "ari038", "g": "sopraventricolari", "t": "Tachicardia giunzionale", "q": "avnrt", "n": "Tachicardia Giunzionale", "f": "Aritmie, slide 38", "w": 1400, "h": 700}, {"id": "ari039", "g": "sopraventricolari", "t": "Tachicardia parossistica da rientro intranodale a 205/min", "q": "avnrt", "n": "Tachicardia giunzionale parossistica (da rientro) del tipo intranodale AV, cioè TNAVR (Frequenza 205 battiti/min, regolare. Nessuna onda P identificabile. QRS di ampiezza normale. T invertite. TPSV", "f": "Aritmie, slide 39", "w": 1400, "h": 325}, {"id": "ari040", "g": "sopraventricolari", "t": "TPSV", "q": "avnrt", "n": "TPSV", "f": "Aritmie, slide 40", "w": 1400, "h": 645}, {"id": "ari041", "g": "sopraventricolari", "t": "TPSV", "q": "avnrt", "n": "TPSV", "f": "Aritmie, slide 41", "w": 1400, "h": 700}, {"id": "ari042", "g": "sopraventricolari", "t": "Extrasistoli sopraventricolari", "q": "esa", "n": "", "f": "Aritmie, slide 42", "w": 1019, "h": 1301}, {"id": "ari043", "g": "sopraventricolari", "t": "Battito prematuro sopraventricolare", "q": "esa", "n": "Battito Prematuro (Extrasistole) Sopra-Ventricolare", "f": "Aritmie, slide 43", "w": 1400, "h": 1253}, {"id": "ari074", "g": "sopraventricolari", "t": "Tachicardia atriale a due foci e bradicardia sinusale con scappamenti", "q": "esa", "n": "Tachicardia Atriale (2 foci diversi) e RS Bradicardia sinusale: I battiti 3-4-5 sono battiti di scappamento ventricolare", "f": "Aritmie, slide 74", "w": 1400, "h": 665}, {"id": "ari080", "g": "sopraventricolari", "t": "Tachicardia sinusale con battiti atriali prematuri; bigeminismo atriale", "q": "esa", "n": "Tracciato 112 Tachicardia sinusale con frequenti battiti atriali prematuri Ritmo sinusale con battiti ectopici prematuri atriali (bigeminismo) ad origine differente (p diverse)", "f": "Aritmie, slide 80", "w": 1400, "h": 770}, {"id": "ari044", "g": "ventricolari", "t": "Battito prematuro ventricolare", "q": "esv", "n": "Battito Prematuro (Extrasistole) Ventricolare", "f": "Aritmie, slide 44", "w": 1400, "h": 544}, {"id": "ari073", "g": "ventricolari", "t": "R su T che innesca una tachicardia ventricolare", "q": "esv", "n": "Ritmo sinusale, R su T che innesca una TV", "f": "Aritmie, slide 73", "w": 1400, "h": 277}, {"id": "ari075", "g": "ventricolari", "t": "Bigeminismo ventricolare che simula un blocco di branca alternante", "q": "esv", "n": "Ritmo sinusale con bigeminismo ventricolare che simula un blocco di branca alternante", "f": "Aritmie, slide 75", "w": 1400, "h": 297}, {"id": "ari081", "g": "ventricolari", "t": "R su T che innesca una TV sostenuta; interruzione con pugno precordiale", "q": "tv", "n": "Tracciato 119 Tracciato 118 Ritmo sinusale con frequenti battiti ectopici del tipo R su T che innescano poi una TV sostenuta Tachicardia ventricolare sostenuta. Dopo il pugno sul precordio una battito prematuro ventricolare interrompe il circuito di rientro e quindi la TV Pugno su precordio", "f": "Aritmie, slide 81", "w": 1400, "h": 914}, {"id": "ari082", "g": "ventricolari", "t": "Battito ventricolare prematuro con pausa compensatoria; trigeminismo atriale", "q": "esv", "n": "Tachicardia sinusale con un singolo battito prematuro ventricolare, la pausa che segue il battito è compensatoria Ritmo sinusale con frequenti battiti atriali prematuri monofocali (trigeminismo)", "f": "Aritmie, slide 82", "w": 1400, "h": 627}, {"id": "ari045", "g": "ventricolari", "t": "Tachicardia ventricolare: criteri di morfologia", "q": "tv", "n": "", "f": "Aritmie, slide 45", "w": 1400, "h": 1134}, {"id": "ari046", "g": "ventricolari", "t": "Tachicardia ventricolare", "q": "tv", "n": "Tachicardia Ventricolare", "f": "Aritmie, slide 46", "w": 1400, "h": 825}, {"id": "ari047", "g": "ventricolari", "t": "Tachicardia ventricolare e fenomeno di Wenckebach ventricolare", "q": "tv", "n": "Tachicardia Ventricolare", "f": "Aritmie, slide 47", "w": 1400, "h": 794}, {"id": "ari048", "g": "ventricolari", "t": "Tachicardia ventricolare", "q": "tv", "n": "Tachicardia Ventricolare", "f": "Aritmie, slide 48", "w": 1400, "h": 753}, {"id": "ari049", "g": "ventricolari", "t": "Tachicardia ventricolare", "q": "tv", "n": "Tachicardia Ventricolare", "f": "Aritmie, slide 49", "w": 1400, "h": 593}, {"id": "ari083", "g": "ventricolari", "t": "Tachicardia ventricolare", "q": "tv", "n": "", "f": "Aritmie, slide 83", "w": 1217, "h": 1301}, {"id": "ari050", "g": "ventricolari", "t": "Torsione di punta", "q": "tdp", "n": "Torsione di Punta", "f": "Aritmie, slide 50", "w": 1400, "h": 569}, {"id": "ari051", "g": "ventricolari", "t": "Torsione di punta", "q": "tdp", "n": "Torsione di Punta", "f": "Aritmie, slide 51", "w": 1400, "h": 511}, {"id": "ari052", "g": "ventricolari", "t": "Torsione di punta", "q": "tdp", "n": "Torsione di Punta", "f": "Aritmie, slide 52", "w": 1400, "h": 706}, {"id": "ari053", "g": "ventricolari", "t": "Fibrillazione ventricolare", "q": "fv", "n": "Fibrillazione Ventricolare", "f": "Aritmie, slide 53", "w": 1400, "h": 873}, {"id": "ari054", "g": "ventricolari", "t": "Fibrillazione ventricolare", "q": "fv", "n": "Fibrillazione Ventricolare", "f": "Aritmie, slide 54", "w": 1400, "h": 767}, {"id": "ari084", "g": "ventricolari", "t": "Flutter e fibrillazione ventricolare", "q": "fv", "n": "", "f": "Aritmie, slide 84", "w": 1400, "h": 948}, {"id": "ari085", "g": "ventricolari", "t": "Fibrillazione ventricolare", "q": "fv", "n": "Fibrillazione Ventricolare", "f": "Aritmie, slide 85", "w": 1400, "h": 781}, {"id": "ari086", "g": "ventricolari", "t": "Fibrillazione ventricolare", "q": "fv", "n": "Fibrillazione Ventricolare", "f": "Aritmie, slide 86", "w": 1400, "h": 1050}, {"id": "ari087", "g": "ventricolari", "t": "Fibrillazione ventricolare a onde fini", "q": "fv", "n": "", "f": "Aritmie, slide 87", "w": 1400, "h": 1057}, {"id": "ari055", "g": "vagali", "t": "Massaggio del seno carotideo: effetto sulle tachicardie", "q": null, "n": "", "f": "Aritmie, slide 55", "w": 1400, "h": 1077}, {"id": "ari056", "g": "vagali", "t": "Massaggio del seno carotideo: risposte possibili", "q": null, "n": "", "f": "Aritmie, slide 56", "w": 1400, "h": 466}, {"id": "ari057", "g": "vagali", "t": "Massaggio del seno carotideo", "q": null, "n": "", "f": "Aritmie, slide 57", "w": 1235, "h": 1301}, {"id": "ari058", "g": "vagali", "t": "Massaggio del seno carotideo: risposta patologica", "q": null, "n": "", "f": "Aritmie, slide 58", "w": 1400, "h": 669}, {"id": "ari076", "g": "vagali", "t": "Tachicardia da rientro atrio-ventricolare in paziente con WPW", "q": "wpw", "n": "Tachicardia atrio-ventricolare da rientro in paziente con WPW", "f": "Aritmie, slide 76", "w": 1400, "h": 797}, {"id": "ari094", "g": "bav", "t": "BAV di I grado con PR 0,32 s", "q": "bav1", "n": "Blocco atrio ventricolare di primo grado. Intervallo PR è costante e prolungato (0,32”)", "f": "Aritmie, slide 94", "w": 1400, "h": 154}, {"id": "ari095", "g": "bav", "t": "Bradicardia sinusale con BAV di I grado (PR 0,92 s)", "q": "bav1", "n": "Bradicardia sinusale (frequenza sinusale 35/min) con BAV I grado (PR allungato =0,92” e costante).", "f": "Aritmie, slide 95", "w": 1400, "h": 326}, {"id": "ari096", "g": "bav", "t": "BAV di I grado con ipertrofia atriale sinistra e segni di ipokaliemia", "q": "bav1", "n": "BAV di I grado (PR=0,26), ipertrofia atriale sx (onda P durata >, difasica in DII, componente neg in V1), modificazioni non specifiche del tratto ST e dell’ onda T, probabile ipoK (onde U da V3 a V6), possibile attività digitalica (ST sottoslivellato da V3 a V6). Infarto inferiore pregresso (onda q in aVF > ¼ onda R seguente).", "f": "Aritmie, slide 96", "w": 1400, "h": 808}, {"id": "ari099", "g": "bav", "t": "BAV di II grado tipo 1 con conduzione 5:4", "q": "wenck", "n": "Blocco atrio ventricolare di secondo grado tipo I. Il terzo QRS è sinusale con PR corto; il quarto, quinto e sesto QRS sono sinusali con progressivo allungamento del PR. La P, dopo il sesto QRS, non viene condotta. I battiti 3-7 mostrano conduzione 5:4 (5P ogni 4QRS)", "f": "Aritmie, slide 99", "w": 1400, "h": 279}, {"id": "ari100", "g": "bav", "t": "BAV di II grado tipo 1 (Wenckebach)", "q": "wenck", "n": "Blocco AV II grado tipo 1 (Wenkebach)", "f": "Aritmie, slide 100", "w": 1400, "h": 251}, {"id": "ari101", "g": "bav", "t": "BAV di II grado tipo 1 (Wenckebach)", "q": "wenck", "n": "Blocco AV II grado tipo 1 (Wenkebach)", "f": "Aritmie, slide 101", "w": 1400, "h": 706}, {"id": "ari102", "g": "bav", "t": "BAV di II grado tipo 2 con blocco di branca sinistra", "q": "mobitz2", "n": "Ritmo sinusale con blocco di branca sinistra (QRS allargati, alterazioni del tratto ST e dell’onda T) e blocco atrio ventricolare di secondo grado tipo II (I primi 3 cicli hanno PR normale di 0,16”. La quarta P non è condotta ai ventricoli)", "f": "Aritmie, slide 102", "w": 1400, "h": 200}, {"id": "ari103", "g": "bav", "t": "BAV di II grado tipo 2 (Mobitz)", "q": "mobitz2", "n": "Blocco AV II grado tipo 2 (Mobitz)", "f": "Aritmie, slide 103", "w": 1400, "h": 767}, {"id": "ari104", "g": "bav", "t": "BAV di II grado tipo 2 (Mobitz)", "q": "mobitz2", "n": "", "f": "Aritmie, slide 104", "w": 1400, "h": 1050}, {"id": "ari106", "g": "bav", "t": "BAV 2:1", "q": "bav21", "n": "Ritmo sinusale con BAV 2:1. Una P ogni due è condotta cioè seguita da un QRS. QRS lievemente aumentato (0,12”).", "f": "Aritmie, slide 106", "w": 1400, "h": 255}, {"id": "ari108", "g": "bav", "t": "BAV completo con scappamento a 23/min e QRS larghi", "q": "bav3", "n": "Blocco di terzo grado (blocco completo). Vi sono P regolari con una frequenza di 110/min con QRS regolari con frequenza di 23/min. I QRS allargati con forma alterata, insieme alla bassa frequenza ventricolare, indicano un ritmo di scappamento basso, prob dalle cellule di Purkinje.", "f": "Aritmie, slide 108", "w": 1400, "h": 213}, {"id": "ari109", "g": "bav", "t": "BAV completo con scappamento a 36/min e QRS stretti", "q": "bav3", "n": "BAV completo. Onde P regolari con frequenza di 107/min. QRS regolari a 36/min. QRS stretti indicano un segnapassi ventricolare alto.", "f": "Aritmie, slide 109", "w": 1400, "h": 589}, {"id": "ari110", "g": "bav", "t": "BAV di III grado", "q": "bav3", "n": "Blocco atrio-ventricolare di terzo grado (blocco completo).", "f": "Aritmie, slide 110", "w": 1400, "h": 768}, {"id": "ari114", "g": "branca", "t": "BBDx completo: rSR’ in V1, T negative V1-V4", "q": "bbdx", "n": "Blocco di branca destro completo. Complesso rSR’ in V1 con QRS = 0,12”. Sottoslivellamento del segmento ST e inversione delle onde T da V1 a V4.", "f": "Aritmie, slide 114", "w": 1400, "h": 780}, {"id": "ari115", "g": "branca", "t": "BBDx con emiblocco anteriore sinistro", "q": "bbdx", "n": "BBDX completo (in V1 onda r secondaria con QRS = 0,13”) con EASX (ÂQRS= -75°, onde r iniziali in DII, DIII, aVF) Ipertrofia atriale sinistra (onde P bifide in DI e difasiche in V1). Rotazione oraria del cuore (Scarsa progressione onda R nelle precordiali, ridotto voltaggio onde r precordiali).", "f": "Aritmie, slide 115", "w": 1400, "h": 779}, {"id": "ari116", "g": "branca", "t": "BBDx con emiblocco posteriore sinistro", "q": "bbdx", "n": "BBDX (In V1 il QRS è del tipo rsR’S’ con durata prolungata di 0,12”) con EPSX (Deviazione assiale destra -ÂQRS= +120°- in assenza di altre cause cliniche o anamnestiche, rotazione oraria del cuore).", "f": "Aritmie, slide 116", "w": 1400, "h": 793}, {"id": "ari117", "g": "branca", "t": "BBDx con QRS oltre 0,18 s", "q": "bbdx", "n": "BBDX (QRS>0,18” e complesso rsR’ in V1)", "f": "Aritmie, slide 117", "w": 1400, "h": 847}, {"id": "ari118", "g": "branca", "t": "BBDx completo: RSR’ in V1, S ampia in DI e aVL", "q": "bbdx", "n": "Tracciato 59 BBDX completo (complesso RSR’ in V1, QRS=0,14”, onda S ampia in DI, aVL e da V1 a V6)", "f": "Aritmie, slide 118", "w": 1400, "h": 820}, {"id": "ari133", "g": "branca", "t": "BBDx con tachicardia sinusale", "q": "bbdx", "n": "Tracciato 48 BBDx (QRS=0,14, complesso rSR’ in V1). FC 107/min: tachicardia sinusale", "f": "Aritmie, slide 133", "w": 1400, "h": 812}, {"id": "ari121", "g": "branca", "t": "BBSx completo senza q settali in V6, DI e aVL", "q": "bbsx", "n": "BBSX completo (QRS = 0,14”, in V6 e in DI e aVL assenza di onde q iniziali settali, assenza di BBDX). In V6, DI, DII, aVL sottoslivellamento tratto ST secondario all’ alterazione del QRS.", "f": "Aritmie, slide 121", "w": 1400, "h": 786}, {"id": "ari122", "g": "branca", "t": "BBSx con QRS 0,16 s", "q": "bbsx", "n": "BBSX (QRS=0,16”, senza R’ in V1, no onda q in V6, DI, aVL)", "f": "Aritmie, slide 122", "w": 1400, "h": 793}, {"id": "ari123", "g": "branca", "t": "BBSx completo con deviazione assiale sinistra", "q": "bbsx", "n": "Tracciato 36 BBSX completo (QRS>0,18”, no onde q settali iniziali, no R’ nelle precordiali, onde S in V1 e complessi QS in V2 e V3, sottosliv ST e inversione T in V6 e soprasliv ST in precordiali destre). Dev assiale sinistra (ÂQRS = -45°). Onda P con componente neg dominante in V1: anomalia atriale sx. Onda q in aVL: IMA?", "f": "Aritmie, slide 123", "w": 1400, "h": 799}, {"id": "ari124", "g": "branca", "t": "BBSx incompleto con tachicardia sinusale", "q": "bbsx", "n": "Tachicardia sinusale (FC >100/min) BBSX incompleto (QRS = 0,11”, onde S in precordiali dx più ampie che di norma così come onde R in precordiali sx, in V5, V6 e in DI e aVL assenza di onde q settali). Alterazioni non specifiche del tratto ST e della T nelle precordiali sinistre, ipertrofia atriale sinistra.", "f": "Aritmie, slide 124", "w": 1400, "h": 800}, {"id": "ari125", "g": "branca", "t": "BBSx con QRS 0,12 s", "q": "bbsx", "n": "Tracciato 62 BBSX (QRS=0,12, assenza di onde q settali e assenza di complessi rSR’ in V1 che indichi BBDX. Nessun segno di pre-eccitazione)", "f": "Aritmie, slide 125", "w": 1400, "h": 827}, {"id": "ari134", "g": "branca", "t": "BBSx completo con anomalia atriale sinistra", "q": "bbsx", "n": "Tracciato 53 BBSX completo (QRS = 0,16, in assenza di onde q settali normali senza complessi rSR’ (BBDX) e di preeccitazione ventricolare) deviazione assiale sinistra anormale (ÂQRS= - 45°). Anomalia atriale sinistra (onda P difasica in DII con durata di 0,14; componente negativa dominante in V1),", "f": "Aritmie, slide 134", "w": 1400, "h": 794}, {"id": "ari127", "g": "branca", "t": "Emiblocco anteriore sinistro: asse −45° con r iniziali nelle inferiori", "q": "eas", "n": "EASX . Deviazione assiale sinistra (ÂQRS = -45°), onde r iniziali normali nelle derivazioni inferiori ( DII, DIII, aVF). QRS =0,10”. Rotazione oraria del cuore (mancanza di onde q settali in V6 ma presenti in aVL-no BBSX incompleto)", "f": "Aritmie, slide 127", "w": 1400, "h": 798}, {"id": "ari135", "g": "branca", "t": "Emiblocco anteriore sinistro e rotazione oraria", "q": "eas", "n": "Tracciato 61 EASX (ÂQRS =-45°, presenza di onde r iniziali in aVF che non permette di diagnosticare un infarto inferiore), rotazione cardiaca oraria (la zona di transizione è a sinistra di V6-dove compaiono onde q settali-o tra V5 e V6-tenendo conto della comparsa della R dominante), modificazioni non specifiche del tratto ST e dell’onda T nelle derivazioni degli arti", "f": "Aritmie, slide 135", "w": 1400, "h": 807}, {"id": "ari129", "g": "branca", "t": "Emiblocco posteriore sinistro: asse +105°", "q": "eps", "n": "EPSX. Lieve dev assiale destra (ÂQRS=+105°). Non vi sono segni di ipertrofia ventricolare destra nelle precordiali. Non vi è rotazione oraria del cuore. Valutare ÂQRS di un ECG precedente.", "f": "Aritmie, slide 129", "w": 1400, "h": 778}, {"id": "ari131", "g": "branca", "t": "Conduzione intraventricolare: quadri a confronto", "q": "bbdx", "n": "", "f": "Aritmie, slide 131", "w": 930, "h": 1301}, {"id": "ari132", "g": "branca", "t": "Ritardo diffuso di conduzione intraventricolare", "q": "bbdx", "n": "continua", "f": "Aritmie, slide 132", "w": 1400, "h": 1230}, {"id": "ari136", "g": "seno", "t": "Aritmia sinusale", "q": "aritmiasinusale", "n": "", "f": "Aritmie, slide 136", "w": 1400, "h": 277}, {"id": "ari137", "g": "seno", "t": "Arresto sinusale", "q": null, "n": "", "f": "Aritmie, slide 137", "w": 1400, "h": 747}, {"id": "ari138", "g": "seno", "t": "Blocco seno-atriale", "q": null, "n": "", "f": "Aritmie, slide 138", "w": 1400, "h": 758}, {"id": "ari139", "g": "seno", "t": "Arresto sinusale", "q": null, "n": "Arresto Sinusale", "f": "Aritmie, slide 139", "w": 1400, "h": 646}, {"id": "ari140", "g": "seno", "t": "Blocco seno-atriale", "q": null, "n": "Blocco Seno-Atriale", "f": "Aritmie, slide 140", "w": 1400, "h": 735}, {"id": "ari141", "g": "seno", "t": "Blocco seno-atriale: pausa doppia dell’intervallo normale", "q": null, "n": "Blocco senoatriale. Intervallo tra quarto e quinto battito è circa 2 volte l’intervallo medio normale: onda di depolarizzazione sinusale non si è propagata al miocardio atriale.", "f": "Aritmie, slide 141", "w": 1400, "h": 230}, {"id": "ari142", "g": "seno", "t": "Sindrome bradi-tachi", "q": null, "n": "Sindrome Bradi-Tachi (Sick Sinus Syndrome) 1) Bradicardia sinusale persistente e inappropriata non causata da farmaci 2) Aritmia sinusale nel paziente anziano non correlata con il pattern respiratorio 3) Blocco seno atriale o arresto sinusale 4) Alternanza di parossismi di fibrillazione atriale con elevata frequenza ventricolare e periodi di ritmo atriale e ventricolare lento", "f": "Aritmie, slide 142", "w": 1400, "h": 652}, {"id": "ari143", "g": "seno", "t": "Ritmi di scappamento", "q": "bav3", "n": "", "f": "Aritmie, slide 143", "w": 1400, "h": 373}, {"id": "ari144", "g": "seno", "t": "Inizio di un ritmo ventricolare di scappamento", "q": "bav3", "n": "", "f": "Aritmie, slide 144", "w": 1400, "h": 620}, {"id": "ari151", "g": "wpw", "t": "WPW: PR 0,06 s, QRS 0,18 s, onda delta in DI e V2-V4", "q": "wpw", "n": "Pre-eccitazione tipo WPW. Intervallo PR=0,06. QRS=0,18. Onda  ben evidente in DI,V2,V3,V4. Sottoslivellamento aspecifico del segmento ST e appiattimento onda T in DI,DII,DIII,aVF, V5,V6.", "f": "Aritmie, slide 151", "w": 1400, "h": 799}, {"id": "ari152", "g": "wpw", "t": "Pre-eccitazione tipo WPW", "q": "wpw", "n": "Pre-eccitazione WPW", "f": "Aritmie, slide 152", "w": 1400, "h": 699}, {"id": "ari153", "g": "wpw", "t": "Onda delta e PR corto: lo schema", "q": "wpw", "n": "", "f": "Aritmie, slide 153", "w": 1400, "h": 1084}, {"id": "ari154", "g": "wpw", "t": "Pre-eccitazione: PR 0,09 s, QRS 0,13 s", "q": "wpw", "n": "Tracciato 70 Pre-eccitazione ventricolare ( intervallo PR = 0,09”, QRS = 0,13”, parte iniziale del QRS impastata)", "f": "Aritmie, slide 154", "w": 1400, "h": 786}, {"id": "ari155", "g": "wpw", "t": "Pre-eccitazione: PR 0,10 s, QRS 0,14 s", "q": "wpw", "n": "Tracciato 55 Pre-eccitazione ventricolare (intervallo PR =0,10” e QRS = 0,14”", "f": "Aritmie, slide 155", "w": 1400, "h": 793}, {"id": "cad051", "g": "ischemia", "t": "Reperti ECG classici dell’ischemia", "q": "stemi-anteriore", "n": "Electrocardiogramma (ECG) – Normale nel 50% dei pazienti con angina mentre asintomatici – spesso anomalie aspecifiche – Reperti classici: • sottoslivellamento del tratto ST (ischemia subendocardica) • inversione dell’onda T • sopraslivellamento tratto ST", "f": "Cardiopatia ischemica, slide 51", "w": 1400, "h": 768}, {"id": "cad089", "g": "ischemia", "t": "Infarto antero-laterale con onde Q patologiche", "q": "stemi-laterale", "n": "Infarto antero laterale (QS in V3 V4 V5 e onda q in V6 con profondità superiore ad ¼ dell’altezza della R successiva)", "f": "Cardiopatia ischemica, slide 89", "w": 1400, "h": 793}, {"id": "cad090", "g": "ischemia", "t": "Infarto inferiore con onde q patologiche in DII, DIII, aVF", "q": "stemi-inferiore", "n": "Infarto miocardico inferiore. Onde q patologiche (profondità > di ¼ dell’altezza dell’onda R successiva, e ampiezza >0,04) in DII, DIII, aVF con anormale progressione dell’onda R nelle precordiali. Onde R di ampiezza ridotta in V4-V6.", "f": "Cardiopatia ischemica, slide 90", "w": 1400, "h": 782}, {"id": "cad091", "g": "ischemia", "t": "Infarto antero-settale pregresso", "q": "stemi-anteriore", "n": "Infarto antero-settale pregresso (mancata progressione dell’onda R nelle precordiali", "f": "Cardiopatia ischemica, slide 91", "w": 1400, "h": 807}, {"id": "cad092", "g": "ischemia", "t": "Infarto antero-laterale esteso recente", "q": "stemi-laterale", "n": "Infarto miocardico anterolaterale esteso (onda q anormale da V2 a V6 e in DI e aVL) recente (sopraslivellamento ST da V2 a V6 e in DI e aVL con sottoslivellamento speculare in DIII e aVF). Possibile danno ischemico della parete posteriore vera (sottoslivellamento ST in V1).", "f": "Cardiopatia ischemica, slide 92", "w": 1400, "h": 798}, {"id": "cad093", "g": "ischemia", "t": "Infarto infero-laterale recente con sottoslivellamento speculare", "q": "stemi-inferiore", "n": "Infarto miocardico infero laterale recente (sopraslivellamento ST in DII, DIII, aVF e da V4 a V6 con sottoslivellamento speculare in DI, aVL, e da V1 a V3). Alterata progressione dell’onda R nelle precordiali sinistre (poss pregresso IMA lat).", "f": "Cardiopatia ischemica, slide 93", "w": 1400, "h": 791}, {"id": "cad094", "g": "ischemia", "t": "Infarto inferiore relativamente recente", "q": "stemi-inferiore", "n": "Infarto miocardico inferiore (onda Q in aVF con durata>0,04” e ampiezza >1/4 R corrispondente, onda Q in DIII) relat recente (inversione onda T nelle deriv inferiori DII, DIII, aVF). Possibile ischemia parete posteriore vera (onde T alte in V2, V3).", "f": "Cardiopatia ischemica, slide 94", "w": 1400, "h": 798}, {"id": "cad095", "g": "ischemia", "t": "Infarto inferiore pregresso e laterale recente", "q": "stemi-laterale", "n": "Tachicardia sinusale (FC>100/min) Infarto miocardico inferiore pregresso (onda q anormale in DII, DIII e aVF) Infarto recente parete laterale (onda q e sopraslivellamento ST in V6) e della parete posteriore vera (sottoslivellamento ST da V1 a V4 e onda R alta e slargata in V1).", "f": "Cardiopatia ischemica, slide 95", "w": 1400, "h": 785}, {"id": "cad096", "g": "ischemia", "t": "Infarto inferiore recente, alterazioni al limite", "q": "stemi-inferiore", "n": "Infarto miocardico inferiore recente (onda q in DII e aVF non sicuramente anormali e sopraslivellamento in DIII e aVF non oltre i limiti di norma, onda T invertita in DII e aVF ) e ischemia o infarto subendocardico (inversione profonda e simmetrica onda T da V2 a V6 e in DI e aVL). Scarsa progressione onda r da V1 a V3: possibile infarto intramurale.", "f": "Cardiopatia ischemica, slide 96", "w": 1400, "h": 829}, {"id": "cad097", "g": "ischemia", "t": "Tracciato anormale con alterazioni aspecifiche", "q": "stemi-anteriore", "n": "Il tracciato è francamente anormale ma le alterazioni non sono specifiche. Onde T invertite in V2, V3, aVL e di basso voltaggio in DI, V4,V5. Sottoslivellamento ST in DI. Quadro clinico: paziente con dolori tipici stenocardici. Probabile eziologia ischemica delle alt. ECG.", "f": "Cardiopatia ischemica, slide 97", "w": 1400, "h": 788}, {"id": "cad098", "g": "ischemia", "t": "Infarto acuto infero-laterale (apicale)", "q": "stemi-inferiore", "n": "Infarto miocardico acuto infero laterale (apicale) (sopraslivellamento ST in DII, DIII, aVF, più sfumato in V5,V6 e sottoslivellamento speculare in DI, aVL, e da V1 a V3)", "f": "Cardiopatia ischemica, slide 98", "w": 1400, "h": 791}, {"id": "cad099", "g": "ischemia", "t": "Infarto inferiore recente", "q": "stemi-inferiore", "n": "Infarto miocardico inferiore recente: onda q anormale in aVF, con sopraslivellamento del tratto ST e inversione delle T nelle derivazioni inferiori. Modesto sopraslivellamento di ST in V6, alterazioni non specifiche dell’onda T in V4, V5. Sottoslivellamento speculare in DI e aVL.", "f": "Cardiopatia ischemica, slide 99", "w": 1400, "h": 753}, {"id": "cad100", "g": "ischemia", "t": "Infarto transmurale anteriore: QS da V1 a V4", "q": "stemi-anteriore", "n": "IMA transmurale anteriore (progressione dell’onda r patologica: nessuna r da V1 a V4, onde q patologiche da V1 a V4, complessi QS da V1 a V4) recente (meno di una settimana) (soprasliv del tratto ST da V1 a V4 (minimo in V5) e l’inversione dell’onda T in V2,V3,V4).", "f": "Cardiopatia ischemica, slide 100", "w": 1400, "h": 798}, {"id": "cad101", "g": "ischemia", "t": "Infarto antero-laterale, inferiore e posteriore", "q": "stemi-posteriore", "n": "IMA antero-laterale esteso (onde q patologiche da V3 a V6 e in DI) e IMA inferiore (onde q in DII e aVF). Onda r dominante in V1: infarto della parete posteriore. Progressione onda r patologica. Onde P anormali in V1: anomalia atriale sx per ischemia o ipertrofia.", "f": "Cardiopatia ischemica, slide 101", "w": 1400, "h": 813}, {"id": "cad102", "g": "ischemia", "t": "Infarto anteriore recente con emiblocco anteriore sinistro", "q": "stemi-anteriore", "n": "IMA anteriore recente (onde r < 8mm, onde q da V1 a V4 > 1/4 onda r seguente con durata superiore a 0,03, soprasliv tratto ST da V1 a V5. EASX (ÂQRS=-60°).", "f": "Cardiopatia ischemica, slide 102", "w": 1400, "h": 827}, {"id": "cad103", "g": "ischemia", "t": "Infarto anteriore: progressione anormale della r", "q": "stemi-anteriore", "n": "Infarto anteriore (progressione anormale onda r: assenza di r da V1 a V3; onde q - in realtà complessi QS - in V1,V2,V3, hanno durata superiore a 0,03” e hanno ampiezza > di ¼ onda r seguente) recente (da V1 a V5 sopraslivellamento significativo del tratto ST) e anomalia atriale sinistra (P difasiche in DII).", "f": "Cardiopatia ischemica, slide 103", "w": 1400, "h": 831}, {"id": "cad104", "g": "ischemia", "t": "Lesione ischemica acuta antero-settale", "q": "stemi-anteriore", "n": "Lesione miocardica ischemica acuta in sede antero settale (progressione dell’onda r da V1 a V3 anormale, onda q in V3 con ampiezza superiore a ¼ onda r seguente, sopraslivellamento tratto ST da V1 a V4 e in DI e aVL con modificazione speculare in DII,DIII e aVF)", "f": "Cardiopatia ischemica, slide 104", "w": 1400, "h": 817}, {"id": "cad105", "g": "ischemia", "t": "Infarto antero-settale recente", "q": "stemi-anteriore", "n": "Infarto antero settale recente (da V1 a V3 onde q di durata > di 0,03” con ampiezza superiore a ¼ onda R seguente. Sopraslivellamento sel tratto ST da V1 a V5 presente anche in DI, inversione dell’onda T da V1 a V5)", "f": "Cardiopatia ischemica, slide 105", "w": 1400, "h": 806}, {"id": "cad109", "g": "ischemia", "t": "Derivazioni destre", "q": "stemi-inferiore", "n": "DERIVAZIONI DESTRE", "f": "Cardiopatia ischemica, slide 109", "w": 1400, "h": 655}, {"id": "cad152", "g": "ischemia", "t": "Infarto transmurale anteriore e infarto inferiore pregresso", "q": "stemi-anteriore", "n": "Infarto miocardico transmurale anteriore (complessi QS da V1 a V3 con onde q anormali in V4BSX nè preeccitazione) relativamente recente (inversione onda T da V1 a V5, basso voltaggio T in V6, DI, aVL) e infarto inferiore pregresso (complessi QS in aVF e DIII senza sopraslivellamento ST o inversione T).", "f": "Cardiopatia ischemica, slide 152", "w": 1400, "h": 809}, {"id": "cad153", "g": "ischemia", "t": "T alte da V1 a V4: ischemia posteriore vera, iperkaliemia o variante", "q": "stemi-posteriore", "n": "Onde T da V1 a V4 alte in modo anormale: ischemia miocardica posteriore vera, iperpotassiemia o variante normale del processo di ripolarizzazione. In V1 rapporto R/S =1, sosp ischemia posteriore vera (DD IVDX (ma asse non deviato). Valutare quadro clinico e valori ematochimici del paziente.", "f": "Cardiopatia ischemica, slide 153", "w": 1400, "h": 786}, {"id": "lett055", "g": "ipertrofia", "t": "Tracciato anormale: R in aVL 14 mm e T invertite in V5-V6", "q": "ivs", "n": "Tracciato anormale. Inversione onda T in V5-V6. Onda R in aVL è 14mm (voltaggio max normale 13 mm). Angolo tra assi del QRS e dell’onda T è di 135°.", "f": "Lettura ECG, slide 55", "w": 1400, "h": 791}, {"id": "lett056", "g": "ipertrofia", "t": "Tracciato anormale: voltaggi precordiali oltre i limiti", "q": "ivs", "n": "Tracciato anormale. Onda R precordiale più alta è di 40mm (>27mm), l’onda S precordiale più profonda è di 37mm (>30mm). La loro somma supera il cut off normale di 40mm. ST sottoslivellato e onde T invertite da V4 a V6. ST sottoslivellato anche in DI, DII, aVF. Onda P in V1 ha una fase terminale negativa dominante.", "f": "Lettura ECG, slide 56", "w": 1400, "h": 809}, {"id": "htn084", "g": "ipertrofia", "t": "Indice di Sokolow-Lyon", "q": "ivs", "n": "ECG e ipertrofia ventricolare sinistra: Indice di Sokolow-Lyon Sokolow M, et al. Am Heart J, 1949", "f": "Clinica e complicanze dell’ipertensione, slide 84", "w": 1400, "h": 1049}, {"id": "htn085", "g": "ipertrofia", "t": "Cornell voltage: R in aVL + S in V3", "q": "ivs", "n": "Casale PN, et al. Circulation, 1987 Cornell Voltage : R in aVL + S in V3 Cut-off > 28 mm (uomini), > 20 mm (donne) ECG e ipertrofia ventricolare sinistra: Cornell voltage", "f": "Clinica e complicanze dell’ipertensione, slide 85", "w": 1400, "h": 1049}, {"id": "htn086", "g": "ipertrofia", "t": "Strain ventricolare sinistro", "q": "ivs", "n": "ECG e ipertrofia ventricolare sinistra: strain Strain: modifica del tratto ST –T : inversione con lenta discesa, rapida risalita con overshoot finale", "f": "Clinica e complicanze dell’ipertensione, slide 86", "w": 1400, "h": 1049}, {"id": "tvp045", "g": "embolia", "t": "EP: tachicardia sinusale, BBDx, S1Q3", "q": "bbdx", "n": "ECG nel paziente con EP Tachicardia sinusale, BBDx, S1Q3", "f": "TVP ed embolia polmonare, slide 45", "w": 1400, "h": 655}, {"id": "tvp046", "g": "embolia", "t": "EP: BBDx, deviazione assiale destra, S1Q3T3", "q": "bbdx", "n": "ECG nel paziente con EP BBDx; deviazione assiale dx; S1 Q3 T3 ; inversione T in V1-4 e DIII; rotazione oraria", "f": "TVP ed embolia polmonare, slide 46", "w": 1400, "h": 756}, {"id": "tvp047", "g": "embolia", "t": "EP: T invertite in V1-V4 e nelle inferiori", "q": null, "n": "ECG nel paziente con EP Onde T invertite in V1-V4 e derivazioni inferiori", "f": "TVP ed embolia polmonare, slide 47", "w": 1400, "h": 716}, {"id": "tvp048", "g": "embolia", "t": "ECG nell’embolia polmonare", "q": null, "n": "ECG nel paziente con EP", "f": "TVP ed embolia polmonare, slide 48", "w": 1400, "h": 676}, {"id": "tvp049", "g": "embolia", "t": "EP: deviazione assiale destra, R prominenti in V1, T invertite V1-V5", "q": null, "n": "ECG nel paziente con EP Deviazione assiale dx, onde R prominenti in V1, inversione T in V1-V5", "f": "TVP ed embolia polmonare, slide 49", "w": 1400, "h": 652}, {"id": "tvp050", "g": "embolia", "t": "EP: tachicardia sinusale, BBDx, T invertite V1-V3, DIII e aVF", "q": "bbdx", "n": "ECG nel paziente con EP Tachicardia sinusale; BBDx; inversione T in V1-3 + DIII e aVF.", "f": "TVP ed embolia polmonare, slide 50", "w": 1400, "h": 652}, {"id": "tvp051", "g": "embolia", "t": "EP: tachicardia sinusale, deviazione assiale destra, BBDx", "q": "bbdx", "n": "ECG nel paziente con EP Tachicardia sinusale; deviazione assiale dx; BBDx", "f": "TVP ed embolia polmonare, slide 51", "w": 1400, "h": 784}, {"id": "tvp052", "g": "embolia", "t": "EP: BBDx con QRS terminale molto allargato", "q": "bbdx", "n": "BBDx con marcato allargamento QRS terminale; deviazione assiale sx (possibile asse pseudo-sx); diffuse alterazioni ST ECG nel paziente con EP", "f": "TVP ed embolia polmonare, slide 52", "w": 1400, "h": 749}, {"id": "ari059", "g": "casi", "t": "Uomo di 65 anni con TIA e dispnea (1)", "q": null, "n": "Maschio 65aa, 2TDM, vasculopatia obliterante aa inf, ricoverato per TIA. Lamenta dispnea", "f": "Aritmie, slide 59", "w": 1400, "h": 988}, {"id": "ari060", "g": "casi", "t": "Uomo di 65 anni con TIA e dispnea (2)", "q": null, "n": "", "f": "Aritmie, slide 60", "w": 1400, "h": 1052}, {"id": "ari061", "g": "casi", "t": "Uomo di 77 anni, arresto cardiaco: primo tracciato", "q": null, "n": "Maschio 77aa, ex-fumatore, BPCO, iperteso. Accompagnato al bagno dal figlio p.d.c. Messo a letto, inizia BLS. Primo tracciato:", "f": "Aritmie, slide 61", "w": 1400, "h": 866}, {"id": "ari062", "g": "casi", "t": "Arresto cardiaco: ritmo dopo 10 minuti di ACLS", "q": null, "n": "ACLS. Dopo 10 min (3 fl di adrenalina e 1 di atropina) compare questo ritmo ma non polso. Continua ACLS", "f": "Aritmie, slide 62", "w": 1400, "h": 686}, {"id": "ari063", "g": "casi", "t": "Arresto cardiaco: dopo altri 5 minuti, ancora senza polso", "q": null, "n": "Dopo altri 5 minuti ritmo invariato ma ancora non c’è polso", "f": "Aritmie, slide 63", "w": 1400, "h": 709}, {"id": "ari064", "g": "casi", "t": "Arresto cardiaco: ripresa del polso e poi PEA", "q": null, "n": "Dopo 30 minuti totali compare polso (PA=85/50) Viene intubato ma dopo 5 minuti va in PEA e quindi di nuovo in arresto. Dopo 50 minuti si sospendono le manovre rianimatorie.", "f": "Aritmie, slide 64", "w": 1400, "h": 679}, {"id": "ari065", "g": "casi", "t": "Uomo di 55 anni con infarto antero-laterale esteso", "q": "stemi-anteriore", "n": "DEF Maschio, 55aa, colest 272, ex-fumatore, iperteso (media recente 150/95). Trovato a terra dalla moglie. ECG del 118 compatibile con IMA ant-lat esteso (V2-V6,I,aVL). All’arrivo in PS comparsa di questo ritmo:", "f": "Aritmie, slide 65", "w": 1400, "h": 779}, {"id": "ari066", "g": "casi", "t": "Donna di 43 anni con toracoalgia e dispnea", "q": null, "n": "Donna 43 aa, in attesa di ricovero per isterectomia (sospetto K utero). Viene in PS per toracoalgia e dispnea. Recente emocromo nn", "f": "Aritmie, slide 66", "w": 1400, "h": 758}, {"id": "ari067", "g": "casi", "t": "Donna di 67 anni con cardiopalmo e dolore retrosternale", "q": null, "n": "Donna di 67 aa. Chiama il med. di guardia per cardiopalmo e dolore retrosternale tipico", "f": "Aritmie, slide 67", "w": 1400, "h": 590}, {"id": "ari068", "g": "casi", "t": "La stessa paziente dopo massaggio del seno carotideo", "q": null, "n": "Pronta regressione del dolore con la ripresa del ritmo, curva enzimatica negativa Massaggio SC", "f": "Aritmie, slide 68", "w": 1400, "h": 469}, {"id": "ari069", "g": "casi", "t": "Tracciati a confronto", "q": null, "n": "", "f": "Aritmie, slide 69", "w": 1400, "h": 852}, {"id": "ari070", "g": "casi", "t": "Tracciati a confronto", "q": null, "n": "", "f": "Aritmie, slide 70", "w": 1400, "h": 851}, {"id": "ari156", "g": "casi", "t": "Crisi ipertensiva con ipokaliemia e perdita di coscienza", "q": "ipok", "n": "Pz con crisi ipertensiva (PA=250/140 al domicilio). Breve perdita di conoscenza durante il trasporto in PS. Agli ematochimici: ipopotassiemia, aumento di CKMB e TnT", "f": "Aritmie, slide 156", "w": 1400, "h": 670}, {"id": "ari157", "g": "casi", "t": "Iperaldosteronismo primitivo: pausa di 4 secondi", "q": null, "n": "Diagnosi: iperaldosteronismo primitivo da microadenoma surrene dx (8mm) Episodio sincopale con pausa documentata di 4 sec: posizionato PM", "f": "Aritmie, slide 157", "w": 1400, "h": 701}, {"id": "ari158", "g": "casi", "t": "Donna di 67 anni, obesa e diabetica, con dolore e sincope", "q": null, "n": "Femmina 67 aa BMI 38, 2TDM. Dolore retrosternale seguito da p.d.c. di breve durata", "f": "Aritmie, slide 158", "w": 1400, "h": 772}, {"id": "ari159", "g": "casi", "t": "Uomo di 80 anni con lipotimia e dolore retrosternale tipico", "q": null, "n": "Pz di 80 aa viene portato in PS per lipotimia durante la cena. All’arrivo lamenta dolore retrosternale tipico", "f": "Aritmie, slide 159", "w": 1400, "h": 714}, {"id": "cad107", "g": "casi", "t": "Uomo di 46 anni con dolore notturno irradiato alla mandibola", "q": null, "n": "Maschio 46aa, fumatore, viene in PS durante la notte per dolore retrosternale accessionale di breve durata irradiato alla mandibola. Dopo reiterati tentativi ammette di avere fatto uso di cocaina", "f": "Cardiopatia ischemica, slide 107", "w": 1400, "h": 708}, {"id": "cad108", "g": "casi", "t": "Donna di 28 anni con ipercolesterolemia familiare e dolore epigastrico", "q": null, "n": "Giovane donna, 28 anni, ipercolesterolemia familiare (colest tot 682), viene in PS per dolore addominale epigastrico e nausea", "f": "Cardiopatia ischemica, slide 108", "w": 1400, "h": 706}, {"id": "cad110", "g": "casi", "t": "Uomo di 76 anni con dolore ai polsi e al collo", "q": null, "n": "Maschio 76aa iperteso, colesterolo 280, PA recente 155/80, viene in PS per dolore ai polsi bilat. e al collo.", "f": "Cardiopatia ischemica, slide 110", "w": 1400, "h": 745}];
 
-const CATS = ['Ritmo sinusale', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Ischemia', 'Ipertrofie', 'Elettroliti e altro'];
+/* ===== Quadri aggiunti: nodo del seno, conduzione atriale, fascicoli, stimolazione ===== */
+
+const pIAB = (amp) => [B(dirAG(60, 15), 0.115 * (amp || 1), 32, 17, 17), B(dirAG(-95, 5), 0.10 * (amp || 1), 82, 18, 18)];
+const qrsBIF = () => ({ w: 144, c: [B(dirAG(120, 35), 0.28, 14, 8, 8), B(dirAG(-58, -8), 1.02, 46, 12, 13), B(dirAG(178, 38), 0.64, 108, 18, 20)] });
+const RAT = (def) => ({ k: 'ratio', label: 'Rapporto di blocco', type: 'select', def: def || '4', opts: [['3', '3:2'], ['4', '4:3'], ['5', '5:4'], ['6', '6:5']] });
+
+/* ---------- NODO DEL SENO E SCAPPAMENTI ---------- */
+add({
+  id: 'bsa1', cat: 'Nodo del seno e scappamenti', name: 'Blocco seno-atriale di I grado',
+  params: [F.hr(68, 45, 95)],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 410, sa: 0.02 }),
+  look: ['II'],
+  card: {
+    def: 'Rallentamento della conduzione fra il nodo del seno e il miocardio atriale, senza perdita di impulsi.',
+    criteri: ['Sull\u2019ECG di superficie il tracciato è indistinguibile da un ritmo sinusale normale', 'Ogni impulso del seno raggiunge comunque l\u2019atrio: nessuna P manca', 'La diagnosi richiede la registrazione diretta del potenziale del nodo del seno o lo studio elettrofisiologico'],
+    meccanismo: 'L\u2019attività del nodo del seno non genera deflessioni visibili in superficie: si vede solo la P, cioè il risultato dell\u2019attivazione atriale. Se l\u2019impulso è solo ritardato in uscita ma arriva sempre, l\u2019intervallo PP resta costante e nulla cambia sul tracciato.',
+    vettori: 'Nessuna modifica dei vettori: P, QRS e T restano normali.',
+    guarda: 'Non c\u2019è nulla da vedere: serve saperlo per non cercarlo.',
+    dd: ['Ritmo sinusale normale', 'Blocco seno-atriale di II grado, dove invece una P manca'],
+    trappole: 'È l\u2019unico grado di blocco seno-atriale che non si può diagnosticare con l\u2019ECG. Chi lo "riconosce" sul tracciato sta guardando altro.',
+    fonte: SRC.brady + '; ' + SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'bsa2t1', cat: 'Nodo del seno e scappamenti', name: 'Blocco seno-atriale di II grado tipo 1', quiz: true,
+  params: [F.hr(70, 45, 100), RAT('4')],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 410, jit: 4, saBlock: { type: 'wenck', ratio: +p.ratio } }),
+  look: ['II'],
+  card: {
+    def: 'Wenckebach del nodo del seno: il tempo di uscita dell\u2019impulso si allunga progressivamente finché un impulso non esce affatto e manca un intero complesso PQRST.',
+    criteri: ['Accorciamento progressivo degli intervalli PP prima della pausa', 'La pausa è più breve del doppio del PP che la precede', 'Il PP che segue la pausa è il più lungo del gruppo', 'Manca tutto il complesso: P, QRS e T insieme', 'Il rapporto si esprime come 4:3, 3:2 e così via'],
+    meccanismo: 'Il tempo di conduzione seno-atriale cresce ad ogni ciclo, ma con incrementi sempre minori: siccome quello che si misura sul tracciato è l\u2019intervallo fra due P e non il tempo di uscita, il PP visibile si accorcia. Quando l\u2019impulso resta bloccato, la pausa contiene un ciclo mancato meno la somma dei ritardi accumulati, e per questo resta più corta di due PP.',
+    vettori: 'I battiti presenti sono del tutto normali: cambia solo il momento in cui arrivano.',
+    guarda: 'DII lungo: misura tre o quattro PP consecutivi prima della pausa e confronta la pausa con il doppio del PP che la precede.',
+    dd: ['Blocco seno-atriale di II grado tipo 2, dove i PP sono costanti e la pausa è un multiplo esatto', 'Aritmia sinusale respiratoria, dove la variazione è graduale e legata al respiro', 'Extrasistole atriale bloccata, dove una P prematura si nasconde nella T che precede la pausa'],
+    trappole: 'La differenza con il Mobitz 1 atrio-ventricolare è netta: là manca solo il QRS e la P resta visibile, qui manca tutto il complesso.',
+    fonte: SRC.brady + '; ' + SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Il blocco seno-atriale è una pausa in cui manca l\u2019intero complesso P-QRS-T', 'Nel tipo 1 gli intervalli PP si accorciano progressivamente prima della pausa', 'La pausa è inferiore al doppio del ciclo di base'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, nodo del seno'
+  }
+});
+
+add({
+  id: 'bsa2t2', cat: 'Nodo del seno e scappamenti', name: 'Blocco seno-atriale di II grado tipo 2', quiz: true,
+  params: [F.hr(68, 45, 100), RAT('4')],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 410, jit: 4, saBlock: { type: 'mobitz2', ratio: +p.ratio } }),
+  look: ['II'],
+  card: {
+    def: 'Un impulso del nodo del seno non riesce a uscire verso l\u2019atrio: manca un intero complesso PQRST e la pausa vale esattamente due cicli.',
+    criteri: ['Intervalli PP costanti prima e dopo la pausa', 'La pausa è un multiplo esatto del PP di base, di solito il doppio', 'Manca l\u2019intero complesso, non solo il QRS', 'Se il blocco è 2:1 la frequenza si dimezza di colpo e sembra una bradicardia sinusale'],
+    meccanismo: 'Il nodo del seno continua a scaricare regolarmente, ma un impulso su n resta bloccato nella giunzione seno-atriale. Poiché il ritmo del pacemaker non si modifica, il battito successivo arriva esattamente quando previsto: la pausa è il doppio del ciclo.',
+    vettori: 'Battiti normali separati da una pausa silenziosa.',
+    guarda: 'DII lungo con il compasso: apri il compasso sul PP di base e vedi se la pausa ne contiene esattamente due.',
+    dd: ['Arresto sinusale, dove la pausa non è un multiplo del PP', 'Blocco seno-atriale tipo 1, dove i PP si accorciano prima della pausa', 'Extrasistole atriale bloccata'],
+    trappole: 'Il blocco seno-atriale 2:1 non si distingue da una bradicardia sinusale su un tracciato singolo: si smaschera se la frequenza raddoppia improvvisamente con lo sforzo o con l\u2019atropina.',
+    fonte: SRC.brady + '; ' + SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Pausa che è un multiplo esatto dell\u2019intervallo PP di base', 'Manca tutto il complesso, non solo il QRS come nei blocchi AV', 'Il ritmo di base resta regolare prima e dopo la pausa'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, nodo del seno'
+  }
+});
+
+add({
+  id: 'bsa3', cat: 'Nodo del seno e scappamenti', name: 'Blocco seno-atriale di III grado',
+  params: [F.hr(44, 30, 60)],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 420, pAmp: 0, jit: 6 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Nessun impulso del nodo del seno raggiunge l\u2019atrio: le P sinusali scompaiono e il ritmo è sostenuto da un centro sottostante.',
+    criteri: ['Assenza completa di onde P sinusali', 'Ritmo di scappamento regolare: giunzionale con QRS stretto a 40–60/min, ventricolare con QRS largo a 20–40/min', 'Sul tracciato di superficie è indistinguibile dall\u2019arresto sinusale prolungato'],
+    meccanismo: 'Il tessuto perinodale non lascia passare alcun impulso. Il nodo del seno può continuare a scaricare, ma in superficie non si vede nulla: compare il ritmo del primo centro sussidiario che si libera dall\u2019inibizione, di solito la giunzione atrio-ventricolare.',
+    vettori: 'Se lo scappamento è giunzionale i vettori ventricolari sono normali; se è ventricolare il QRS è largo e la T discordante.',
+    guarda: 'DII e V1 per cercare qualunque attività atriale prima del QRS.',
+    dd: ['Arresto sinusale completo', 'Fibrillazione atriale a maglie fini con risposta regolare', 'Ritmo giunzionale con P retrograda nascosta nel QRS'],
+    trappole: 'Assenza di P non significa blocco atrio-ventricolare: nel BAV di III grado le P ci sono e marciano indipendenti dal QRS.',
+    fonte: SRC.brady + '; ' + SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'arrestosinusale', cat: 'Nodo del seno e scappamenti', name: 'Arresto sinusale con scappamento', quiz: true,
+  params: [F.hr(62, 40, 90), { k: 'pausa', label: 'Durata della pausa', unit: 'ms', min: 1600, max: 4500, step: 100, def: 2800 }, { k: 'esc', label: 'Scappamento', type: 'select', def: 'j', opts: [['j', 'Giunzionale'], ['v', 'Ventricolare'], ['no', 'Nessuno']] }],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 415, pause: { after: 4, ms: p.pausa, escape: p.esc === 'no' ? null : p.esc } }),
+  look: ['II'],
+  card: {
+    def: 'Il nodo del seno smette temporaneamente di scaricare: compare una pausa senza alcuna attività atriale, che può essere chiusa da un battito di scappamento.',
+    criteri: ['Pausa senza onde P', 'La durata della pausa non è un multiplo esatto del PP di base: è questo che la distingue dal blocco seno-atriale', 'Pausa oltre 3 secondi da sveglio: significativa e sintomatica nella maggior parte dei casi', 'Il battito che chiude la pausa è di scappamento: giunzionale a QRS stretto o ventricolare a QRS largo'],
+    meccanismo: 'Cessa l\u2019automatismo delle cellule del nodo. Dopo un tempo variabile un centro sussidiario, liberato dalla soppressione da overdrive, scarica al proprio ritmo intrinseco: giunzione 40–60/min, rete di Purkinje 20–40/min. Se nessun centro interviene, la pausa diventa asistolia.',
+    vettori: 'Nello scappamento giunzionale i vettori ventricolari restano normali; in quello ventricolare il QRS nasce fuori dal sistema di conduzione ed è largo, con ripolarizzazione opposta.',
+    guarda: 'DII lungo, compasso alla mano: misura la pausa e confrontala con il PP di base.',
+    dd: ['Blocco seno-atriale di II grado tipo 2 (pausa multipla esatta)', 'Extrasistole atriale bloccata (cerca la P prematura dentro la T)', 'Fibrillazione atriale con pausa lunga'],
+    trappole: 'La pausa di per sé non dà l\u2019indicazione al pacemaker: contano i sintomi e la correlazione tra sintomo e pausa. Cerca sempre le cause reversibili, farmaci bradicardizzanti in testa.',
+    fonte: SRC.brady + '; ' + SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Arresto sinusale: pausa con assenza completa di attività atriale', 'La pausa non è multiplo del ciclo di base, a differenza del blocco seno-atriale', 'Il battito di scappamento nasce dal centro sottostante più rapido'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, nodo del seno'
+  }
+});
+
+add({
+  id: 'braditachi', cat: 'Nodo del seno e scappamenti', name: 'Malattia del nodo del seno: pausa post-tachicardica',
+  params: [{ k: 'hr', label: 'Frequenza della tachiaritmia', unit: '/min', min: 90, max: 160, step: 1, def: 115 }, { k: 'pausa', label: 'Pausa alla cessazione', unit: 'ms', min: 1800, max: 5000, step: 100, def: 3400 }],
+  build: p => ({ rate: p.hr, pr: 150, qtc: 400, jit: 18, pause: { after: 6, ms: p.pausa, escape: 'j' } }),
+  look: ['II'],
+  card: {
+    def: 'Sindrome bradicardia-tachicardia: episodi di tachiaritmia atriale che, cessando, lasciano una pausa lunga perché il nodo del seno è malato e non riprende subito.',
+    criteri: ['Alternanza di tachiaritmia atriale (di solito fibrillazione o flutter) e di bradicardia o pause', 'Pausa alla cessazione della tachiaritmia, spesso oltre 3 secondi, con sincope o presincope', 'Tempo di recupero del nodo del seno allungato', 'Fra un episodio e l\u2019altro il ritmo di base è spesso una bradicardia sinusale inappropriata'],
+    meccanismo: 'La tachiaritmia sopprime l\u2019automatismo del nodo del seno per overdrive. In un nodo sano la ripresa è immediata; in un nodo malato il recupero è lento e ne risulta una pausa, talvolta chiusa da uno scappamento giunzionale.',
+    vettori: 'Nessuna alterazione dei vettori: il problema è di automatismo e di ripresa.',
+    guarda: 'Il momento della cessazione della tachiaritmia, su Holter o telemetria: è lì che si vede la pausa.',
+    dd: ['Pausa da farmaci bradicardizzanti', 'Blocco atrio-ventricolare parossistico', 'Ipertono vagale del giovane e dell\u2019atleta'],
+    trappole: 'È la situazione classica in cui il farmaco che serve per la tachicardia peggiora la bradicardia: spesso serve il pacemaker proprio per poter trattare la tachiaritmia.',
+    fonte: SRC.brady + '; ' + SRC.pacing + '; ' + SRC.af,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Sindrome bradi-tachi: alternanza fra tachiaritmie atriali e bradicardia o pause', 'La pausa compare alla cessazione della tachiaritmia'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, nodo del seno'
+  }
+});
+
+add({
+  id: 'interatriale', cat: 'Nodo del seno e scappamenti', name: 'Blocco interatriale avanzato', quiz: true,
+  params: [F.hr(70, 50, 100)],
+  build: p => ({ rate: p.hr, pr: 180, qtc: 415, pComps: pIAB(1) }),
+  look: ['II', 'III', 'aVF'],
+  card: {
+    def: 'Ritardo o blocco della conduzione fra atrio destro e atrio sinistro nel fascio di Bachmann: l\u2019atrio sinistro si attiva tardi e, nella forma avanzata, dal basso verso l\u2019alto.',
+    criteri: ['P di durata ≥ 120 ms', 'Nella forma parziale la P è larga e bifida, con le due gobbe distanti più di 40 ms', 'Nella forma avanzata la P è bifasica, positiva e poi negativa, in DII, DIII e aVF', 'Spesso si accompagna a ingrandimento atriale sinistro, ma è cosa diversa: qui il problema è di conduzione, non di dimensione'],
+    meccanismo: 'Normalmente l\u2019impulso passa all\u2019atrio sinistro attraverso il fascio di Bachmann, in alto, e l\u2019attivazione procede dall\u2019alto in basso: P positiva nelle derivazioni inferiori. Se il fascio è bloccato, l\u2019atrio sinistro viene raggiunto attraverso la regione del seno coronarico e si attiva dal basso verso l\u2019alto: la seconda metà della P diventa negativa nelle inferiori.',
+    vettori: 'Il vettore della prima parte della P resta in basso a sinistra (atrio destro); il vettore terminale si inverte verso l\u2019alto, dando la componente negativa in DII, DIII e aVF.',
+    guarda: 'DII, DIII e aVF: misura la durata della P e guarda se la parte finale scende sotto la linea.',
+    dd: ['Ingrandimento atriale sinistro (P mitralica) senza componente negativa inferiore', 'Ritmo atriale ectopico basso, dove la P è negativa per intero', 'Artefatto da posizione degli elettrodi'],
+    trappole: 'La forma avanzata è associata al rischio di fibrillazione atriale e di ictus: è la sindrome di Bayés. Una P larga e bifasica nelle inferiori merita una segnalazione nel referto, non un\u2019alzata di spalle.',
+    fonte: 'Bayés de Luna A. et al., consenso sul blocco interatriale, 2012; ' + SRC.aha3,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Il fascio di Bachmann porta l\u2019impulso all\u2019atrio sinistro', 'P larga oltre 120 ms quando la conduzione interatriale è rallentata'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Lettura ECG, onda P'
+  }
+});
+
+add({
+  id: 'ritmogiunzionale', cat: 'Nodo del seno e scappamenti', name: 'Ritmo giunzionale di scappamento', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 35, max: 70, step: 1, def: 46 }],
+  build: p => ({ mode: 'svt', vRate: p.hr, qtc: 420 }),
+  look: ['II', 'aVR'],
+  card: {
+    def: 'Ritmo sostenuto dalla giunzione atrio-ventricolare quando il nodo del seno rallenta o si arresta, o quando la conduzione verso i ventricoli è interrotta a monte.',
+    criteri: ['QRS stretto, identico a quello sinusale', 'Frequenza 40–60/min: sopra i 60 si parla di ritmo giunzionale accelerato, sopra i 100 di tachicardia giunzionale', 'P assente, oppure retrograda: negativa in DII, DIII e aVF e positiva in aVR', 'La P retrograda può precedere il QRS con PR corto, esservi nascosta dentro o seguirlo'],
+    meccanismo: 'Le cellule della giunzione hanno un automatismo proprio a 40–60/min, normalmente soppresso dal nodo del seno che è più veloce. Quando il seno rallenta, la giunzione si libera e prende il comando. L\u2019attivazione atriale, se avviene, procede all\u2019indietro: da qui la P negativa nelle inferiori.',
+    vettori: 'I vettori ventricolari sono normali perché la via His-Purkinje è usata regolarmente. Il vettore della P retrograda punta in alto e a destra, opposto a quello sinusale.',
+    guarda: 'DII e aVR per la P retrograda; confronta la morfologia del QRS con un tracciato sinusale precedente.',
+    dd: ['Ritmo atriale ectopico basso, con PR normale o lungo', 'Blocco seno-atriale di III grado', 'Ritmo idioventricolare, dove il QRS è largo'],
+    trappole: 'Uno scappamento giunzionale non è un\u2019aritmia da sopprimere: è un meccanismo di sicurezza. Il problema da trattare è ciò che lo ha reso necessario.',
+    fonte: SRC.brady + '; ' + SRC.svt,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Scappamento giunzionale a 40–60/min con QRS stretto', 'P assente o retrograda, negativa nelle derivazioni inferiori'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, ritmi di scappamento'
+  }
+});
+
+add({
+  id: 'idioventricolare', cat: 'Nodo del seno e scappamenti', name: 'Ritmo idioventricolare di scappamento', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 15, max: 45, step: 1, def: 30 }],
+  build: p => ({ mode: 'vt', vRate: p.hr, aRate: 0.5, vtQrs: M.qrsEscapeV(), vtT: { a: 150, g: 30, amp: 0.4 }, qtc: 460 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Ultima linea di difesa: quando né il nodo del seno né la giunzione funzionano, il ritmo nasce dalla rete di Purkinje o dal miocardio ventricolare.',
+    criteri: ['QRS largo ≥ 120 ms, morfologia bizzarra', 'Frequenza 20–40/min, spesso ancora più bassa', 'Nessun rapporto con l\u2019attività atriale, quando questa è presente', 'T opposta alla parte principale del QRS'],
+    meccanismo: 'L\u2019automatismo delle cellule di Purkinje è il più lento della gerarchia. L\u2019impulso nasce lontano dal sistema di conduzione rapido e si diffonde lentamente attraverso il miocardio comune: da qui il QRS largo e deformato.',
+    vettori: 'Un unico vettore lento, orientato secondo il punto di origine: se nasce dal ventricolo sinistro il QRS ha morfologia tipo blocco di branca destra, se nasce dal destro tipo blocco di branca sinistra.',
+    guarda: 'DII e V1 per la larghezza del QRS e per cercare attività atriale indipendente.',
+    dd: ['Ritmo idioventricolare accelerato (60–110/min)', 'Tachicardia ventricolare lenta', 'BAV di III grado con scappamento ventricolare, dove le P sono presenti e regolari', 'Ritmo da pacemaker, dove c\u2019è lo spike'],
+    trappole: 'Frequenza così bassa significa portata cardiaca insufficiente: è una situazione da trattare subito, non da osservare. E attenzione al contesto dell\u2019attività elettrica senza polso.',
+    fonte: SRC.brady + '; ' + SRC.va,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Scappamento ventricolare a 20–40/min con QRS largo', 'È il centro più lento della gerarchia dell\u2019automatismo'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, ritmi di scappamento'
+  }
+});
+
+/* ---------- BLOCCHI AV ---------- */
+add({
+  id: 'bavavanzato', cat: 'Blocchi AV', name: 'BAV di II grado avanzato', quiz: true,
+  params: [F.hr(80, 60, 120), { k: 'ratio', label: 'Rapporto di conduzione', type: 'select', def: '3', opts: [['3', '3:1'], ['4', '4:1'], ['5', '5:1']] }],
+  build: p => ({ rate: p.hr, pr: 180, av: 'adv', ratio: +p.ratio, qtc: 420 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Blocco di secondo grado in cui due o più P consecutive restano bloccate, ma la conduzione atrio-ventricolare non è del tutto assente.',
+    criteri: ['Due o più P consecutive bloccate, con rapporto 3:1, 4:1 o superiore', 'Almeno alcune P conducono: questo lo distingue dal blocco completo', 'Il PR dei battiti condotti è costante', 'Frequenza ventricolare bassa, spesso sintomatica'],
+    meccanismo: 'La sede è quasi sempre infranodale, hisiana o infrahisiana. La conduzione è "tutto o nulla" come nel Mobitz 2, ma il rapporto di blocco è più sfavorevole.',
+    vettori: 'I battiti condotti hanno vettori normali, a meno che non coesista un blocco di branca, cosa frequente quando la sede è distale.',
+    guarda: 'DII lungo: conta le P fra un QRS e il successivo e verifica che il PR dei condotti sia sempre uguale.',
+    dd: ['BAV di III grado, dove nessuna P conduce e c\u2019è dissociazione completa', 'BAV 2:1', 'Blocco atrio-ventricolare funzionale da P molto precoci in tachicardia atriale'],
+    trappole: 'Per dire "avanzato" devi dimostrare che almeno una P conduce con PR costante: se ogni QRS è uno scappamento indipendente, il blocco è completo.',
+    fonte: SRC.brady + '; ' + SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'dissociazioneav', cat: 'Blocchi AV', name: 'Dissociazione atrio-ventricolare isoritmica',
+  params: [{ k: 'hr', label: 'Frequenza sinusale', unit: '/min', min: 50, max: 90, step: 1, def: 66 }, { k: 'j', label: 'Frequenza giunzionale', unit: '/min', min: 50, max: 95, step: 1, def: 70 }],
+  build: p => ({ rate: p.hr, av: 'dissoc', escRate: p.j, escape: 'giunzionale', qtc: 415 }),
+  look: ['II'],
+  card: {
+    def: 'Atri e ventricoli battono ciascuno per conto proprio a frequenze quasi uguali, perché un centro sottostante è diventato più veloce del nodo del seno, non perché la conduzione sia bloccata.',
+    criteri: ['P e QRS indipendenti, con frequenze molto vicine fra loro', 'QRS stretto se l\u2019origine è giunzionale', 'La P scivola avanti e indietro rispetto al QRS, entrandovi e uscendone', 'Possibili battiti di cattura: quando la P cade al momento giusto conduce e anticipa il QRS'],
+    meccanismo: 'Due pacemaker competono. Se il seno rallenta (ipertono vagale, farmaci) o la giunzione accelera (ischemia, digitale, febbre), il centro inferiore prende il sopravvento per semplice differenza di frequenza. La conduzione atrio-ventricolare è intatta, ma trova sempre i ventricoli già depolarizzati.',
+    vettori: 'Vettori normali quando l\u2019origine è giunzionale.',
+    guarda: 'DII lungo: segui la P e guarda come cambia posizione rispetto al QRS di battito in battito.',
+    dd: ['BAV di III grado: là la frequenza atriale è più alta di quella ventricolare e la dissociazione è obbligata', 'Ritmo giunzionale accelerato con conduzione retrograda'],
+    trappole: 'Dissociazione atrio-ventricolare non è sinonimo di blocco completo: qui il blocco non c\u2019è, c\u2019è una gara di frequenze. Chiamarlo BAV di III grado è l\u2019errore classico.',
+    fonte: SRC.brady + '; ' + SRC.svt,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ---------- CONDUZIONE INTRAVENTRICOLARE ---------- */
+add({
+  id: 'bbdxinc', cat: 'Conduzione intraventricolare', name: 'Blocco di branca destra incompleto',
+  params: [F.hr(72, 50, 110)],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 420, qrs: M.qrsRBBB(), qrsScale: 0.82, T: { a: 40, g: -10, amp: 0.3 } }),
+  look: ['V1', 'V2', 'I'],
+  card: {
+    def: 'Stesso disegno del blocco di branca destra, ma con QRS non ancora allargato oltre la soglia.',
+    criteri: ['QRS fra 110 e 119 ms nell\u2019adulto', 'rSr′, rsR′ o rSR′ in V1 o V2', 'S larga in DI e V6', 'Le altre caratteristiche sono quelle del blocco completo'],
+    meccanismo: 'Il ritardo della branca destra esiste ma è modesto: l\u2019attivazione del ventricolo destro è solo posticipata, non affidata interamente al miocardio comune.',
+    vettori: 'Vettore terminale diretto a destra e in avanti, come nel blocco completo, ma di durata minore.',
+    guarda: 'V1 e V2 per la r′, DI e V6 per la S.',
+    dd: ['Variante normale del giovane, in cui una piccola r′ in V1 non ha significato patologico', 'Pattern di Brugada', 'Ipertrofia ventricolare destra', 'Pectus excavatum e altre alterazioni della parete'],
+    trappole: 'Il manuale di Gaita definisce incompleto un blocco con QRS fra 100 e 120 ms, l\u2019AHA usa 110–119 ms: la sostanza non cambia, ma se all\u2019esame citi una soglia di\' anche quale fonte segui.',
+    fonte: SRC.aha3,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'bbsxinc', cat: 'Conduzione intraventricolare', name: 'Blocco di branca sinistra incompleto',
+  params: [F.hr(72, 50, 110)],
+  build: p => ({ rate: p.hr, pr: 165, qtc: 425, qrs: M.qrsLBBB(), qrsScale: 0.76, T: { a: -150, g: 25, amp: 0.26 } }),
+  look: ['V6', 'I', 'V1'],
+  card: {
+    def: 'Ritardo parziale della branca sinistra: il disegno è quello del blocco sinistro, ma il QRS non raggiunge i 120 ms.',
+    criteri: ['QRS fra 110 e 119 ms nell\u2019adulto', 'Assenza della q settale in DI, V5 e V6', 'R con salita lenta o impastata, R peak time in V5–V6 superiore a 60 ms', 'Quadro spesso associato a ipertrofia ventricolare sinistra'],
+    meccanismo: 'L\u2019attivazione settale da sinistra a destra è persa o ridotta, quindi sparisce la q settale, ma il ventricolo sinistro riceve ancora in parte l\u2019impulso attraverso la branca.',
+    vettori: 'Il vettore settale iniziale, normalmente diretto a destra, si inverte verso sinistra: è la ragione per cui la q scompare.',
+    guarda: 'DI, V5 e V6: la scomparsa della q settale è il segno più precoce.',
+    dd: ['Ipertrofia ventricolare sinistra isolata', 'Ritardo aspecifico della conduzione intraventricolare', 'Preeccitazione'],
+    trappole: 'Anche il blocco sinistro incompleto ostacola la lettura della ripolarizzazione: le alterazioni di ST e T vanno giudicate con prudenza.',
+    fonte: SRC.aha3,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'bifascicolare', cat: 'Conduzione intraventricolare', name: 'Blocco bifascicolare', quiz: true,
+  params: [F.hr(70, 45, 110)],
+  build: p => ({ rate: p.hr, pr: 170, qtc: 430, qrs: qrsBIF(), T: { a: 35, g: -30, amp: 0.28 }, via: 'rbbb' }),
+  look: ['V1', 'I', 'III', 'aVF'],
+  card: {
+    def: 'Blocco di branca destra associato a blocco di uno dei due fascicoli della branca sinistra: restano attive solo una via su tre.',
+    criteri: ['Forma comune: BBDx con emiblocco anteriore sinistro, cioè rSR′ in V1 con asse fra −45° e −90°', 'Forma meno comune: BBDx con emiblocco posteriore sinistro, cioè rSR′ in V1 con asse oltre +90° e senza altre cause di deviazione destra', 'QRS ≥ 120 ms', 'Il blocco di branca sinistra completo è di per sé un blocco bifascicolare'],
+    meccanismo: 'La conduzione raggiunge i ventricoli attraverso l\u2019unico fascicolo rimasto: tutto il miocardio viene attivato da quel punto, con un percorso lungo e lento. Se cede anche quello, il risultato è il blocco completo.',
+    vettori: 'Il vettore iniziale e quello principale sono spostati secondo il fascicolo bloccato (in alto a sinistra nell\u2019emiblocco anteriore); il vettore terminale è quello del blocco destro, verso destra e in avanti.',
+    guarda: 'V1 per la R′, DI, DIII e aVF per l\u2019asse.',
+    dd: ['BBDx isolato con deviazione assiale da altra causa', 'Infarto inferiore che simula l\u2019emiblocco posteriore', 'Cuore verticale del longilineo'],
+    trappole: 'In un paziente con sincope, il blocco bifascicolare cambia il ragionamento: la sincope potrebbe essere dovuta a un blocco completo intermittente.',
+    fonte: SRC.aha3 + '; ' + SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Blocco di branca destra con asse marcatamente deviato: pensa al blocco bifascicolare', 'BBDx più emiblocco anteriore sinistro è la combinazione più frequente'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, blocchi di branca'
+  }
+});
+
+add({
+  id: 'trifascicolare', cat: 'Conduzione intraventricolare', name: 'Blocco bifascicolare con PR lungo',
+  params: [F.hr(66, 45, 100), F.pr(260, 210, 380)],
+  build: p => ({ rate: p.hr, pr: p.pr, av: 'I', qtc: 435, qrs: qrsBIF(), T: { a: 35, g: -30, amp: 0.28 }, via: 'rbbb' }),
+  look: ['II', 'V1', 'I'],
+  card: {
+    def: 'Blocco bifascicolare associato a PR prolungato. Storicamente chiamato blocco trifascicolare, termine oggi sconsigliato.',
+    criteri: ['BBDx con emiblocco anteriore o posteriore sinistro', 'PR > 200 ms', 'La dizione corretta è "blocco bifascicolare con BAV di I grado"'],
+    meccanismo: 'Il PR lungo non dimostra che il terzo fascicolo sia malato: il ritardo può essere nel nodo atrio-ventricolare, che è una sede del tutto diversa e con prognosi diversa. Solo lo studio elettrofisiologico, misurando l\u2019intervallo HV, dice dove sta davvero il ritardo.',
+    vettori: 'Come nel blocco bifascicolare.',
+    guarda: 'DII per il PR, V1 e l\u2019asse per i due fascicoli.',
+    dd: ['Blocco bifascicolare con ritardo nodale da farmaci o da tono vagale', 'Blocco alternante di branca, che invece è un\u2019indicazione forte al pacemaker'],
+    trappole: 'Le linee guida sconsigliano il termine "trifascicolare" proprio perché suggerisce una certezza che l\u2019ECG non può dare.',
+    fonte: SRC.aha3 + '; ' + SRC.pacing + '; ' + SRC.brady,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'ivcd', cat: 'Conduzione intraventricolare', name: 'Ritardo aspecifico della conduzione intraventricolare',
+  params: [F.hr(72, 45, 110), { k: 'w', label: 'Larghezza del QRS', unit: '×', min: 1.2, max: 1.7, step: 0.05, def: 1.35 }],
+  build: p => ({ rate: p.hr, pr: 165, qtc: 430, qrs: M.qrsNormal(), qrsScale: p.w, T: { a: -140, g: 20, amp: 0.24 } }),
+  look: ['V1', 'V6', 'I'],
+  card: {
+    def: 'QRS allargato che non ha né la morfologia del blocco destro né quella del blocco sinistro.',
+    criteri: ['QRS > 110 ms', 'Assenza dei criteri morfologici del blocco di branca destra o sinistra', 'Complessi spesso impastati e di morfologia variabile fra le derivazioni'],
+    meccanismo: 'Il rallentamento è diffuso nel miocardio ventricolare, non confinato a una branca: fibrosi, cardiomiopatia, iperkaliemia, farmaci che bloccano i canali del sodio, ischemia acuta grave.',
+    vettori: 'Nessun vettore terminale caratteristico: tutta la sequenza è rallentata.',
+    guarda: 'Confronta V1 e V6: se nessuna delle due mostra il disegno tipico di un blocco di branca, il ritardo è aspecifico.',
+    dd: ['Blocco di branca atipico', 'Iperkaliemia, dove il QRS si allarga e le T sono appuntite', 'Intossicazione da antidepressivi triciclici o da antiaritmici di classe I', 'Ritmo ventricolare o stimolato'],
+    trappole: 'Un QRS che si allarga rispetto a un tracciato precedente è un segnale da prendere sul serio: cerca la causa metabolica o tossica prima di considerarlo cronico.',
+    fonte: SRC.aha3,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ---------- VENTRICOLARI ---------- */
+add({
+  id: 'riva', cat: 'Ventricolari', name: 'Ritmo idioventricolare accelerato', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza ventricolare', unit: '/min', min: 55, max: 115, step: 1, def: 82 }, { k: 'ar', label: 'Frequenza sinusale', unit: '/min', min: 50, max: 100, step: 1, def: 74 }],
+  build: p => ({ mode: 'vt', vRate: p.hr, aRate: p.ar, vtQrs: M.qrsEscapeV(), vtT: { a: 150, g: 30, amp: 0.4 }, qtc: 440 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Ritmo ventricolare a frequenza compresa fra 60 e 110/min: più veloce dello scappamento, più lento della tachicardia ventricolare.',
+    criteri: ['QRS largo, tre o più battiti consecutivi', 'Frequenza fra 60 e 110/min', 'Inizio e fine graduali, spesso con battiti di fusione e di cattura all\u2019inizio e alla fine', 'Dissociazione atrio-ventricolare con frequenza atriale simile'],
+    meccanismo: 'Aumento dell\u2019automatismo di un focus ventricolare che supera la frequenza del nodo del seno. È il ritmo classico della riperfusione dopo angioplastica o trombolisi nell\u2019infarto.',
+    vettori: 'Vettore unico e lento, come negli altri ritmi ventricolari.',
+    guarda: 'DII per i battiti di fusione all\u2019inizio e alla fine dell\u2019episodio: sono la firma del quadro.',
+    dd: ['Tachicardia ventricolare lenta', 'Ritmo giunzionale con aberranza', 'Ritmo da pacemaker'],
+    trappole: 'Nel contesto della riperfusione è un segno favorevole e di regola non va trattato: sopprimerlo può togliere al cuore l\u2019unico ritmo che ha.',
+    fonte: SRC.va + '; ' + SRC.acs,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ---------- STIMOLAZIONE ---------- */
+add({
+  id: 'pmvvi', cat: 'Stimolazione', name: 'Stimolazione ventricolare (VVI)', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza sinusale propria', unit: '/min', min: 35, max: 75, step: 1, def: 52 }, { k: 'pm', label: 'Frequenza del pacemaker', unit: '/min', min: 50, max: 90, step: 1, def: 62 }],
+  build: p => ({ rate: p.hr, av: 'dissoc', escRate: p.pm, escape: 'ventricolare', escQrs: M.qrsPaced(), qtc: 440 }),
+  look: ['V1', 'II', 'V6'],
+  card: {
+    def: 'Stimolazione monocamerale del ventricolo destro: uno spike precede ogni QRS stimolato, l\u2019attività atriale procede indipendente.',
+    criteri: ['Spike stretto e verticale immediatamente prima del QRS', 'QRS largo con morfologia tipo blocco di branca sinistra, perché la stimolazione parte dall\u2019apice del ventricolo destro', 'Asse spesso deviato in alto a sinistra', 'T opposta alla parte principale del QRS', 'Attività atriale dissociata dai battiti stimolati'],
+    meccanismo: 'L\u2019elettrocatetere depolarizza il ventricolo destro; da lì l\u2019impulso si propaga al sinistro attraverso il miocardio comune, quindi lentamente. La modalità VVI stimola solo se il ritmo spontaneo scende sotto la frequenza programmata.',
+    vettori: 'Vettore unico, diretto in alto a sinistra e indietro, che nasce dall\u2019apice del ventricolo destro.',
+    guarda: 'V1 e V6 per la morfologia, DII per gli spike e per l\u2019attività atriale.',
+    dd: ['Blocco di branca sinistra spontaneo, dove manca lo spike', 'Ritmo idioventricolare', 'Stimolazione biventricolare, dove il QRS è più stretto e spesso con R alta in V1'],
+    trappole: 'Una morfologia stimolata tipo blocco di branca destra deve far pensare a un catetere nel ventricolo sinistro o a una perforazione del setto, non è normale. E ricorda i criteri di Sgarbossa per riconoscere un infarto in un ritmo stimolato.',
+    fonte: SRC.pacing + '; ' + SRC.aha3,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'pmddd', cat: 'Stimolazione', name: 'Stimolazione bicamerale (DDD)',
+  params: [F.hr(70, 50, 100), F.pr(170, 120, 250)],
+  build: p => ({ rate: p.hr, pr: p.pr, qtc: 440, qrs: M.qrsPaced() }),
+  look: ['II', 'V1', 'V6'],
+  card: {
+    def: 'Il dispositivo segue l\u2019attività atriale propria e stimola il ventricolo dopo un ritardo programmato: ogni P è seguita da uno spike e da un QRS stimolato.',
+    criteri: ['P sinusale seguita, dopo l\u2019intervallo AV programmato, da uno spike ventricolare', 'QRS largo con morfologia tipo blocco di branca sinistra', 'Rapporto fisso e costante fra P e spike', 'Se anche l\u2019atrio viene stimolato compare un secondo spike prima della P'],
+    meccanismo: 'Il dispositivo bicamerale mantiene la sincronia atrio-ventricolare: rileva la P spontanea e, se la conduzione propria non arriva in tempo, stimola il ventricolo. È la modalità usata nel blocco atrio-ventricolare con funzione sinusale conservata.',
+    vettori: 'La P è normale perché nasce dal seno; il vettore ventricolare è quello della stimolazione dall\u2019apice destro.',
+    guarda: 'DII per la sequenza P-spike-QRS, V1 e V6 per la morfologia stimolata.',
+    dd: ['Preeccitazione con PR corto', 'BAV di I grado con blocco di branca sinistra, dove manca lo spike', 'Malfunzionamento con mancata cattura: lo spike c\u2019è ma non è seguito dal QRS'],
+    trappole: 'Riconoscere i malfunzionamenti è più utile che riconoscere il ritmo normale: mancata cattura, mancata rilevazione, spike nella fase vulnerabile.',
+    fonte: SRC.pacing,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ===== Secondo blocco di quadri aggiunti ===== */
+
+const SRC2 = {
+  als: 'ERC 2021, Linee guida sul supporto avanzato delle funzioni vitali',
+  bru: 'HRS/EHRA/APHRS 2013, Consenso sulle sindromi aritmiche ereditarie; ESC 2022',
+  arvc: 'Criteri diagnostici rivisti per la cardiomiopatia aritmogena, 2010; ESC 2023 cardiomiopatie'
+};
+
+const pFoci = () => [
+  [B(dirAG(70, 10), 0.12, 34, 17, 17)],
+  [B(dirAG(-70, 15), 0.11, 34, 16, 16)],
+  [B(dirAG(20, -45), 0.13, 34, 18, 18)]
+];
+
+/* ---------- SOPRAVENTRICOLARI ---------- */
+add({
+  id: 'tachiatriale', cat: 'Sopraventricolari', name: 'Tachicardia atriale focale', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 120, max: 240, step: 1, def: 165 }],
+  build: p => ({ rate: p.hr, pr: 130, qtc: 380, pComps: M.pLowAtrial(1.1), jit: 6 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Tachicardia sopraventricolare che nasce da un singolo focus atriale fuori dal nodo del seno, per automatismo, attività triggerata o microrientro.',
+    criteri: ['Frequenza atriale 100–250/min, di regola regolare', 'P di morfologia diversa da quella sinusale, ma tutte uguali fra loro', 'Fra una P e l\u2019altra la linea torna isoelettrica: è questo che la distingue dal flutter', 'Intervallo RP lungo: la P precede il QRS con PR normale o allungato', 'Può esserci blocco atrio-ventricolare 2:1 senza che la tachicardia si interrompa'],
+    meccanismo: 'Un gruppo di cellule atriali scarica più in fretta del nodo del seno. Poiché il circuito non coinvolge il nodo atrio-ventricolare, il blocco del nodo rallenta la risposta ventricolare ma non ferma l\u2019aritmia: è il comportamento tipico alla manovra vagale o all\u2019adenosina.',
+    vettori: 'Il vettore della P punta secondo la sede del focus: dall\u2019atrio destro basso dà P negative nelle inferiori, dalle vene polmonari dà P positive e strette in V1.',
+    guarda: 'DII e V1 per la morfologia della P e per la linea isoelettrica fra le P.',
+    dd: ['Flutter atriale, dove manca la linea isoelettrica e le onde F sono a dente di sega', 'Tachicardia sinusale, dove la P è identica a quella di base', 'Rientro nodale, dove la P è retrograda e vicinissima al QRS'],
+    trappole: 'Tachicardia atriale con blocco 2:1 e frequenza atriale intorno a 150: la metà delle P si nasconde nella T. Se la risposta è regolare a 75 e sospetti "solo" una tachicardia sinusale, cerca le P dentro le onde T. Tachicardia atriale con blocco è anche il quadro classico dell\u2019intossicazione digitalica.',
+    fonte: SRC.svt,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'tam', cat: 'Sopraventricolari', name: 'Tachicardia atriale multifocale', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza media', unit: '/min', min: 100, max: 160, step: 1, def: 122 }],
+  build: p => ({ rate: p.hr, pr: 140, qtc: 380, pVar: pFoci(), jit: 130 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Tachicardia atriale sostenuta da più foci: le P cambiano forma di battito in battito e il ritmo è francamente irregolare.',
+    criteri: ['Frequenza atriale superiore a 100/min', 'Almeno tre morfologie diverse di P nella stessa derivazione', 'Intervalli PP, PR e RR tutti variabili', 'Linea isoelettrica presente fra le P'],
+    meccanismo: 'Atri dilatati e ipossici, con più zone che scaricano in modo autonomo. È l\u2019aritmia della broncopneumopatia riacutizzata, spesso favorita da ipossia, teofillina e beta-agonisti.',
+    vettori: 'Ogni focus ha il proprio vettore di P: da qui le morfologie diverse.',
+    guarda: 'DII e V1 su una striscia lunga: conta le morfologie di P, non i battiti.',
+    dd: ['Fibrillazione atriale, dove le P mancano del tutto', 'Extrasistoli atriali frequenti su ritmo sinusale', 'Ritmo atriale migrante, che è lo stesso quadro ma con frequenza sotto i 100/min'],
+    trappole: 'Viene confusa con la fibrillazione atriale perché è irregolare, e il paziente finisce anticoagulato a torto o cardiovertito senza motivo. La terapia vera è quella della malattia polmonare: correggere ipossia ed elettroliti.',
+    fonte: SRC.svt,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012',
+    corso: ['Tachicardia atriale multifocale: almeno tre morfologie di P diverse', 'Ritmo irregolare, tipica della broncopneumopatia'],
+    corsoFonte: 'Mulatero P., Corso di Metodologia Clinica, UniTo', slide: 'Aritmie, tachicardie sopraventricolari'
+  }
+});
+
+add({
+  id: 'avrt', cat: 'Sopraventricolari', name: 'Tachicardia da rientro atrio-ventricolare ortodromica', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 150, max: 240, step: 1, def: 190 }],
+  build: p => ({ mode: 'svt', vRate: p.hr, rp: 130, rpAmp: 0.75, qtc: 370 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Rientro che scende ai ventricoli per la via normale e risale agli atri per la via accessoria: il QRS resta stretto.',
+    criteri: ['Frequenza 150–250/min, regolare', 'QRS stretto, salvo aberranza di conduzione', 'P retrograda visibile dopo il QRS, con RP fra 70 e 140 ms: più lontana dal QRS che nel rientro nodale', 'P retrograda negativa in DII, DIII e aVF', 'Sottoslivellamento di ST frequente, non significa ischemia'],
+    meccanismo: 'Il circuito usa due vie in serie: nodo atrio-ventricolare e fascio di His in discesa, via accessoria in risalita. Siccome i ventricoli sono parte obbligata del circuito, la tachicardia non può esistere con blocco atrio-ventricolare: questa è la differenza concettuale con la tachicardia atriale.',
+    vettori: 'Vettori ventricolari normali; il vettore della P retrograda punta in alto, verso l\u2019atrio, e la sua direzione dice da che parte sta la via accessoria.',
+    guarda: 'DII e V1 subito dopo il QRS: cerca una deflessione in più che non c\u2019era nel tracciato sinusale.',
+    dd: ['Rientro nodale, dove la P retrograda è dentro il QRS o lo deforma appena (pseudo-r′ in V1, pseudo-S nelle inferiori)', 'Tachicardia atriale con RP lungo', 'Flutter atriale 2:1'],
+    trappole: 'Fra le crisi l\u2019ECG può mostrare la preeccitazione (PR corto, onda delta) e allora si parla di sindrome di Wolff-Parkinson-White; ma la via accessoria può essere occulta, cioè conduce solo all\u2019indietro, e allora il tracciato basale è normale.',
+    fonte: SRC.svt,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'avrtanti', cat: 'Sopraventricolari', name: 'Tachicardia da rientro atrio-ventricolare antidromica',
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 150, max: 230, step: 1, def: 185 }],
+  build: p => ({ mode: 'svt', vRate: p.hr, rp: 0, qrs: M.qrsWPW(), qtc: 400, T: { a: -140, g: 30, amp: 0.4 } }),
+  look: ['V1', 'II'],
+  card: {
+    def: 'Rientro che scende ai ventricoli attraverso la via accessoria e risale per il sistema di conduzione: il QRS è largo perché i ventricoli sono attivati per intero dalla via anomala.',
+    criteri: ['Tachicardia regolare a QRS largo', 'Il QRS è tutto onda delta: massima preeccitazione', 'Morfologia identica, ma esagerata, a quella del tracciato sinusale preeccitato', 'Rara: circa il 5% dei rientri atrio-ventricolari'],
+    meccanismo: 'Il circuito gira al contrario rispetto all\u2019ortodromica. Poiché nessuna parte del ventricolo è attivata dal sistema di His-Purkinje, il complesso è largo e bizzarro.',
+    vettori: 'Un solo vettore lento, orientato secondo la sede dell\u2019inserzione ventricolare della via accessoria.',
+    guarda: 'Confronta la morfologia con l\u2019ECG sinusale del paziente, se ce l\u2019hai: la direzione dell\u2019onda delta è la stessa.',
+    dd: ['Tachicardia ventricolare: in assenza di un ECG di confronto la distinzione è difficile e in urgenza si tratta come ventricolare', 'Tachicardia sopraventricolare con blocco di branca'],
+    trappole: 'Davanti a una tachicardia a QRS largo, l\u2019errore grave è chiamarla sopraventricolare e trattarla con verapamil. In dubbio, si considera ventricolare.',
+    fonte: SRC.svt + '; ' + SRC.va,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'fapreeccitata', cat: 'Sopraventricolari', name: 'Fibrillazione atriale preeccitata', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza media', unit: '/min', min: 150, max: 280, step: 1, def: 215 }],
+  build: p => ({ atrial: 'af', vRate: p.hr, qrs: M.qrsWPW(), qtc: 400, T: { a: -140, g: 30, amp: 0.35 }, fAmp: 0.02 }),
+  look: ['V1', 'II', 'V4'],
+  card: {
+    def: 'Fibrillazione atriale in un paziente con via accessoria: gli impulsi atriali raggiungono i ventricoli attraverso la via anomala, che non ha il freno del nodo atrio-ventricolare.',
+    criteri: ['Ritmo francamente irregolare', 'QRS largo e di larghezza variabile da battito a battito, secondo il grado di preeccitazione', 'Frequenza ventricolare molto alta, spesso oltre 200/min, con intervalli RR minimi sotto i 250 ms', 'Il quadro è detto FBI: Fast, Broad, Irregular'],
+    meccanismo: 'Il nodo atrio-ventricolare protegge normalmente i ventricoli filtrando gli impulsi della fibrillazione. La via accessoria ha periodo refrattario breve e non filtra nulla: se è molto breve, la frequenza ventricolare può degenerare in fibrillazione ventricolare.',
+    vettori: 'Ogni battito ha una quota diversa di attivazione attraverso la via accessoria: il vettore cambia da battito a battito, e con esso la larghezza del QRS.',
+    guarda: 'V1 e DII: irregolarità, larghezza variabile, frequenza altissima.',
+    dd: ['Tachicardia ventricolare polimorfa', 'Fibrillazione atriale con blocco di branca, dove però i QRS hanno tutti la stessa larghezza'],
+    trappole: 'È l\u2019emergenza in cui i farmaci che bloccano il nodo — adenosina, verapamil, diltiazem, betabloccanti e digossina — sono controindicati: bloccando la via normale spingono tutti gli impulsi nella via accessoria e possono provocare la fibrillazione ventricolare. Si usa la cardioversione elettrica, o la procainamide se il paziente è stabile.',
+    fonte: SRC.svt + '; ' + SRC.af,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ---------- VENTRICOLARI E ARRESTO ---------- */
+add({
+  id: 'flutterv', cat: 'Ventricolari', name: 'Flutter ventricolare',
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 220, max: 330, step: 5, def: 280 }],
+  build: p => ({ mode: 'vt', vRate: p.hr, aRate: 0.5, vtQrs: { w: 190, c: [B(dirAG(-55, -30), 1.15, 95, 55, 55)] }, vtT: { a: 125, g: 30, amp: 0.2 }, qtc: 420 }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Tachicardia ventricolare regolarissima e velocissima, in cui QRS e T non sono più distinguibili: il tracciato è una sinusoide.',
+    criteri: ['Onde ampie, regolari, sinusoidali, a 250–300/min', 'Impossibile separare QRS, ST e T', 'Stessa morfologia in tutte le derivazioni', 'Nessun polso: è un arresto cardiaco'],
+    meccanismo: 'Rientro ventricolare a ciclo brevissimo. È il passaggio intermedio fra la tachicardia ventricolare e la fibrillazione ventricolare, e degenera rapidamente in quest\u2019ultima.',
+    vettori: 'Un unico vettore che ruota a velocità costante.',
+    guarda: 'Qualunque derivazione: il quadro è inconfondibile e non richiede analisi fine.',
+    dd: ['Torsione di punta, dove l\u2019ampiezza oscilla e l\u2019asse ruota', 'Fibrillazione ventricolare a onde grossolane, che è irregolare', 'Artefatto da movimento, che ha il polso e complessi riconoscibili in mezzo'],
+    trappole: 'Ritmo defibrillabile: si tratta con la scarica immediata, non con i farmaci.',
+    fonte: SRC.va + '; ' + SRC2.als,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'asistolia', cat: 'Arresto cardiaco', name: 'Asistolia', quiz: true,
+  params: [],
+  build: () => ({ mode: 'continuous', noise: 0.012 }),
+  look: ['II'],
+  card: {
+    def: 'Assenza completa di attività elettrica ventricolare: la linea è piatta, salvo il rumore di fondo.',
+    criteri: ['Nessun QRS', 'Possono persistere onde P isolate: si parla allora di asistolia ventricolare con attività atriale', 'La linea non è mai perfettamente piatta: un tracciato assolutamente rettilineo fa sospettare un elettrodo staccato', 'Va confermata in due derivazioni e con il guadagno al massimo'],
+    meccanismo: 'Nessun pacemaker, nemmeno quello ventricolare, riesce più a scaricare. È di solito l\u2019esito finale di un arresto prolungato, per esaurimento delle riserve energetiche del miocardio.',
+    vettori: 'Nessun vettore.',
+    guarda: 'Controlla elettrodi, cavi e guadagno prima di dichiararla, e cerca la fibrillazione ventricolare a onde fini che può nascondersi in una linea quasi piatta.',
+    dd: ['Fibrillazione ventricolare a onde fini', 'Elettrodo o cavo staccato', 'Monitor in pausa o in modalità sbagliata'],
+    trappole: 'Ritmo **non** defibrillabile: la scarica non serve e interrompe il massaggio. Si fa rianimazione cardiopolmonare, adrenalina appena possibile, e si cercano le cause reversibili.',
+    fonte: SRC2.als,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'pea', cat: 'Arresto cardiaco', name: 'Attività elettrica senza polso',
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 20, max: 90, step: 1, def: 38 }, { k: 'w', label: 'Larghezza del QRS', unit: '×', min: 1, max: 1.8, step: 0.05, def: 1.5 }],
+  build: p => ({ rate: p.hr, pr: 190, qtc: 470, qrs: M.qrsNormal(), qrsScale: p.w, T: { a: -140, g: 20, amp: 0.2 } }),
+  look: ['II', 'V1'],
+  card: {
+    def: 'Attività elettrica organizzata sul monitor, ma senza polso centrale palpabile: la diagnosi è clinica, non elettrocardiografica.',
+    criteri: ['Il tracciato può essere qualunque ritmo organizzato: sinusale, giunzionale, idioventricolare, spesso lento e con QRS largo', 'Assenza di polso e di segni di circolo', 'Nessun criterio ECG permette da solo di fare la diagnosi: l\u2019ECG non dice nulla sulla gittata'],
+    meccanismo: 'L\u2019attivazione elettrica c\u2019è ma non produce contrazione efficace, oppure la contrazione c\u2019è e non genera flusso. Le cause si cercano fra le quattro ipo/iper e le quattro T: ipossia, ipovolemia, ipo o iperkaliemia e disturbi metabolici, ipotermia; pneumotorace iperteso, tamponamento cardiaco, tossici, trombosi coronarica o polmonare.',
+    vettori: 'Dipendono dal ritmo sottostante.',
+    guarda: 'Non il monitor: il polso, l\u2019ecografia al letto, la storia. Il monitor serve solo a escludere un ritmo defibrillabile.',
+    dd: ['Arresto con ritmo defibrillabile', 'Pseudo-PEA, in cui la contrazione c\u2019è ma la pressione è troppo bassa per essere palpata: l\u2019ecografia la distingue'],
+    trappole: 'Ritmo **non** defibrillabile. Il tempo speso a cercare la scarica è tempo tolto al massaggio e alla ricerca della causa: la prognosi dipende quasi solo dal trovarla.',
+    fonte: SRC2.als,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ---------- ISCHEMIA ---------- */
+add({
+  id: 'wellens', cat: 'Ischemia', name: 'Sindrome di Wellens', quiz: true,
+  params: [F.hr(72, 50, 100), { k: 'tipo', label: 'Tipo', type: 'select', def: 'b', opts: [['a', 'Tipo A: T bifasiche'], ['b', 'Tipo B: T profondamente invertite']] }],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 440, qrs: M.qrsNormal(), T: p.tipo === 'b' ? { a: 45, g: -75, amp: 0.85 } : { a: 45, g: -55, amp: 0.45 }, tShape: p.tipo === 'a' ? 'notched' : 'broad' }),
+  look: ['V2', 'V3', 'V4'],
+  card: {
+    def: 'Pattern di T in V2–V3 che segnala una stenosi critica della discendente anteriore prossimale, in un paziente che al momento non ha dolore.',
+    criteri: ['T profondamente invertite e simmetriche in V2–V3 (tipo B), oppure bifasiche positive-negative (tipo A)', 'Registrato in assenza di dolore, dopo un episodio anginoso recente', 'Progressione della R conservata: niente onde Q patologiche', 'ST isoelettrico o sopraslivellato meno di 1 mm', 'Troponina normale o appena mossa'],
+    meccanismo: 'È il quadro della riperfusione spontanea di un\u2019occlusione critica: il miocardio anteriore è salvo ma la stenosi resta, e la T invertita è il segno della miocardio stordito.',
+    vettori: 'Il vettore della T si inverte verso il basso e all\u2019indietro rispetto alla parete anteriore.',
+    guarda: 'V2 e V3, confrontando con tracciati precedenti e con il momento del dolore.',
+    dd: ['Embolia polmonare, dove le T invertite sono in V1–V4 e nelle inferiori insieme', 'Sovraccarico ventricolare sinistro', 'Emorragia subaracnoidea, con T giganti e QT lungo'],
+    trappole: 'È la trappola classica: il paziente sta bene, la troponina è normale, e viene dimesso. Il test da sforzo in questa situazione è pericoloso: la strada è la coronarografia.',
+    fonte: SRC.acs + '; ' + SRC.udmi,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'dewinter', cat: 'Ischemia', name: 'Pattern di de Winter',
+  params: [F.hr(80, 55, 115)],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 400, qrs: M.qrsNormal(), st: { a: 40, g: -70, amp: 0.22 }, T: { a: 40, g: 72, amp: 1.0 }, tShape: 'broad' }),
+  look: ['V2', 'V3', 'V4', 'aVR'],
+  card: {
+    def: 'Equivalente di infarto con sopraslivellamento: sottoslivellamento di ST a salita rapida seguito da T alte e simmetriche nelle precordiali, per occlusione della discendente anteriore prossimale.',
+    criteri: ['Sottoslivellamento di ST di 1–3 mm al punto J, con tratto a salita ripida, da V1 a V6', 'T alte, larghe e simmetriche subito dopo', 'Frequente lieve sopraslivellamento in aVR', 'Nessun sopraslivellamento nelle precordiali: per questo sfugge ai criteri classici', 'Quadro statico, non evolve verso il sopraslivellamento'],
+    meccanismo: 'Occlusione acuta e completa della discendente anteriore in pazienti con una particolare risposta del subendocardio. Il significato clinico è identico a quello di uno STEMI anteriore.',
+    vettori: 'Il vettore di lesione resta orientato verso il subendocardio anteriore e non riesce a invertirsi verso l\u2019epicardio.',
+    guarda: 'Da V1 a V6: il punto J basso con la salita ripida che porta a T altissime.',
+    dd: ['Iperkaliemia, dove le T sono appuntite ma strette e il QRS si allarga', 'T alte da ischemia subendocardica diffusa', 'Ripolarizzazione precoce'],
+    trappole: 'La quinta definizione universale riconosce gli equivalenti di occlusione: se il quadro clinico è di infarto, la strategia è la riperfusione immediata anche senza sopraslivellamento.',
+    fonte: SRC.udmi + '; ' + SRC.acs,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ---------- ELETTROLITI, FARMACI, CANALOPATIE ---------- */
+add({
+  id: 'brugada', cat: 'Elettroliti e altro', name: 'Pattern di Brugada tipo 1', quiz: true,
+  params: [F.hr(68, 45, 100)],
+  build: p => ({ rate: p.hr, pr: 180, qtc: 410, qrs: M.qrsRBBB(), qrsScale: 0.85, st: { a: 172, g: 52, amp: 0.36 }, T: { a: -10, g: -55, amp: 0.3 } }),
+  look: ['V1', 'V2'],
+  card: {
+    def: 'Sopraslivellamento del punto J con ST discendente a tenda e T negativa in V1–V2: la firma elettrocardiografica della sindrome di Brugada.',
+    criteri: ['Punto J sopraslivellato ≥ 2 mm in almeno una derivazione fra V1 e V2', 'ST discendente, concavo verso il basso, a "coved type"', 'T negativa che segue senza linea isoelettrica in mezzo', 'Il tipo 1 è l\u2019unico diagnostico; i pattern tipo 2 a sella richiedono conferma', 'Le derivazioni vanno registrate anche al secondo e terzo spazio intercostale, dove il pattern è più evidente'],
+    meccanismo: 'Perdita di funzione dei canali del sodio cardiaci: si crea una disomogeneità di ripolarizzazione fra epicardio ed endocardio del tratto di efflusso destro, che predispone al rientro di fase 2 e alla fibrillazione ventricolare.',
+    vettori: 'Vettore di ripolarizzazione anomalo diretto verso il tratto di efflusso del ventricolo destro, cioè in alto, a destra e in avanti: per questo si vede solo in V1–V2.',
+    guarda: 'V1 e V2, anche negli spazi intercostali più alti.',
+    dd: ['Blocco di branca destra, dove il punto J non è sopraslivellato e la r′ è distinta', 'Ripolarizzazione precoce', 'Pectus excavatum e altre cause di falso pattern', 'Displasia aritmogena del ventricolo destro'],
+    trappole: 'Il pattern può essere smascherato o peggiorato da febbre, farmaci bloccanti i canali del sodio, alcol e cocaina: nel dubbio, la febbre va trattata in fretta. Il pattern isolato non è la sindrome: serve la storia di sincope, di arresto o la familiarità.',
+    fonte: SRC2.bru,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'ipotermia', cat: 'Elettroliti e altro', name: 'Ipotermia: onda J di Osborn', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza', unit: '/min', min: 28, max: 60, step: 1, def: 42 }, { k: 'j', label: 'Ampiezza dell\u2019onda J', unit: 'mm', min: 1, max: 8, step: 0.5, def: 4 }],
+  build: p => ({ rate: p.hr, pr: 230, av: 'I', qtc: 520, qrs: M.qrsNormal(), qrsScale: 1.15, extra: [B(dirAG(45, 5), p.j / 10, 100, 12, 16)], T: { a: 45, g: 15, amp: 0.2 }, jit: 20 }),
+  look: ['II', 'V4', 'V5'],
+  card: {
+    def: 'Deflessione positiva alla giunzione fra QRS e ST, tanto più ampia quanto più bassa è la temperatura.',
+    criteri: ['Onda J di Osborn: gobba positiva al punto J, meglio visibile nelle precordiali sinistre e nelle inferiori', 'Bradicardia sinusale, spesso marcata', 'Allungamento di tutti gli intervalli: PR, QRS e QT', 'Tremore muscolare che sporca il tracciato', 'Sotto i 30 °C compaiono fibrillazione atriale a risposta lenta e aritmie ventricolari'],
+    meccanismo: 'L\u2019ipotermia rallenta tutte le correnti transmembrana e crea un gradiente di ripolarizzazione precoce fra epicardio ed endocardio, che si traduce nella deflessione al punto J.',
+    vettori: 'L\u2019onda J ha un vettore diretto in basso e a sinistra, come il QRS: per questo è positiva nelle stesse derivazioni.',
+    guarda: 'V4–V6 e DII, dove l\u2019onda J è più alta.',
+    dd: ['Ripolarizzazione precoce del giovane', 'Ipercalcemia', 'Pattern di Brugada, dove però il quadro è in V1–V2 con T negativa', 'Emorragia subaracnoidea'],
+    trappole: 'Il cuore ipotermico è irritabile: movimenti bruschi possono innescare la fibrillazione ventricolare, e questa risponde male alla scarica finché la temperatura non risale. Nessuno è morto finché non è caldo e morto.',
+    fonte: SRC2.als + '; ' + SRC.aha4,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'digitale', cat: 'Elettroliti e altro', name: 'Impregnazione digitalica', quiz: true,
+  params: [F.hr(62, 45, 90)],
+  build: p => ({ rate: p.hr, pr: 210, av: 'I', qtc: 350, qrs: M.qrsNormal(), st: { a: -140, g: 20, amp: 0.13 }, T: { a: -150, g: 25, amp: 0.16 } }),
+  look: ['V5', 'V6', 'II'],
+  card: {
+    def: 'Alterazioni tipiche del tracciato in chi assume digitale a dosi terapeutiche: non indicano tossicità.',
+    criteri: ['Sottoslivellamento di ST concavo, "a baffo di Salvador Dalì" o a cucchiaio, nelle derivazioni con R alta', 'T appiattita o bifasica', 'QT accorciato', 'PR allungato per l\u2019effetto vagale sul nodo atrio-ventricolare', 'Frequenza ventricolare rallentata nella fibrillazione atriale'],
+    meccanismo: 'La digitale inibisce la pompa sodio-potassio: aumenta il calcio intracellulare, accorcia il potenziale d\u2019azione ventricolare e aumenta il tono vagale sul nodo.',
+    vettori: 'Il vettore di ripolarizzazione si sposta in direzione opposta al QRS nelle derivazioni a R alta: da qui la cucchiaiata.',
+    guarda: 'V5, V6 e DII, cioè dove la R è alta.',
+    dd: ['Ischemia subendocardica, dove il sottoslivellamento è rettilineo o discendente e il QT non è corto', 'Sovraccarico ventricolare sinistro'],
+    trappole: 'Impregnazione non è intossicazione. L\u2019intossicazione si riconosce dalle aritmie: tachicardia atriale con blocco, tachicardia giunzionale, extrasistoli ventricolari, e la tachicardia ventricolare bidirezionale che è quasi patognomonica. Nell\u2019intossicazione la cardioversione elettrica è rischiosa.',
+    fonte: SRC.aha4 + '; ' + SRC.af,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'ipercalcemia', cat: 'Elettroliti e altro', name: 'Ipercalcemia',
+  params: [F.hr(70, 50, 100), { k: 'qtc', label: 'QTc', unit: 'ms', min: 280, max: 380, step: 5, def: 320 }],
+  build: p => ({ rate: p.hr, pr: 165, qtc: p.qtc, qrs: M.qrsNormal(), T: { a: 45, g: 20, amp: 0.3 } }),
+  look: ['II', 'V2', 'V5'],
+  card: {
+    def: 'Accorciamento del QT per riduzione della durata del tratto ST: il calcio accelera la fase di plateau.',
+    criteri: ['QT e QTc accorciati, a spese del tratto ST che quasi scompare', 'La T sembra nascere direttamente dalla fine del QRS', 'Nelle forme gravi: onda J, allungamento del PR, allargamento del QRS, bradicardia', 'Sopra i 16 mg/dl può comparire arresto cardiaco'],
+    meccanismo: 'Il calcio extracellulare elevato accorcia la fase 2 del potenziale d\u2019azione, cioè il plateau: si accorcia il tratto ST e con esso il QT.',
+    vettori: 'Nessuna modifica della direzione dei vettori: cambia solo la durata.',
+    guarda: 'Misura il QT e guarda dove finisce il QRS e dove comincia la T.',
+    dd: ['Impregnazione digitalica, che pure accorcia il QT ma con la cucchiaiata', 'QT corto congenito', 'Ipertermia'],
+    trappole: 'Un QTc sotto i 340 ms merita il dosaggio del calcio: nel paziente oncologico l\u2019ipercalcemia è frequente e trattabile.',
+    fonte: SRC.aha4,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'ipocalcemia', cat: 'Elettroliti e altro', name: 'Ipocalcemia',
+  params: [F.hr(72, 50, 100), { k: 'qtc', label: 'QTc', unit: 'ms', min: 440, max: 600, step: 5, def: 510 }],
+  build: p => ({ rate: p.hr, pr: 160, qtc: p.qtc, qrs: M.qrsNormal(), T: { a: 45, g: 20, amp: 0.3 }, tShape: 'late' }),
+  look: ['II', 'V2', 'V5'],
+  card: {
+    def: 'Allungamento del QT per allungamento del tratto ST, con onda T che resta di forma e durata normali.',
+    criteri: ['QT e QTc allungati', 'L\u2019allungamento è tutto a carico del tratto ST, non della T: è il segno che distingue l\u2019ipocalcemia dalle altre cause di QT lungo', 'T normale per morfologia e durata', 'Raramente aritmie, salvo torsione di punta nelle forme gravi o associate'],
+    meccanismo: 'Il calcio extracellulare basso prolunga la fase di plateau del potenziale d\u2019azione: il tratto ST si allunga e la ripolarizzazione rapida resta invariata.',
+    vettori: 'Direzioni invariate.',
+    guarda: 'DII e V2: misura dove finisce l\u2019ST e dove comincia la T.',
+    dd: ['QT lungo congenito, dove la T è deformata o bifida', 'Farmaci che allungano il QT, che agiscono sulla T', 'Ipokaliemia, dove compaiono onde U e la T si appiattisce'],
+    trappole: 'Quando trovi un QT lungo, chiediti sempre quale parte si è allungata: se è l\u2019ST pensa al calcio, se è la T pensa ai farmaci, al potassio o alla genetica.',
+    fonte: SRC.aha4,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+add({
+  id: 'arvc', cat: 'Elettroliti e altro', name: 'Cardiomiopatia aritmogena: onda epsilon',
+  params: [F.hr(74, 50, 105)],
+  build: p => ({ rate: p.hr, pr: 165, qtc: 425, qrs: M.qrsNormal(), extra: [B(dirAG(175, 45), 0.1, 112, 10, 14)], T: { a: 40, g: -65, amp: 0.34 } }),
+  look: ['V1', 'V2', 'V3'],
+  card: {
+    def: 'Piccola deflessione dopo la fine del QRS in V1–V3, espressione di attivazione ritardata di zone del ventricolo destro sostituite da tessuto fibro-adiposo.',
+    criteri: ['Onda epsilon in V1–V3: criterio maggiore', 'T invertite in V1–V3 in assenza di blocco di branca destra completo, in soggetti sopra i 14 anni: criterio maggiore', 'Durata dell\u2019attivazione terminale del QRS ≥ 55 ms in V1–V3: criterio minore', 'Extrasistoli e tachicardie ventricolari con morfologia tipo blocco di branca sinistra, cioè di origine destra'],
+    meccanismo: 'Il miocardio del ventricolo destro viene sostituito da grasso e fibrosi: la conduzione in quelle zone è lentissima e produce potenziali tardivi visibili in superficie come onda epsilon. Le stesse zone sostengono i rientri ventricolari.',
+    vettori: 'Un piccolo vettore terminale, tardivo e diretto a destra e in avanti: per questo si vede solo nelle precordiali destre.',
+    guarda: 'V1–V3 subito dopo il QRS, con il guadagno doppio se serve.',
+    dd: ['Blocco di branca destra, dove la deflessione terminale è dentro il QRS e non dopo', 'Pattern di Brugada', 'Sovraccarico destro', 'Variante giovanile delle T negative nelle precordiali destre, normale sotto i 14 anni'],
+    trappole: 'È una causa di morte improvvisa nel giovane e nell\u2019atleta: T negative in V1–V3 in un adulto meritano l\u2019ecocardiogramma, non un\u2019alzata di spalle.',
+    fonte: SRC2.arvc + '; ' + SRC.va,
+    libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
+  }
+});
+
+/* ---------- capitolo di teoria ---------- */
+THEORY.push({
+  id: 'defibrillabili', title: '15. Ritmi defibrillabili e non defibrillabili', html: `
+<p class="note">Cosa guardare sul monitor durante un arresto, e perché la scarica serve in due casi soltanto.</p>
+<h4>La divisione che conta</h4>
+<p>Nell\u2019arresto cardiaco i ritmi si dividono in due gruppi, e la divisione non è accademica: decide il gesto successivo.</p>
+<table class="ttab"><thead><tr><th>Defibrillabili</th><th>Non defibrillabili</th></tr></thead><tbody>
+<tr><td><b>Fibrillazione ventricolare</b>: onde caotiche, irregolari per ampiezza e frequenza, nessun QRS riconoscibile</td><td><b>Asistolia</b>: nessuna attività ventricolare, linea quasi piatta</td></tr>
+<tr><td><b>Tachicardia ventricolare senza polso</b>, compreso il flutter ventricolare: complessi larghi, regolari, rapidissimi</td><td><b>Attività elettrica senza polso</b>: qualunque ritmo organizzato senza polso palpabile</td></tr>
+</tbody></table>
+<p>Nei ritmi defibrillabili il miocardio è elettricamente attivo ma disorganizzato: la scarica lo azzera tutto insieme e dà al nodo del seno la possibilità di riprendere. Negli altri due non c\u2019è nulla da riorganizzare, e la scarica sottrae solo tempo al massaggio.</p>
+<h4>Come si comporta chi legge il monitor</h4>
+<ul class="crit">
+<li>La valutazione del ritmo dura pochi secondi e si fa durante una pausa brevissima del massaggio.</li>
+<li>Se il ritmo è defibrillabile: scarica immediata, poi due minuti di rianimazione senza ricontrollare il polso.</li>
+<li>Se non lo è: rianimazione e adrenalina appena possibile, poi ricontrollo ogni due minuti.</li>
+<li>L\u2019adrenalina si dà subito nei ritmi non defibrillabili, mentre nei defibrillabili si dà dopo la terza scarica, insieme all\u2019amiodarone.</li>
+<li>Le cause reversibili si cercano sempre, con le quattro ipo/iper e le quattro T: ipossia, ipovolemia, alterazioni del potassio e metaboliche, ipotermia; pneumotorace iperteso, tamponamento, tossici, trombosi coronarica o polmonare.</li>
+</ul>
+<h4>Le trappole del monitor</h4>
+<ul class="crit">
+<li><b>Fibrillazione ventricolare a onde fini</b>: assomiglia all\u2019asistolia. Aumenta il guadagno e controlla in due derivazioni prima di decidere.</li>
+<li><b>Linea perfettamente piatta</b>: sospetta un elettrodo staccato o un cavo scollegato; l\u2019asistolia vera ha sempre un po\u2019 di rumore.</li>
+<li><b>Artefatti da compressione o da trasporto</b>: possono simulare una tachicardia o una fibrillazione. Il polso e il capnografo dicono la verità.</li>
+<li><b>Attività elettrica senza polso</b>: il tracciato può essere del tutto normale. È l\u2019unico caso in cui un ECG rassicurante non rassicura affatto.</li>
+</ul>
+<h4>Defibrillazione e cardioversione non sono la stessa cosa</h4>
+<p>La <b>defibrillazione</b> è una scarica non sincronizzata e si usa quando non c\u2019è polso: fibrillazione ventricolare e tachicardia ventricolare senza polso. La <b>cardioversione</b> è sincronizzata sull\u2019onda R e si usa nelle tachiaritmie con polso ma instabili: fibrillazione e flutter atriale, tachicardia sopraventricolare, tachicardia ventricolare con polso. La sincronizzazione serve a evitare che la scarica cada sull\u2019onda T, nella fase vulnerabile, provocando proprio la fibrillazione ventricolare che si voleva evitare.</p>
+<p>Due casi a parte: la <b>torsione di punta</b>, che si tratta con magnesio e con la correzione della causa, e va defibrillata se degenera; e la <b>fibrillazione atriale preeccitata</b>, dove i farmaci che bloccano il nodo sono controindicati e la strada è la cardioversione elettrica.</p>
+<p class="note">Fonti: ERC 2021, linee guida sul supporto avanzato delle funzioni vitali; ${SRC.va}.</p>` });
+
+const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', 'Elettroliti e altro'];
 const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ISO_DATA = API;
 })(typeof window !== 'undefined' ? window : this);

@@ -157,13 +157,15 @@ dd{margin:0;color:var(--muted)}
   .legend .hint{display:none}
 }
 @media (prefers-reduced-motion: reduce){ .sw input,.sw input::after{transition:none} }
+.madeby{font-size:11px;opacity:.6;margin-left:10px;white-space:nowrap}
+@media (max-width:860px){.madeby{display:none}}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="brand">
-      <h1>Orbitali ECG</h1>
+      <h1>Orbitali ECG</h1><span class="madeby">App made by Eliseo Peirano · 2026</span>
       <p>Derivazioni, range di normalità dei vettori e sistema di conduzione nello stesso spazio</p>
     </div>
     <button class="iconbtn" id="themeBtn" aria-label="Cambia tema chiaro o scuro" title="Tema">

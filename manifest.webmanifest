@@ -1,7 +1,7 @@
 {
   "name": "Isoelettrica — ECG vettoriale",
   "short_name": "Isoelettrica",
-  "description": "Atlante interattivo dell'ECG: tracciati a 12 derivazioni, vettori 3D, teoria e quiz.",
+  "description": "Isoelettrica — atlante ECG, teoria e quiz. App made by Eliseo Peirano · 2026",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -9,7 +9,17 @@
   "background_color": "#121926",
   "theme_color": "#121926",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }
