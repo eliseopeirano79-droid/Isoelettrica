@@ -489,14 +489,29 @@ function loadScenario(id, keepTime) {
   renderCard(sc); renderParams(sc);
   closeLib();
 }
+const LIBIDX = SCENARIOS.map(s => {
+  const c = s.card || {};
+  const righe = [].concat(c.criteri || [], c.corso || [], c.dd || [], c.def ? [c.def] : [], c.trappole ? [c.trappole] : []);
+  return { id: s.id, righe, hay: (s.name + ' ' + s.cat + ' ' + righe.join(' ')).toLowerCase() };
+});
+function libHit(id, f) {
+  const e = LIBIDX.find(x => x.id === id); if (!e) return null;
+  const r = e.righe.find(x => x.toLowerCase().includes(f));
+  if (!r) return null;
+  const i = r.toLowerCase().indexOf(f);
+  const t = r.length > 120 ? (i > 50 ? '…' + r.slice(i - 40) : r).slice(0, 120) + '…' : r;
+  const j = t.toLowerCase().indexOf(f);
+  return j < 0 ? esc(t) : esc(t.slice(0, j)) + '<mark>' + esc(t.slice(j, j + f.length)) + '</mark>' + esc(t.slice(j + f.length));
+}
 function renderLib(filter) {
   const f = (filter || '').trim().toLowerCase(); const box = $('#libList'); box.innerHTML = '';
   CATS.forEach(cat => {
-    const items = SCENARIOS.filter(s => s.cat === cat && (!f || s.name.toLowerCase().includes(f) || cat.toLowerCase().includes(f)));
+    const items = SCENARIOS.filter(s => s.cat === cat && (!f || (LIBIDX.find(x => x.id === s.id) || { hay: '' }).hay.includes(f)));
     if (!items.length) return;
     const h = document.createElement('h4'); h.textContent = cat; box.appendChild(h);
-    items.forEach(s => { const b = document.createElement('button'); b.className = 'item' + (s.id === S.sc ? ' on' : ''); b.dataset.id = s.id; b.textContent = s.name; b.addEventListener('click', () => loadScenario(s.id, true)); box.appendChild(b); });
+    items.forEach(s => { const b = document.createElement('button'); b.className = 'item' + (s.id === S.sc ? ' on' : ''); b.dataset.id = s.id; b.innerHTML = esc(s.name) + (f && !s.name.toLowerCase().includes(f) && libHit(s.id, f) ? '<span class="hit">' + libHit(s.id, f) + '</span>' : ''); b.addEventListener('click', () => loadScenario(s.id, true)); box.appendChild(b); });
   });
+  if (f) { const n = $$('#libList .item').length; const t = document.createElement('p'); t.className = 'note'; t.style.padding = '8px 14px 0'; t.textContent = n + (n === 1 ? ' quadro trovato' : ' quadri trovati') + ' per "' + filter.trim() + '"'; box.insertBefore(t, box.firstChild); }
   if (!box.children.length) box.innerHTML = '<p class="note" style="padding:10px 14px">Nessun quadro corrisponde alla ricerca.</p>';
 }
 function renderCard(sc) {

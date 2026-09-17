@@ -236,6 +236,8 @@ ul.dd{margin:4px 0;padding-left:18px;color:var(--muted)}
 @media (max-width:860px){.credit{display:none}}
 .hudrange{width:104px;accent-color:var(--accent);vertical-align:middle}
 @media (max-width:760px){.hudrange{width:74px}}
+.item .hit{display:block;font-size:11.5px;color:var(--muted);line-height:1.35;margin-top:2px;white-space:normal}
+.item mark{background:var(--accent-soft);color:var(--accent);padding:0 1px;border-radius:3px}
 </style>
 </head>
 <body>
@@ -260,7 +262,7 @@ ul.dd{margin:4px 0;padding-left:18px;color:var(--muted)}
   <!-- TRACCIATO -->
   <section class="view on" id="v-trace">
     <aside class="lib" id="lib">
-      <div class="search"><input type="search" id="q" placeholder="Cerca un quadro" aria-label="Cerca un quadro"></div>
+      <div class="search"><input type="search" id="q" placeholder="Cerca per nome o criterio: QRS largo, PR corto, onda delta…" aria-label="Cerca un quadro o un criterio"></div>
       <div class="list" id="libList"></div>
     </aside>
     <div class="scrim" id="scrim"></div>

@@ -1717,6 +1717,154 @@ THEORY.push({
 <p>Due casi a parte: la <b>torsione di punta</b>, che si tratta con magnesio e con la correzione della causa, e va defibrillata se degenera; e la <b>fibrillazione atriale preeccitata</b>, dove i farmaci che bloccano il nodo sono controindicati e la strada è la cardioversione elettrica.</p>
 <p class="note">Fonti: ERC 2021, linee guida sul supporto avanzato delle funzioni vitali; ${SRC.va}.</p>` });
 
+/* ===== Approfondimenti dei capitoli di base ===== */
+const APPRO = {
+  cose: `
+<h4>Perché una cellula che si depolarizza produce una deflessione</h4>
+<p>Una fibra a riposo è polarizzata in modo uniforme: non c\u2019è differenza di potenziale fra due punti della sua superficie, e l\u2019elettrodo scrive la linea isoelettrica. Quando un\u2019estremità si depolarizza si crea un confine fra zona già attivata, elettricamente negativa all\u2019esterno, e zona ancora a riposo, positiva. Quel confine è un <b>dipolo</b>: una coppia di cariche opposte con una direzione e un\u2019intensità, cioè un vettore che punta dal negativo verso il positivo, cioè verso il tessuto non ancora attivato.</p>
+<p>Il dipolo si sposta lungo la fibra man mano che il fronte avanza. L\u2019elettrodo non registra la carica in sé: registra la <b>proiezione</b> di quel vettore sulla propria direzione. Da qui discende tutto il resto, compresa la regola che l\u2019avvicinarsi del fronte dà una deflessione positiva.</p>
+<h4>Il cuore intero come dipolo unico</h4>
+<p>In ogni istante nel cuore ci sono milioni di fronti di attivazione, ognuno con il proprio piccolo dipolo. L\u2019ECG di superficie non li distingue: registra la <b>somma vettoriale</b> di tutti, come se esistesse un solo dipolo situato al centro elettrico del cuore. È un\u2019approssimazione potente e utile, ma è un\u2019approssimazione, ed è la ragione dei limiti dell\u2019esame.</p>
+<h4>Cosa il modello non può dire</h4>
+<ul class="crit">
+<li>Due fronti uguali e opposti si annullano: l\u2019attivazione c\u2019è ma l\u2019ECG non la vede. È così che l\u2019infarto posteriore isolato o l\u2019ischemia circonferenziale possono passare inosservati.</li>
+<li>Il torace non è un conduttore omogeneo: polmoni, sangue, ossa e grasso deformano il campo, e l\u2019ampiezza in superficie non è proporzionale alla massa che si è attivata.</li>
+<li>La distanza conta: un elettrodo precordiale è vicino al miocardio sottostante e ne risente più che di regioni lontane, mentre nel modello le derivazioni sono assi ideali passanti per l\u2019origine.</li>
+<li>L\u2019ECG è una registrazione elettrica: non dice nulla sulla contrazione. Un tracciato normale in un paziente senza polso è esattamente il quadro dell\u2019attività elettrica senza polso.</li>
+</ul>
+<p class="note">Approfondimento basato su ${SRC.aha3} e su Gaita e Leclercq, capitolo 1.</p>`,
+
+  derivazioni: `
+<h4>Le tre famiglie di derivazioni e perché sono fatte così</h4>
+<p><b>Bipolari degli arti (Einthoven).</b> DI, DII e DIII misurano la differenza di potenziale fra due elettrodi: DI fra braccio sinistro e destro, DII fra gamba sinistra e braccio destro, DIII fra gamba sinistra e braccio sinistro. I tre lati formano il triangolo di Einthoven, e da qui discende la legge che vale sempre come controllo: <b>DII = DI + DIII</b>. Se sul tracciato questa somma non torna, gli elettrodi sono scambiati.</p>
+<p><b>Unipolari aumentate (Goldberger).</b> aVR, aVL e aVF misurano il potenziale di un arto rispetto alla media degli altri due. Il termine "aumentate" non è decorativo: il segnale così ottenuto sarebbe piccolo, e viene amplificato del 50% per renderlo confrontabile con le bipolari.</p>
+<p><b>Precordiali (Wilson).</b> Ognuna misura il potenziale di un punto del torace rispetto al <b>terminale centrale di Wilson</b>, cioè la media dei tre arti, che approssima un punto a potenziale zero. Sono le derivazioni che guardano il cuore da vicino e sul piano orizzontale.</p>
+<h4>Dove vanno gli elettrodi</h4>
+<table class="ttab"><thead><tr><th>Derivazione</th><th>Posizione</th></tr></thead><tbody>
+<tr><td>V1</td><td>Quarto spazio intercostale, margine destro dello sterno</td></tr>
+<tr><td>V2</td><td>Quarto spazio intercostale, margine sinistro dello sterno</td></tr>
+<tr><td>V3</td><td>A metà fra V2 e V4</td></tr>
+<tr><td>V4</td><td>Quinto spazio intercostale, linea emiclaveare</td></tr>
+<tr><td>V5</td><td>Stessa altezza di V4, linea ascellare anteriore</td></tr>
+<tr><td>V6</td><td>Stessa altezza di V4, linea ascellare media</td></tr>
+</tbody></table>
+<p>Le derivazioni aggiuntive si registrano quando servono: <b>V7-V9</b> sul dorso per la parete posteriore, <b>V3R-V4R</b> a destra per il ventricolo destro, obbligatorie davanti a un infarto inferiore.</p>
+<h4>Le due prospettive</h4>
+<p>Le sei derivazioni degli arti guardano il cuore sul <b>piano frontale</b> e formano il sistema esassiale, con 30° fra una e l\u2019altra: DI 0°, DII +60°, aVF +90°, DIII +120°, aVR −150°, aVL −30°. Le sei precordiali guardano sul <b>piano orizzontale</b>: V6 0°, V5 +30°, V4 +60°, V3 +75°, V2 +90°, V1 +120°, dove positivo significa in avanti. Un vettore diretto in alto e indietro sfugge a entrambe le prospettive se non lo si cerca.</p>
+<h4>Errori di collegamento da riconoscere subito</h4>
+<ul class="crit">
+<li><b>Braccio destro e sinistro invertiti</b>: P e QRS negativi in DI, aVR positiva. È il più frequente e simula una destrocardia.</li>
+<li><b>Destrocardia vera</b>: come sopra, ma in più la progressione della R nelle precordiali è invertita, cioè decresce da V1 a V6.</li>
+<li><b>Elettrodo di un arto invertito con la gamba</b>: una derivazione risulta piatta.</li>
+<li><b>Precordiali troppo alte</b>: r piccole in V1-V2 che simulano un infarto anteriore pregresso.</li>
+</ul>
+<p class="note">Approfondimento basato su ${SRC.aha3} e su Gaita e Leclercq, capitolo 2.</p>`,
+
+  normale: `
+<h4>La progressione della R e la zona di transizione</h4>
+<p>Nelle precordiali il QRS passa gradualmente da prevalentemente negativo in V1 a prevalentemente positivo in V6: è la <b>progressione della R</b>, che riflette lo spostamento del vettore principale verso il ventricolo sinistro. Il punto in cui R ed S si equivalgono è la <b>zona di transizione</b>, normalmente in V3 o V4.</p>
+<ul class="crit">
+<li>Transizione in V1-V2: <b>rotazione antioraria</b>, si vede nell\u2019ipertrofia sinistra e nell\u2019infarto posteriore.</li>
+<li>Transizione in V5-V6: <b>rotazione oraria</b>, tipica della broncopneumopatia, dell\u2019embolia polmonare e del sovraccarico destro.</li>
+<li>Progressione povera: R che non cresce da V1 a V4, da valutare insieme a infarto anteriore pregresso, posizione degli elettrodi, enfisema e cardiomiopatia.</li>
+</ul>
+<h4>Cosa è normale e non sembra</h4>
+<ul class="crit">
+<li><b>Ripolarizzazione precoce</b>: sopraslivellamento del punto J concavo, con notch o slurring sulla branca discendente della R, nelle precordiali medie del giovane. Benigna nella grande maggioranza dei casi, ma il pattern inferiore con ST orizzontale merita attenzione.</li>
+<li><b>Onde T negative giovanili</b> in V1-V3, normali fino all\u2019adolescenza.</li>
+<li><b>Aritmia sinusale respiratoria</b>: il ciclo si accorcia in inspirazione e si allunga in espirazione.</li>
+<li><b>Onda U</b>: piccola deflessione dopo la T, normale se inferiore al 25% della T; diventa patologica quando è prominente nell\u2019ipokaliemia o invertita nell\u2019ischemia.</li>
+<li><b>Q settali</b> strette e piccole in DI, aVL, V5 e V6: sono la normalità, non un infarto. Patologiche se durano oltre 40 ms o superano un quarto della R che segue.</li>
+</ul>
+<h4>Le misure che servono sempre</h4>
+<p>Frequenza, ritmo, asse, PR, QRS, QT e QTc: sono i sei numeri da cui parte ogni referto. Le soglie sono nel capitolo 13, con i valori usati a lezione; qui basta ricordare che vanno misurati sulla derivazione in cui l\u2019onda è più larga, non su quella dove si legge meglio.</p>
+<p class="note">Approfondimento basato su ${SRC.aha3}, ${SRC.aha4} e su Gaita e Leclercq, capitolo 3.</p>`,
+
+  ripol: `
+<h4>Il potenziale d\u2019azione, fase per fase</h4>
+<table class="ttab"><thead><tr><th>Fase</th><th>Cosa succede</th><th>Corrente</th></tr></thead><tbody>
+<tr><td>0 — depolarizzazione rapida</td><td>Il potenziale sale da −90 a +20 mV</td><td>Ingresso di sodio (I<sub>Na</sub>)</td></tr>
+<tr><td>1 — ripolarizzazione precoce</td><td>Piccolo avvallamento subito dopo il picco</td><td>Uscita transitoria di potassio (I<sub>to</sub>)</td></tr>
+<tr><td>2 — plateau</td><td>Il potenziale resta quasi costante: è ciò che rende lungo il potenziale d\u2019azione cardiaco</td><td>Ingresso di calcio di tipo L, bilanciato dall\u2019uscita di potassio</td></tr>
+<tr><td>3 — ripolarizzazione</td><td>Ritorno al potenziale di riposo</td><td>Uscita di potassio (I<sub>Kr</sub>, I<sub>Ks</sub>)</td></tr>
+<tr><td>4 — riposo</td><td>Stabile nel miocardio comune, in lenta salita nelle cellule pacemaker</td><td>Pompa sodio-potassio; nelle pacemaker la corrente funny I<sub>f</sub></td></tr>
+</tbody></table>
+<p>Sull\u2019ECG: la fase 0 di tutte le cellule ventricolari fa il <b>QRS</b>, il plateau della fase 2 corrisponde al <b>tratto ST</b>, quando non c\u2019è differenza di potenziale fra le zone perché sono tutte depolarizzate, e la fase 3 fa l\u2019<b>onda T</b>.</p>
+<h4>Perché la T è positiva dove il QRS è positivo</h4>
+<p>Sembra un paradosso: la ripolarizzazione è il processo inverso della depolarizzazione, quindi dovrebbe dare una deflessione opposta. Le cose sono due, e si annullano a vicenda.</p>
+<ul class="crit">
+<li><b>Il dipolo è rovesciato</b>: nella ripolarizzazione la zona già ripolarizzata torna positiva all\u2019esterno e il vettore punta all\u2019indietro rispetto al fronte. Questo, da solo, invertirebbe la T.</li>
+<li><b>Il fronte viaggia al contrario</b>: la depolarizzazione va dall\u2019endocardio all\u2019epicardio, la ripolarizzazione procede dall\u2019epicardio all\u2019endocardio. Questo, da solo, invertirebbe la T una seconda volta.</li>
+</ul>
+<p>Due inversioni danno una concordanza: <b>il vettore T finisce per puntare più o meno dove punta il QRS</b>, e la T è positiva nelle stesse derivazioni. Il motivo per cui l\u2019epicardio si ripolarizza per primo, pur essendo stato depolarizzato per ultimo, è che il suo potenziale d\u2019azione è più breve: subisce meno pressione, è meglio perfuso ed è più caldo.</p>
+<h4>Periodi refrattari</h4>
+<ul class="crit">
+<li><b>Refrattario assoluto</b>: dalla fase 0 fino a metà della fase 3. Nessuno stimolo, per quanto forte, genera un nuovo potenziale. Corrisponde al QRS e alla prima parte della T.</li>
+<li><b>Refrattario relativo</b>: la parte finale della fase 3, sul versante discendente della T. Uno stimolo forte può innescare una risposta, ma con conduzione lenta e rischio di rientro.</li>
+<li><b>Fase vulnerabile</b>: il picco della T. Uno stimolo che cade lì può innescare fibrillazione ventricolare: è il fenomeno R su T e il motivo per cui la cardioversione si sincronizza sulla R.</li>
+</ul>
+<p class="note">Approfondimento basato su ${SRC.aha4} e su Gaita e Leclercq, capitolo 3.</p>`,
+
+  asse: `
+<h4>Tre modi di trovare l\u2019asse, dal più veloce al più preciso</h4>
+<ol class="crit">
+<li><b>I due pollici.</b> Guarda DI e aVF: entrambe positive, asse normale, cioè nel quadrante fra 0° e +90°; DI positiva e aVF negativa, asse deviato a sinistra; DI negativa e aVF positiva, asse deviato a destra; entrambe negative, asse nella terra di nessuno, fra −90° e 180°.</li>
+<li><b>La derivazione isoelettrica.</b> Cerca la derivazione frontale in cui il QRS è più vicino a zero, cioè dove positivo e negativo si equivalgono: l\u2019asse è <b>perpendicolare</b> a quella derivazione. Restano due possibilità opposte, e si sceglie quella verso cui punta una derivazione positiva.</li>
+<li><b>Il calcolo sul sistema esassiale.</b> Misura l\u2019area netta del QRS in DI e in aVF, riportale come componenti su due assi perpendicolari e componi il vettore. È il metodo che usa la macchina.</li>
+</ol>
+<h4>I quadranti e cosa significano</h4>
+<table class="ttab"><thead><tr><th>Asse</th><th>Nome</th><th>Cause da considerare</th></tr></thead><tbody>
+<tr><td>−30° / +90°</td><td>Normale</td><td>—</td></tr>
+<tr><td>−30° / −90°</td><td>Deviazione a sinistra</td><td>Emiblocco anteriore sinistro, infarto inferiore, ipertrofia sinistra, obesità e gravidanza, cuore orizzontale</td></tr>
+<tr><td>+90° / +180°</td><td>Deviazione a destra</td><td>Emiblocco posteriore sinistro, ipertrofia destra, embolia polmonare, broncopneumopatia, infarto laterale, longilineo</td></tr>
+<tr><td>−90° / 180°</td><td>Asse indeterminato</td><td>Ritmi ventricolari, iperkaliemia, cardiopatie congenite, inversione degli elettrodi</td></tr>
+</tbody></table>
+<h4>Non solo il QRS</h4>
+<p>Anche <b>P</b> e <b>T</b> hanno un asse. L\u2019asse della P è normalmente fra 0° e +75°, e se esce da lì il ritmo non nasce dal nodo del seno. L\u2019angolo fra asse del QRS e asse della T, il <b>QRS-T angle</b>, è normalmente stretto: un angolo largo indica che la ripolarizzazione non segue più la depolarizzazione, come nel sovraccarico, nell\u2019ischemia e nei blocchi di branca.</p>
+<p class="note">Approfondimento basato su ${SRC.aha3} e sui criteri del corso, capitolo 13.</p>`,
+
+  fc: `
+<h4>Tutti i metodi, e quando usarli</h4>
+<ul class="crit">
+<li><b>Regola del 300</b> per i ritmi regolari: 300 diviso il numero di quadrati grandi fra due R. La sequenza da tenere a memoria è 300, 150, 100, 75, 60, 50.</li>
+<li><b>Regola del 1500</b> quando serve precisione: 1500 diviso il numero di quadratini piccoli fra due R.</li>
+<li><b>Metodo dei sei secondi</b> per i ritmi irregolari, fibrillazione atriale in testa: conta i QRS in trenta quadrati grandi e moltiplica per dieci. È l\u2019unico metodo corretto quando gli RR variano.</li>
+<li><b>60.000 diviso l\u2019RR in millisecondi</b>: la formula da cui derivano tutte le altre.</li>
+</ul>
+<h4>Attenzioni</h4>
+<ul class="crit">
+<li>Se la carta scorre a 50 mm/s invece di 25, tutti i tempi sulla carta raddoppiano e la frequenza calcolata con le regole classiche va dimezzata. Controlla sempre la velocità stampata in fondo al tracciato.</li>
+<li>Nei blocchi atrio-ventricolari le frequenze sono due, atriale e ventricolare, e vanno riportate entrambe.</li>
+<li>Nel flutter è utile calcolare la frequenza atriale e dedurne il rapporto di conduzione: 300 diviso 150 al minuto significa 2:1.</li>
+</ul>
+<p class="note">Approfondimento basato sui criteri del corso, capitolo 13.</p>`,
+
+  referto: `
+<h4>La sequenza, sempre la stessa</h4>
+<ol class="crit">
+<li><b>Dati tecnici</b>: velocità 25 mm/s, taratura 10 mm/mV, qualità del tracciato, artefatti.</li>
+<li><b>Frequenza</b> atriale e ventricolare.</li>
+<li><b>Ritmo</b>: c\u2019è una P prima di ogni QRS e un QRS dopo ogni P? La P è sinusale, cioè positiva in DI, DII e aVF e negativa in aVR? Gli intervalli sono regolari?</li>
+<li><b>Asse</b> del QRS, e se serve della P e della T.</li>
+<li><b>Intervalli</b>: PR, QRS, QT con il QTc.</li>
+<li><b>Onda P</b>: durata, ampiezza, morfologia, segni di ingrandimento atriale.</li>
+<li><b>QRS</b>: onde Q patologiche, voltaggi, progressione della R, morfologia da blocco.</li>
+<li><b>ST e T</b>: sopraslivellamenti e sottoslivellamenti con la loro forma, direzione della T, onda U.</li>
+<li><b>Confronto</b> con i tracciati precedenti: cambia la diagnosi più di qualunque criterio.</li>
+<li><b>Conclusione</b> in una frase, e la domanda finale: questo referto cambia qualcosa per il paziente adesso?</li>
+</ol>
+<h4>Le regole che salvano</h4>
+<ul class="crit">
+<li>Un ECG normale non esclude una sindrome coronarica acuta: fino al 10% degli infarti ha un primo tracciato non diagnostico. Se il dolore continua, si ripete a 15-30 minuti.</li>
+<li>Davanti a un infarto inferiore si registrano sempre le derivazioni destre V3R-V4R e le posteriori V7-V9.</li>
+<li>Una tachicardia a QRS largo si considera ventricolare fino a prova contraria.</li>
+<li>Il referto automatico della macchina è un suggerimento, non una diagnosi: va sempre riletto, soprattutto su ritmo e intervalli.</li>
+<li>Il tracciato si legge insieme al paziente: la stessa immagine ha significati diversi in un ventenne asintomatico e in un settantenne con dolore toracico.</li>
+</ul>
+<p class="note">Approfondimento basato su ${SRC.acs}, ${SRC.udmi} e sui criteri del corso.</p>`
+};
+THEORY.forEach(ch => { if (APPRO[ch.id]) ch.html += APPRO[ch.id]; });
+
 const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', 'Elettroliti e altro'];
 const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ISO_DATA = API;
