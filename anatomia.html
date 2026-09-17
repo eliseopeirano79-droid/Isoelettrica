@@ -497,7 +497,7 @@ const matVent=hmat('#c64d58',0.24),matAtr=hmat('#d8766a',0.22),matAo=hmat('#d060
 })();
 
 /* Sistema di conduzione */
-const NSA=[-0.52,0.62,0.02],NAV=[0,0,0],BIF=[0.12,-0.25,0.1];
+const NSA=[-0.16,0.36,-0.02],NAV=[0,0,0],BIF=[0.12,-0.25,0.1];
 const condPaths=[];
 const matCond=new THREE.MeshBasicMaterial({color:'#8a7446',transparent:true,opacity:.9});
 const sparkGeo=new THREE.SphereGeometry(0.035,14,10);
@@ -514,12 +514,12 @@ function addPath(pts,t0,t1,r,spark){
   if(spark){part=new THREE.Mesh(sparkGeo,sparkMat);const gl=new THREE.Sprite(glowMat);gl.scale.set(0.34,0.34,1);part.add(gl);part.visible=false;G.impulse.add(part);}
   condPaths.push({curve,og,om,part,t0,t1,seg,rad});
 }
-addPath([NSA,[-0.3,0.52,0.24],[-0.1,0.2,0.14],NAV],10,82,0.013,true);
-addPath([NSA,[-0.34,0.38,0.02],[-0.12,0.12,0],NAV],10,86,0.013,true);
-addPath([NSA,[-0.56,0.34,-0.14],[-0.22,0.06,-0.12],NAV],10,92,0.013,true);
-addPath([NSA,[-0.24,0.66,0.06],[0.08,0.62,-0.18],[0.35,0.5,-0.42]],10,62,0.013,true);
+addPath([NSA,[-0.12,0.26,0.10],[-0.06,0.12,0.08],NAV],10,82,0.013,true);
+addPath([NSA,[-0.16,0.22,-0.02],[-0.08,0.10,0],NAV],10,86,0.013,true);
+addPath([NSA,[-0.20,0.18,-0.12],[-0.10,0.06,-0.08],NAV],10,92,0.013,true);
+addPath([NSA,[0.0,0.40,-0.10],[0.16,0.34,-0.24],[0.28,0.26,-0.34]],10,62,0.013,true);
 addPath([NAV,[0.06,-0.12,0.06],BIF],165,186,0.022,true);
-const RB=[0.15,-0.62,0.42],LAF=[0.62,-0.38,0.22],LPF=[0.45,-0.7,-0.02];
+const RB=[0.15,-0.62,0.42],LAF=[0.55,-0.36,0.18],LPF=[0.40,-0.63,0.0];
 addPath([BIF,[0.1,-0.4,0.26],[0.12,-0.55,0.38],RB],186,214,0.016,true);
 addPath([BIF,[0.3,-0.26,0.12],[0.5,-0.3,0.2],LAF],186,210,0.016,true);
 addPath([BIF,[0.26,-0.36,0.02],[0.38,-0.58,-0.02],LPF],186,213,0.016,true);
@@ -531,7 +531,7 @@ const nsaNode=new THREE.Mesh(new THREE.SphereGeometry(0.065,20,14),nodeMat.clone
 const navNode=new THREE.Mesh(new THREE.SphereGeometry(0.06,20,14),nodeMat.clone());G.conduction.add(navNode);
 const nsaGlow=new THREE.Sprite(glowMat.clone());nsaGlow.scale.set(0.5,0.5,1);nsaNode.add(nsaGlow);
 const navGlow=new THREE.Sprite(glowMat.clone());navGlow.scale.set(0.45,0.45,1);navNode.add(navGlow);
-[['Nodo del seno',[-0.95,0.82,0.05]],['Nodo AV, origine',[-0.5,-0.12,0.18]],['Fascio di His',[-0.28,-0.33,0.24]],['Branca destra',[-0.12,-0.82,0.55]],['Fascicolo anteriore sx',[0.95,-0.24,0.32]],['Fascicolo posteriore sx',[0.72,-0.95,-0.1]],['Fascio di Bachmann',[0.35,0.78,-0.5]]]
+[['Nodo del seno',[-0.62,0.54,0.0]],['Nodo AV, origine',[-0.5,-0.12,0.18]],['Fascio di His',[-0.28,-0.33,0.24]],['Branca destra',[-0.12,-0.82,0.55]],['Fascicolo anteriore sx',[0.95,-0.24,0.32]],['Fascicolo posteriore sx',[0.72,-0.95,-0.1]],['Fascio di Bachmann',[0.35,0.78,-0.5]]]
   .forEach(([t,p])=>{const l=makeLabel(t,{h:0.095,color:'#ffe3a0',weight:500,bg:'rgba(20,16,6,.55)'});l.position.set(...p);G.condLabels.add(l);});
 
 
@@ -4178,14 +4178,7 @@ function loadAnatHeart(){
       if(o.geometry&&!o.geometry.attributes.normal)o.geometry.computeVertexNormals();
       o.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.78,metalness:.02,transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide});
       anatMats.push(o.material);});
-    const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),c=box.getCenter(new THREE.Vector3());
-    const k=2.3/Math.max(0.001,Math.max(size.x,size.y,size.z));
-    root.scale.setScalar(k); root.position.set(-c.x*k,-c.y*k,-c.z*k);
-    const holder=new THREE.Group(); holder.add(root);
-    const m=[0.5956,-0.7712,-0.2249,0.2255,0.4292,-0.8746,0.771,0.4702,0.4295];
-    holder.setRotationFromMatrix(new THREE.Matrix4().set(m[0],m[1],m[2],0,m[3],m[4],m[5],0,m[6],m[7],m[8],0,0,0,0,1));
-    holder.position.set(0.05,-0.15,-0.02);
-    G.anatHeart.add(holder);
+    G.anatHeart.add(root);
     if(typeof anatOpacity==='number')setAnatOpacity(anatOpacity);
   },null,()=>{anatReq=false;});
 }

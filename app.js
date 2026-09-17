@@ -287,11 +287,11 @@ class Scene3D {
       let part = null; if (withSpark) { part = new THREE.Mesh(spark, sparkM); const gl = new THREE.Sprite(this.glowM); gl.scale.set(0.3, 0.3, 1); part.add(gl); part.visible = false; FX.add(part); }
       const o = { curve, bm, og, om, part, seg, rad }; (this.paths[name] = this.paths[name] || []).push(o); return o;
     };
-    const NSA = [-0.52, 0.62, 0.02], NAV = [0, 0, 0], BIF = [0.12, -0.25, 0.1], RB = [0.15, -0.62, 0.42], LAF = [0.62, -0.38, 0.22], LPF = [0.45, -0.7, -0.02];
-    add('atr', [NSA, [-0.3, 0.52, 0.24], [-0.1, 0.2, 0.14], NAV], 0.012, true);
-    add('atr', [NSA, [-0.34, 0.38, 0.02], [-0.12, 0.12, 0], NAV], 0.012, true);
-    add('atr', [NSA, [-0.56, 0.34, -0.14], [-0.22, 0.06, -0.12], NAV], 0.012, true);
-    add('atr', [NSA, [-0.24, 0.66, 0.06], [0.08, 0.62, -0.18], [0.35, 0.5, -0.42]], 0.012, true);
+    const NSA = [-0.16, 0.36, -0.02], NAV = [0, 0, 0], BIF = [0.12, -0.25, 0.1], RB = [0.15, -0.62, 0.42], LAF = [0.55, -0.36, 0.18], LPF = [0.40, -0.63, 0.0];
+    add('atr', [NSA, [-0.12, 0.26, 0.10], [-0.06, 0.12, 0.08], NAV], 0.012, true);
+    add('atr', [NSA, [-0.16, 0.22, -0.02], [-0.08, 0.10, 0], NAV], 0.012, true);
+    add('atr', [NSA, [-0.20, 0.18, -0.12], [-0.10, 0.06, -0.08], NAV], 0.012, true);
+    add('atr', [NSA, [0.0, 0.40, -0.10], [0.16, 0.34, -0.24], [0.28, 0.26, -0.34]], 0.012, true);
     add('his', [NAV, [0.06, -0.12, 0.06], BIF], 0.02, true);
     add('rb', [BIF, [0.1, -0.4, 0.26], [0.12, -0.55, 0.38], RB], 0.015, true);
     add('laf', [BIF, [0.3, -0.26, 0.12], [0.5, -0.3, 0.2], LAF], 0.015, true);
@@ -311,7 +311,7 @@ class Scene3D {
     this.focus = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12), new THREE.MeshBasicMaterial({ color: '#ff9b6b' })); FX.add(this.focus);
     this.wave = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: '#ff8a5b', transparent: true, opacity: 0.2, depthWrite: false })); FX.add(this.wave);
     this.sparks = []; for (let i = 0; i < 10; i++) { const sp = new THREE.Sprite(this.glowM.clone()); sp.scale.set(0.22, 0.22, 1); FX.add(sp); this.sparks.push(sp); }
-    [['Nodo del seno', [-0.95, 0.82, 0.05]], ['Nodo AV', [-0.42, -0.08, 0.2]], ['His', [-0.18, -0.3, 0.26]]].forEach(([t, p]) => { const l = makeLabel(t, { h: 0.12, color: '#ffe3a0', weight: 500, bg: 'rgba(20,16,6,.55)' }); l.position.set(...p); G.add(l); });
+    [['Nodo del seno', [-0.62, 0.54, 0.0]], ['Nodo AV', [-0.42, -0.08, 0.2]], ['His', [-0.18, -0.3, 0.26]]].forEach(([t, p]) => { const l = makeLabel(t, { h: 0.12, color: '#ffe3a0', weight: 500, bg: 'rgba(20,16,6,.55)' }); l.position.set(...p); G.add(l); });
   }
   buildOrbitals() {
     const G = this.G.orb;
@@ -366,16 +366,7 @@ class Scene3D {
         o.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0.02, transparent: true, opacity: this._anatOp == null ? 0.6 : this._anatOp, depthWrite: false, side: THREE.DoubleSide });
         this.anatMats.push(o.material);
       });
-      const box = new THREE.Box3().setFromObject(root);
-      const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-      const k = 1.75 / Math.max(0.001, Math.max(size.x, size.y, size.z));
-      root.scale.setScalar(k);
-      root.position.set(-c.x * k, -c.y * k, -c.z * k);
-      const holder = new THREE.Group(); holder.add(root);
-      const m = ANAT_M;
-      holder.setRotationFromMatrix(new THREE.Matrix4().set(m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, 0, 0, 0, 1));
-      holder.position.set(0.05, -0.12, -0.02);
-      this.G.anat.add(holder);
+      this.G.anat.add(root);
       this.anatRoot = root;
       this.setHeartOpacity(this._anatOp == null ? 0.6 : this._anatOp);
     }, null, () => { this._anatReq = false; });
