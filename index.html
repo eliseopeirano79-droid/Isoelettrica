@@ -238,6 +238,14 @@ ul.dd{margin:4px 0;padding-left:18px;color:var(--muted)}
 @media (max-width:760px){.hudrange{width:74px}}
 .item .hit{display:block;font-size:11.5px;color:var(--muted);line-height:1.35;margin-top:2px;white-space:normal}
 .item mark{background:var(--accent-soft);color:var(--accent);padding:0 1px;border-radius:3px}
+
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+.app{height:100%;min-height:0}
+#v-trace.on{overflow:auto;-webkit-overflow-scrolling:touch}
+#v-theory.on,#v-quiz.on{min-height:0}
+#v-quiz.on{overflow:auto;-webkit-overflow-scrolling:touch}
+.top{position:relative;z-index:40;background:var(--panel);isolation:isolate}
+@supports (-webkit-touch-callout:none){.top{backdrop-filter:none;-webkit-backdrop-filter:none}}
 </style>
 </head>
 <body>

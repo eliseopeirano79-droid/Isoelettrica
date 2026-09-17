@@ -287,11 +287,11 @@ class Scene3D {
       let part = null; if (withSpark) { part = new THREE.Mesh(spark, sparkM); const gl = new THREE.Sprite(this.glowM); gl.scale.set(0.3, 0.3, 1); part.add(gl); part.visible = false; FX.add(part); }
       const o = { curve, bm, og, om, part, seg, rad }; (this.paths[name] = this.paths[name] || []).push(o); return o;
     };
-    const NSA = [-0.16, 0.36, -0.02], NAV = [0, 0, 0], BIF = [0.12, -0.25, 0.1], RB = [0.15, -0.62, 0.42], LAF = [0.55, -0.36, 0.18], LPF = [0.40, -0.63, 0.0];
-    add('atr', [NSA, [-0.12, 0.26, 0.10], [-0.06, 0.12, 0.08], NAV], 0.012, true);
-    add('atr', [NSA, [-0.16, 0.22, -0.02], [-0.08, 0.10, 0], NAV], 0.012, true);
-    add('atr', [NSA, [-0.20, 0.18, -0.12], [-0.10, 0.06, -0.08], NAV], 0.012, true);
-    add('atr', [NSA, [0.0, 0.40, -0.10], [0.16, 0.34, -0.24], [0.28, 0.26, -0.34]], 0.012, true);
+    const NSA = [-0.38, 0.46, 0.10], NAV = [0, 0, 0], BIF = [0.12, -0.25, 0.1], RB = [0.15, -0.62, 0.42], LAF = [0.55, -0.36, 0.18], LPF = [0.40, -0.63, 0.0];
+    add('atr', [NSA, [-0.26, 0.34, 0.14], [-0.12, 0.16, 0.10], NAV], 0.012, true);
+    add('atr', [NSA, [-0.28, 0.30, 0.02], [-0.13, 0.14, 0], NAV], 0.012, true);
+    add('atr', [NSA, [-0.30, 0.26, -0.08], [-0.14, 0.10, -0.06], NAV], 0.012, true);
+    add('atr', [NSA, [-0.15, 0.50, 0.0], [0.05, 0.46, -0.16], [0.18, 0.36, -0.28]], 0.012, true);
     add('his', [NAV, [0.06, -0.12, 0.06], BIF], 0.02, true);
     add('rb', [BIF, [0.1, -0.4, 0.26], [0.12, -0.55, 0.38], RB], 0.015, true);
     add('laf', [BIF, [0.3, -0.26, 0.12], [0.5, -0.3, 0.2], LAF], 0.015, true);
@@ -311,7 +311,7 @@ class Scene3D {
     this.focus = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12), new THREE.MeshBasicMaterial({ color: '#ff9b6b' })); FX.add(this.focus);
     this.wave = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: '#ff8a5b', transparent: true, opacity: 0.2, depthWrite: false })); FX.add(this.wave);
     this.sparks = []; for (let i = 0; i < 10; i++) { const sp = new THREE.Sprite(this.glowM.clone()); sp.scale.set(0.22, 0.22, 1); FX.add(sp); this.sparks.push(sp); }
-    [['Nodo del seno', [-0.62, 0.54, 0.0]], ['Nodo AV', [-0.42, -0.08, 0.2]], ['His', [-0.18, -0.3, 0.26]]].forEach(([t, p]) => { const l = makeLabel(t, { h: 0.12, color: '#ffe3a0', weight: 500, bg: 'rgba(20,16,6,.55)' }); l.position.set(...p); G.add(l); });
+    [['Nodo del seno', [-0.82, 0.62, 0.08]], ['Nodo AV', [-0.42, -0.08, 0.2]], ['His', [-0.18, -0.3, 0.26]]].forEach(([t, p]) => { const l = makeLabel(t, { h: 0.12, color: '#ffe3a0', weight: 500, bg: 'rgba(20,16,6,.55)' }); l.position.set(...p); G.add(l); });
   }
   buildOrbitals() {
     const G = this.G.orb;
