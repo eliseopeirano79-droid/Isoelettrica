@@ -381,9 +381,11 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
     <div class="corleft">
       <div class="corctrl">
         <label class="corlab" for="corArt">Arteria</label>
-        <select id="corArt"><option value="lm">Sinistra: tronco comune, discendente anteriore, circonflessa</option><option value="rca">Coronaria destra</option></select>
-        <label class="corlab" for="corRamo">Sede dell’occlusione</label>
-        <select id="corRamo"></select>
+        <select id="corArt"><option value="">— nessuna occlusione —</option><option value="lca">Coronaria sinistra (LCA)</option><option value="rca">Coronaria destra (RCA)</option></select>
+        <label class="corlab" for="corVaso">Vaso</label>
+        <select id="corVaso"></select>
+        <label class="corlab" for="corSede">Sede lungo il vaso</label>
+        <select id="corSede"></select>
         <div class="ctrl"><div class="lab"><span>Tempo dall’occlusione</span><output class="num" id="corTempoOut">0 minuti</output></div>
           <input id="corTempo" type="range" min="0" max="1440" step="10" value="0"></div>
         <button class="btn" id="corReset">Riapri l’arteria</button>
@@ -439,7 +441,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 </div>
 
 <script src="three.min.js"></script>
-<script src="gltfloader.js"></script>
+<script src="cuore3d.js"></script>
 <script src="engine.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>

@@ -145,6 +145,12 @@
     am: { seg: [], vd: 1, rischio: 3, tipo: 'Infarto del ventricolo destro isolato', ecg: 'Sopraslivellamento in V4R; sull\u2019ECG standard può non vedersi nulla o solo in V1.', rec: 'Nessuna', comp: 'Ipotensione, giugulari turgide con polmoni liberi, sensibilità al carico di volume.', q: 'stemi-inferiore' },
     cono: { seg: [], vd: 0.4, rischio: 2, tipo: 'Ischemia del tratto di efflusso destro', ecg: 'Di regola silente. Il ramo del cono è una fonte importante di circoli collaterali verso la discendente anteriore.', rec: 'Nessuna', comp: 'Perdita di un collaterale importante.', q: 'stemi-inferiore' },
     nsa: { seg: [], vd: 0, rischio: 1, tipo: 'Ischemia del nodo del seno', ecg: 'Bradicardia sinusale, arresto sinusale, blocco seno-atriale, fibrillazione atriale.', rec: 'Nessuna', comp: 'Aritmie atriali nella fase acuta dell\u2019infarto inferiore.', q: 'bsa2t2' },
+    s3: { seg: [14, 17], vd: 0, rischio: 3, tipo: 'Infarto settale apicale', ecg: 'Alterazioni modeste in V3-V4.', rec: 'Nessuna', comp: 'Area piccola.', q: 'stemi-anteriore' },
+    ri: { seg: [6, 12, 16], vd: 0, rischio: 9, tipo: 'Infarto laterale (ramo intermedio)', ecg: 'Sopraslivellamento in DI, aVL, V5-V6.', rec: 'Sottoslivellamento in DIII e aVF', comp: 'Il ramo intermedio è presente in circa un terzo dei cuori: quando c\u2019è, irrora la parete laterale come una diagonale o un marginale.', q: 'stemi-laterale' },
+    am2: { seg: [], vd: 0.5, rischio: 2, tipo: 'Infarto del ventricolo destro', ecg: 'Sopraslivellamento in V4R, poco o nulla sull\u2019ECG standard.', rec: 'Nessuna', comp: 'Ipotensione se estesa.', q: 'stemi-inferiore' },
+    rvb: { seg: [], vd: 0.4, rischio: 2, tipo: 'Ischemia della parete anteriore del ventricolo destro', ecg: 'Sopraslivellamento in V1 e V3R-V4R.', rec: 'Nessuna', comp: 'Di regola ben tollerata.', q: 'stemi-inferiore' },
+    sp1: { seg: [3, 9], vd: 0, rischio: 4, tipo: 'Infarto settale inferiore', ecg: 'Alterazioni in DIII e aVF con onde Q settali inferiori.', rec: 'Speculari in aVL', comp: 'Blocco atrio-ventricolare se coinvolto il nodo.', q: 'stemi-inferiore' },
+    sp2: { seg: [9, 14], vd: 0, rischio: 3, tipo: 'Infarto settale inferiore distale', ecg: 'Alterazioni modeste inferiori.', rec: 'Nessuna', comp: 'Area piccola.', q: 'stemi-inferiore' },
     nav: { seg: [], vd: 0, rischio: 1, tipo: 'Ischemia del nodo atrio-ventricolare', ecg: 'Blocco atrio-ventricolare di primo, secondo tipo 1 o terzo grado, con QRS stretto e scappamento giunzionale.', rec: 'Nessuna', comp: 'Di regola transitorio e responsivo all\u2019atropina: raramente serve il pacemaker definitivo.', q: 'wenck' }
   };
 
@@ -202,29 +208,15 @@
     const d2 = new THREE.DirectionalLight(0xffd9c9, 0.35); d2.position.set(-3, -1, -2); sc.add(d2);
     root = new THREE.Group(); sc.add(root);
 
-    SEG.forEach(sg => {
-      const m = new THREE.Mesh(patch(sg), new THREE.MeshStandardMaterial({ color: 0xd98f92, roughness: 0.85, metalness: 0.02, side: THREE.DoubleSide, transparent: true, opacity: 0.97 }));
-      m.userData.seg = sg.n; segMesh[sg.n] = m; root.add(m);
-    });
-    // ventricolo destro: mezzaluna anteriore-destra applicata al setto
-    const rvPts = [];
-    for (let i = 0; i <= 22; i++) {
-      const s = 0.04 + 0.78 * i / 22;
-      rvPts.push(P(s, -70, 0.1 * Math.sin(Math.PI * i / 22) + 0.02));
-    }
-    const rv = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rvPts), 40, 0.21, 16, false),
-      new THREE.MeshStandardMaterial({ color: 0xc98a8e, roughness: 0.9, transparent: true, opacity: 0.42, side: THREE.DoubleSide }));
-    rv.userData.rv = true; segMesh.rv = rv; root.add(rv);
-
-    Object.keys(ALBERO).forEach(id => {
-      const b = ALBERO[id];
-      const g = new THREE.TubeGeometry(curva(b.via), 60, b.r, 10, false);
-      const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xd3283c, roughness: 0.45, metalness: 0.1 }));
-      m.userData.id = id; ramiMesh[id] = m; root.add(m);
-    });
-    [['LAD', 'lad2'], ['LCx', 'cx1'], ['RCA', 'rca2'], ['PDA', 'pda'], ['D1', 'd1'], ['OM1', 'om1']].forEach(([t, id]) => {
-      const b = ALBERO[id], p = curva(b.via).getPoint(0.6);
-      const s = makeLabel(t); s.position.copy(p).addScaledVector(p.clone().normalize(), 0.16); root.add(s); lbl.push(s);
+    const h = ISO_CUORE.build({ opacity: 1 });
+    root.add(h.group);
+    h.SEG.forEach(sg => { segMesh[sg.n] = h.seg[sg.n]; });
+    segMesh.rv = h.rv; h.rv.material.transparent = true; h.rv.material.opacity = 0.5; h.rv.material.depthWrite = false;
+    Object.keys(h.coro).forEach(id => { if (!ISO_CUORE.CORO[id].vena) ramiMesh[id] = h.coro[id]; });
+    [['LAD', 'lad2'], ['LCx', 'cx1'], ['RCA', 'rca2'], ['PDA', 'pda'], ['D1', 'd1'], ['OM1', 'om1'], ['LM', 'lm']].forEach(([t, id]) => {
+      const via = ISO_CUORE.CORO[id].via, v = via[Math.floor(via.length / 2)];
+      const p = ISO_CUORE.P(v[0], v[1], v[2] + 0.12);
+      const sp = makeLabel(t); sp.position.copy(p); root.add(sp); lbl.push(sp);
     });
     inited = true;
   }
@@ -243,7 +235,7 @@
 
   /* ---------- stato e colori ---------- */
   function aggiorna() {
-    const chiusi = occl ? aValle(occl) : [];
+    const chiusi = occl ? ISO_CUORE.aValle(occl) : [];
     Object.keys(ramiMesh).forEach(id => {
       const m = ramiMesh[id];
       const closed = chiusi.indexOf(id) >= 0;
@@ -252,7 +244,7 @@
     });
     const o = occl ? OCCL[occl] : null;
     const f = frazione(minuti);
-    SEG.forEach(sg => {
+    ISO_CUORE.SEG.forEach(sg => {
       const m = segMesh[sg.n];
       const colpito = o && o.seg.indexOf(sg.n) >= 0;
       if (!colpito) { m.material.color.setHex(0xd98f92); m.material.emissive && m.material.emissive.setHex(0x000000); return; }
@@ -273,7 +265,7 @@
     if (!box) return;
     if (!o) { box.innerHTML = '<p class="note">Scegli un\u2019arteria e un ramo: l\u2019albero a valle si chiude, il territorio colpito si colora e qui compare il tipo di infarto che ne deriva.</p>'; return; }
     const b = ALBERO[occl];
-    const segNomi = o.seg.map(n => (SEG.find(s => s.n === n) || {}).nome).filter(Boolean);
+    const segNomi = o.seg.map(n => (ISO_CUORE.SEG.find(s => s.n === n) || {}).nome).filter(Boolean);
     const perse = Math.round(o.rischio * f);
     box.innerHTML =
       '<h3>' + esc(b.nome) + '</h3>' +
@@ -294,13 +286,50 @@
   function fmtMin(m) { return m < 60 ? m + ' minuti' : (m % 60 === 0 ? (m / 60) + ' ore' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'); }
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
-  /* ---------- interfaccia ---------- */
-  function popolaRami(art) {
-    const sel = document.getElementById('corRamo');
-    sel.innerHTML = '<option value="">— scegli il ramo —</option>';
-    (RADICI[art] || []).forEach(id => {
-      const o = document.createElement('option'); o.value = id; o.textContent = ALBERO[id].nome + ' (' + ALBERO[id].sigla + ')';
-      sel.appendChild(o);
+  /* ---------- interfaccia: tre tendine in cascata ---------- */
+  // ogni voce occlude subito; scendendo di livello si precisa la sede
+  const LIV1 = [['lca', 'Coronaria sinistra (LCA)', 'lm'], ['rca', 'Coronaria destra (RCA)', 'rca1']];
+  const LIV2 = {
+    lca: [['lm', 'Tronco comune (LM)', 'lm'], ['lad', 'Interventricolare anteriore (LAD)', 'lad1'], ['cx', 'Circonflessa (LCx)', 'cx1']],
+    rca: [['tronco', 'Tronco della coronaria destra', 'rca1'], ['cono', 'Ramo del cono', 'cono'], ['nsa', 'Ramo del nodo del seno', 'nsa'],
+    ['am', 'Primo marginale acuto', 'am'], ['am2', 'Secondo marginale acuto', 'am2'], ['rvb', 'Ramo ventricolare destro', 'rvb'], ['pda', 'Discendente posteriore (PDA)', 'pda'], ['plv', 'Postero-laterale destra', 'plv'], ['nav', 'Ramo del nodo atrio-ventricolare', 'nav']]
+  };
+  const LIV3 = {
+    lm: [['ri', 'Ramo intermedio']],
+    lad: [['lad1', 'Tutta la LAD: occlusione prossimale, prima della prima settale'], ['lad2', 'LAD media, dopo la prima settale'], ['lad3', 'LAD distale, oltre la seconda diagonale'],
+    ['s1', 'Prima settale (S1)'], ['s2', 'Seconda settale (S2)'], ['s3', 'Terza settale (S3)'], ['d1', 'Prima diagonale (D1)'], ['d2', 'Seconda diagonale (D2)']],
+    cx: [['cx1', 'Tutta la circonflessa: occlusione prossimale'], ['cx2', 'Circonflessa distale'], ['om1', 'Primo marginale ottuso (OM1)'], ['om2', 'Secondo marginale ottuso (OM2)'], ['pla', 'Postero-laterale sinistra (PLA)']],
+    tronco: [['rca1', 'Tutta la destra: occlusione prossimale'], ['rca2', 'Tratto medio, dopo il marginale acuto'], ['rca3', 'Tratto distale, alla crux']],
+    pda: [['sp1', 'Prima settale posteriore'], ['sp2', 'Seconda settale posteriore']],
+    cono: [], nsa: [], am: [], am2: [], rvb: [], plv: [], nav: []
+  };
+  let l1 = '', l2 = '';
+  function riempi(sel, voci, ph) {
+    sel.innerHTML = '<option value="">' + ph + '</option>';
+    voci.forEach(v => { const o = document.createElement('option'); o.value = v[0]; o.textContent = v[1]; sel.appendChild(o); });
+    sel.disabled = voci.length === 0;
+  }
+  function setOccl(id) { occl = id || null; aggiorna(); }
+  function initSel() {
+    const a = document.getElementById('corArt'), b = document.getElementById('corVaso'), c = document.getElementById('corSede');
+    riempi(b, [], '— tutta l\u2019arteria —'); riempi(c, [], '— tutto il vaso —');
+    a.addEventListener('change', e => {
+      l1 = e.target.value; l2 = '';
+      const v = LIV1.find(x => x[0] === l1);
+      riempi(b, l1 ? LIV2[l1] : [], '— tutta l\u2019arteria —');
+      riempi(c, [], '— tutto il vaso —');
+      setOccl(v ? v[2] : null);
+    });
+    b.addEventListener('change', e => {
+      l2 = e.target.value;
+      const v = (LIV2[l1] || []).find(x => x[0] === l2);
+      riempi(c, l2 ? (LIV3[l2] || []) : [], '— tutto il vaso —');
+      if (v) setOccl(v[2]);
+      else { const r = LIV1.find(x => x[0] === l1); setOccl(r ? r[2] : null); }
+    });
+    c.addEventListener('change', e => {
+      if (e.target.value) setOccl(e.target.value);
+      else { const v = (LIV2[l1] || []).find(x => x[0] === l2); setOccl(v ? v[2] : null); }
     });
   }
 
@@ -317,15 +346,17 @@
       });
       host.addEventListener('pointerup', () => { drag = null; });
       host.addEventListener('wheel', e => { e.preventDefault(); dist = Math.max(2.2, Math.min(8, dist + e.deltaY * 0.004)); draw(); }, { passive: false });
-      document.getElementById('corArt').addEventListener('change', e => { popolaRami(e.target.value); occl = null; aggiorna(); });
-      document.getElementById('corRamo').addEventListener('change', e => { occl = e.target.value || null; aggiorna(); });
+      initSel();
       const sl = document.getElementById('corTempo');
       sl.addEventListener('input', e => { minuti = +e.target.value; document.getElementById('corTempoOut').textContent = fmtMin(minuti); aggiorna(); });
       document.getElementById('corReset').addEventListener('click', () => {
-        occl = null; minuti = 0; sl.value = 0; document.getElementById('corTempoOut').textContent = '0 minuti';
-        document.getElementById('corArt').value = 'lm'; popolaRami('lm'); document.getElementById('corRamo').value = ''; aggiorna();
+        occl = null; minuti = 0; l1 = ''; l2 = ''; sl.value = 0;
+        document.getElementById('corTempoOut').textContent = '0 minuti';
+        document.getElementById('corArt').value = '';
+        riempi(document.getElementById('corVaso'), [], '— tutta l\u2019arteria —');
+        riempi(document.getElementById('corSede'), [], '— tutto il vaso —');
+        aggiorna();
       });
-      popolaRami('lm');
       if (window.ResizeObserver) new ResizeObserver(() => { resize(); draw(); }).observe(host);
     }
     resize(); aggiorna();

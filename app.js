@@ -356,20 +356,10 @@ class Scene3D {
   }
   loadAnat() {
     if (this._anatReq) return; this._anatReq = true;
-    if (!THREE.GLTFLoader) return;
-    this.anatMats = [];
-    new THREE.GLTFLoader().load(window.ISO_GLB || 'cuore.glb', gl => {
-      const root = gl.scene;
-      root.traverse(o => {
-        if (!o.isMesh) return;
-        if (o.geometry && !o.geometry.attributes.normal) o.geometry.computeVertexNormals();
-        o.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0.02, transparent: true, opacity: this._anatOp == null ? 0.6 : this._anatOp, depthWrite: false, side: THREE.DoubleSide });
-        this.anatMats.push(o.material);
-      });
-      this.G.anat.add(root);
-      this.anatRoot = root;
-      this.setHeartOpacity(this._anatOp == null ? 0.6 : this._anatOp);
-    }, null, () => { this._anatReq = false; });
+    if (!window.ISO_CUORE) return;
+    this.cuore = ISO_CUORE.build({ opacity: this._anatOp == null ? 0.6 : this._anatOp });
+    this.anatMats = []; this.cuore.group.traverse(o => { if (o.isMesh) this.anatMats.push(o.material); });
+    this.G.anat.add(this.cuore.group);
   }
   setHeartOpacity(v) {
     this._anatOp = v;
