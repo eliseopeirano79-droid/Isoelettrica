@@ -12,7 +12,7 @@
   const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
   const K = V3(0.55, -0.72, 0.43).normalize();               // asse lungo, base -> apice
   const A = V3(0, 0, 1).projectOnPlane(K).normalize();       // direzione anteriore
-  const B = new THREE.Vector3().crossVectors(K, A).normalize(); // sinistra del paziente
+  const B = new THREE.Vector3().crossVectors(A, K).normalize(); // sinistra del paziente (A x K: X positivo)
   const L = 1.30, RB = 0.53;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const rad = d => d * Math.PI / 180;
