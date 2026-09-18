@@ -2,11 +2,11 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Orbitali ECG: atlante vettoriale 3D</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Orbitali ECG">
 <meta name="theme-color" content="#141b2b">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -406,7 +406,7 @@ function makeArrow(radius,headR,headH,color,opacity){
 function group(){const g=new THREE.Group();scene.add(g);return g;}
 
 /* ---------- Gruppi ---------- */
-const G={front:group(),horiz:group(),planeF:group(),planeH:group(),axes:group(),orb:group(),heart:group(),conduction:group(),impulse:group(),condLabels:group(),instVec:group(),loops:group(),waveVecs:group(),projection:group(),anatHeart:group(),accessory:group()};
+const G={front:group(),horiz:group(),planeF:group(),planeH:group(),axes:group(),orb:group(),heart:group(),conduction:group(),impulse:group(),condLabels:group(),instVec:group(),loops:group(),waveVecs:group(),projection:group(),anatHeart:group(),accessory:group()};window.G=G;window.THREE=THREE;
 
 /* Assi anatomici */
 [[V3(1,0,0),'sinistra del paziente'],[V3(-1,0,0),'destra'],[V3(0,1,0),'craniale'],[V3(0,-1,0),'caudale'],[V3(0,0,1),'anteriore'],[V3(0,0,-1),'posteriore']].forEach(([d,t])=>{
@@ -4178,7 +4178,9 @@ function loadAnatHeart(){
       if(o.geometry&&!o.geometry.attributes.normal)o.geometry.computeVertexNormals();
       o.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.78,metalness:.02,transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide});
       anatMats.push(o.material);});
-    G.anatHeart.add(root);
+    const holder=new THREE.Group(); holder.add(root);
+    holder.scale.setScalar(1.30); holder.position.set(0.02,0.16,0);
+    G.anatHeart.add(holder);
     if(typeof anatOpacity==='number')setAnatOpacity(anatOpacity);
   },null,()=>{anatReq=false;});
 }

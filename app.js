@@ -791,6 +791,89 @@ $('#aSearch').addEventListener('input', e => {
   aTimer = setTimeout(() => { atlasQ = v; renderAtlas(); }, 180);
 });
 
+
+/* =====================================================================
+   CONFRONTA: due quadri affiancati
+   ===================================================================== */
+const CMP = {
+  A: { sel: 'stemi-inferiore', p: {}, mon: null, st: null },
+  B: { sel: 'normale', p: {}, mon: null, st: null },
+  ready: false
+};
+function cmpCardHTML(sc) {
+  const c = sc.card || {};
+  const ul = a => '<ul>' + (a || []).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  let s = '<p>' + esc(c.def || '') + '</p>';
+  if (c.criteri) s += '<h4>Criteri</h4>' + ul(c.criteri);
+  if (c.guarda) s += '<h4>Dove guardare</h4><p>' + esc(c.guarda) + '</p>';
+  if (c.meccanismo) s += '<h4>Meccanismo</h4><p>' + esc(c.meccanismo) + '</p>';
+  if (c.dd) s += '<h4>Diagnosi differenziale</h4>' + ul(c.dd);
+  if (c.trappole) s += '<h4>Trappole</h4><p>' + esc(c.trappole) + '</p>';
+  if (c.corso) s += '<h4>Criteri del corso</h4>' + ul(c.corso);
+  if (c.fonte) s += '<p class="src"><b>Criteri:</b> ' + esc(c.fonte) + '</p>';
+  return s;
+}
+function cmpParams(side) {
+  const S2 = CMP[side], sc = byId[S2.sel], box = $('#cmpPar' + side);
+  box.innerHTML = '';
+  const sec = document.createElement('div'); sec.className = 'sec';
+  sec.innerHTML = '<h3>Parametri</h3>';
+  (sc.params || []).forEach(q => {
+    const d = document.createElement('div'); d.className = 'ctrl';
+    const v = S2.p[q.k];
+    if (q.type === 'select') {
+      d.innerHTML = '<div class="lab"><span>' + esc(q.label) + '</span></div><select>' +
+        q.opts.map(o => '<option value="' + o[0] + '"' + (String(v) === String(o[0]) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select>';
+      d.querySelector('select').addEventListener('change', e => { S2.p[q.k] = e.target.value; cmpBuild(side, true); });
+    } else {
+      d.innerHTML = '<div class="lab"><span>' + esc(q.label) + '</span><output class="num">' + fmt(+v, q.step < 1 ? 1 : 0) + ' ' + (q.unit || '') + '</output></div>' +
+        '<input type="range" min="' + q.min + '" max="' + q.max + '" step="' + q.step + '" value="' + v + '">';
+      const inp = d.querySelector('input'), out = d.querySelector('output');
+      inp.addEventListener('input', () => { out.textContent = fmt(+inp.value, q.step < 1 ? 1 : 0) + ' ' + (q.unit || ''); S2.p[q.k] = +inp.value; cmpBuild(side, true); });
+    }
+    sec.appendChild(d);
+  });
+  const r = document.createElement('button'); r.className = 'btn'; r.textContent = 'Valori tipici';
+  r.addEventListener('click', () => { S2.p = paramsFor(byId[S2.sel]); cmpParams(side); cmpBuild(side, true); });
+  sec.appendChild(r); box.appendChild(sec);
+}
+function cmpBuild(side, keep) {
+  const S2 = CMP[side], sc = byId[S2.sel];
+  const cfg = sc.build(S2.p); cfg.noise = S.noise; cfg.t0 = keep ? S2.mon.t : 0;
+  S2.st = new Stream(cfg, ++seed);
+  S2.mon.setStream(S2.st, keep);
+  S2.mon.setHighlight(sc.look || []);
+}
+function cmpLoad(side, id) {
+  const S2 = CMP[side]; S2.sel = id; S2.p = paramsFor(byId[id]);
+  store['cmp' + side] = id; save();
+  $('#cmpSel' + side).value = id;
+  $('#cmpCard' + side).innerHTML = cmpCardHTML(byId[id]);
+  cmpParams(side); cmpBuild(side, false);
+}
+function cmpInit() {
+  if (CMP.ready) return; CMP.ready = true;
+  ['A', 'B'].forEach(side => {
+    const sel = $('#cmpSel' + side);
+    CATS.forEach(cat => {
+      const g = document.createElement('optgroup'); g.label = cat;
+      SCENARIOS.filter(s => s.cat === cat).forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; g.appendChild(o); });
+      sel.appendChild(g);
+    });
+    CMP[side].mon = new Monitor($('#cmpEcg' + side), $('#cmpOv' + side), {});
+    CMP[side].mon.mode = 'print'; CMP[side].mon.speed = 25; CMP[side].mon.gain = 10;
+    sel.addEventListener('change', e => cmpLoad(side, e.target.value));
+    if (window.ResizeObserver) new ResizeObserver(() => { if (S.view === 'cmp') CMP[side].mon.layout(); }).observe($('#cmpWrap' + side));
+  });
+  $('#cmpSwap').addEventListener('click', () => { const a = CMP.A.sel, b = CMP.B.sel; cmpLoad('A', b); cmpLoad('B', a); });
+  cmpLoad('A', byId[store.cmpA] ? store.cmpA : 'stemi-inferiore');
+  cmpLoad('B', byId[store.cmpB] ? store.cmpB : 'normale');
+}
+function cmpShow() {
+  cmpInit();
+  ['A', 'B'].forEach(s => { CMP[s].mon.layout(); CMP[s].mon.t = CMP[s].mon.pageMs() - 40; CMP[s].mon.draw(); });
+}
+
 /* =====================================================================
    NAVIGAZIONE, TEMA, LOOP
    ===================================================================== */
@@ -800,6 +883,8 @@ function showView(v) {
   if (v === 'trace') { requestAnimationFrame(() => { mon.layout(); scene.resize(); }); }
   if (v === 'theory') renderTheory();
   if (v === 'atlas') renderAtlas();
+  if (v === 'cmp') cmpShow();
+  if (v === 'cor' && window.ISO_CORONARIE) window.ISO_CORONARIE.init();
   if (v === 'anat') {
     const f = $('#anatFrame');
     if (!f.getAttribute('src')) {
@@ -835,10 +920,14 @@ function loop(now) {
   } else if (S.view === 'quiz' && Q.stream) {
     if (Q.playing) qmon.t += dt;
     qmon.draw();
+  } else if (S.view === 'cmp' && CMP.ready) {
+    ['A', 'B'].forEach(s => { const m = CMP[s].mon; if (!m.stream) return; if (S.playing) m.t += dt * S.slow; m.draw(); });
+    if (now - mT > 500) { mT = now; ['A', 'B'].forEach(s => { const m = CMP[s].mon; if (m.stream) $('#cmpMeas' + s).innerHTML = measure(m.stream, m.t); }); }
   }
   requestAnimationFrame(loop);
 }
 
+window.ISO_OPEN = id => { showView('trace'); loadScenario(id, false); };
 renderLib('');
 setPlaying(S.playing);
 loadScenario(S.sc, false);

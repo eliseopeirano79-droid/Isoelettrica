@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="author" content="Eliseo Peirano">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Isoelettrica</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
 <link rel="manifest" href="manifest.webmanifest">
@@ -246,6 +246,43 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 #v-quiz.on{overflow:auto;-webkit-overflow-scrolling:touch}
 .top{position:relative;z-index:40;background:var(--panel);isolation:isolate}
 @supports (-webkit-touch-callout:none){.top{backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+#v-cmp.on{display:block;overflow:auto;-webkit-overflow-scrolling:touch}
+.cmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:100%}
+.cmpcol{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.cmpcol:last-child{border-right:none}
+.cmphead{display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+.cmpsel{flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px}
+.cmpswap{padding:6px 10px;font-size:15px;line-height:1}
+.cmpmeas{padding:6px 12px;font-size:11.5px;flex-wrap:wrap}
+.cmpwrap{height:290px;flex:none}
+.cmpbody{overflow:auto;padding:0 0 30px}
+.cmppar .sec,.cmpcard .sec{margin:10px 12px}
+.cmpcard h4{margin:12px 12px 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--accent)}
+.cmpcard p,.cmpcard ul{margin:0 12px 8px;font-size:13px;line-height:1.5}
+.cmpcard ul{padding-left:18px}
+.cmpcard .src{font-size:11.5px;color:var(--muted)}
+@media (max-width:860px){.cmpgrid{grid-template-columns:1fr}.cmpcol{border-right:none;border-bottom:1px solid var(--line)}.cmpwrap{height:230px}}
+
+#v-cor.on{display:grid;grid-template-columns:minmax(0,1fr) 380px}
+.corleft{display:flex;flex-direction:column;min-width:0}
+.corctrl{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+.corctrl select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px}
+.corlab{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.corstage{flex:1;min-height:320px;background:var(--stage);position:relative;touch-action:none}
+.corstage canvas{display:block;width:100%;height:100%}
+.corhint{margin:0;padding:8px 14px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
+.corout{border-left:1px solid var(--line);overflow:auto;padding:14px 16px 40px}
+.corout h3{margin:0 0 4px;font-size:16px}
+.corout h4{margin:14px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--accent)}
+.corout p{margin:0 0 8px;font-size:13.5px;line-height:1.5}
+.cortipo{font-weight:600;color:var(--accent)}
+.corgrid{display:grid;gap:8px;margin:10px 0}
+.corgrid>div{background:var(--chip);border-radius:9px;padding:8px 10px;font-size:13px}
+.corgrid .corlab{display:block;margin-bottom:2px}
+.coronda{font-size:13px;color:var(--fg);background:var(--accent-soft);border-radius:9px;padding:8px 10px}
+.corout .src{font-size:11.5px;color:var(--muted)}
+@media (max-width:900px){#v-cor.on{grid-template-columns:minmax(0,1fr);overflow:auto}.corout{border-left:none;border-top:1px solid var(--line)}.corstage{min-height:300px;height:44vh}}
 </style>
 </head>
 <body>
@@ -259,6 +296,8 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
       <button data-v="trace" class="on">Tracciato</button>
       <button data-v="theory">Teoria</button>
       <button data-v="atlas">Atlante</button>
+      <button data-v="cmp">Confronta</button>
+      <button data-v="cor">Coronarie</button>
       <button data-v="anat">Anatomia</button>
       <button data-v="quiz">Quiz</button>
     </nav>
@@ -319,6 +358,42 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
     <article class="article" id="article"></article>
   </section>
 
+  <!-- CONFRONTA -->
+  <section class="view" id="v-cmp">
+    <div class="cmpgrid">
+      <div class="cmpcol" data-s="A">
+        <div class="cmphead"><select class="cmpsel" id="cmpSelA" aria-label="Quadro a sinistra"></select><button class="btn cmpswap" id="cmpSwap" title="Scambia i due quadri">⇄</button></div>
+        <div class="measures num cmpmeas" id="cmpMeasA"></div>
+        <div class="ecgwrap cmpwrap" id="cmpWrapA"><canvas id="cmpEcgA"></canvas><canvas id="cmpOvA" class="ov"></canvas></div>
+        <div class="cmpbody"><div class="cmppar" id="cmpParA"></div><div class="cmpcard" id="cmpCardA"></div></div>
+      </div>
+      <div class="cmpcol" data-s="B">
+        <div class="cmphead"><select class="cmpsel" id="cmpSelB" aria-label="Quadro a destra"></select></div>
+        <div class="measures num cmpmeas" id="cmpMeasB"></div>
+        <div class="ecgwrap cmpwrap" id="cmpWrapB"><canvas id="cmpEcgB"></canvas><canvas id="cmpOvB" class="ov"></canvas></div>
+        <div class="cmpbody"><div class="cmppar" id="cmpParB"></div><div class="cmpcard" id="cmpCardB"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CORONARIE -->
+  <section class="view" id="v-cor">
+    <div class="corleft">
+      <div class="corctrl">
+        <label class="corlab" for="corArt">Arteria</label>
+        <select id="corArt"><option value="lm">Sinistra: tronco comune, discendente anteriore, circonflessa</option><option value="rca">Coronaria destra</option></select>
+        <label class="corlab" for="corRamo">Sede dell’occlusione</label>
+        <select id="corRamo"></select>
+        <div class="ctrl"><div class="lab"><span>Tempo dall’occlusione</span><output class="num" id="corTempoOut">0 minuti</output></div>
+          <input id="corTempo" type="range" min="0" max="1440" step="10" value="0"></div>
+        <button class="btn" id="corReset">Riapri l’arteria</button>
+      </div>
+      <div class="corstage" id="corStage"></div>
+      <p class="corhint">Trascina per ruotare, pizzica o rotella per lo zoom. Rosso: arteria pervia. Grigio: tratto chiuso. Giallo: miocardio a rischio ancora vivo. Grigio-blu: necrosi.</p>
+    </div>
+    <div class="corout" id="corOut"></div>
+  </section>
+
   <!-- ANATOMIA: Orbitali ECG -->
   <section class="view" id="v-anat"><iframe id="anatFrame" title="Orbitali ECG" loading="lazy"></iframe></section>
 
@@ -368,5 +443,6 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="engine.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="coronarie.js"></script>
 </body>
 </html>
