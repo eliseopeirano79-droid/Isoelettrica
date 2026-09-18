@@ -215,7 +215,7 @@
     Object.keys(h.coro).forEach(id => { if (!ISO_CUORE.CORO[id].vena) ramiMesh[id] = h.coro[id]; });
     [['LAD', 'lad2'], ['LCx', 'cx1'], ['RCA', 'rca2'], ['PDA', 'pda'], ['D1', 'd1'], ['OM1', 'om1'], ['LM', 'lm']].forEach(([t, id]) => {
       const via = ISO_CUORE.CORO[id].via, v = via[Math.floor(via.length / 2)];
-      const p = ISO_CUORE.P(v[0], v[1], v[2] + 0.12);
+      const p = v.length === 4 ? new THREE.Vector3(v[0], v[1], v[2] + 0.14) : ISO_CUORE.P(v[0], v[1], v[2] + 0.12);
       const sp = makeLabel(t); sp.position.copy(p); root.add(sp); lbl.push(sp);
     });
     inited = true;
