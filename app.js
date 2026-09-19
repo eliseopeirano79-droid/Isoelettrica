@@ -755,18 +755,21 @@ $('#zenEsci').addEventListener('click', () => zenStage(false));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (zenOn) zenStage(false); else if (document.body.classList.contains('zen-card')) zenCard(false); } });
 
 function zDati() {
+  // tre riquadri di soli numeri (larghezza e altezza fisse) e la fase, che è
+  // testo variabile, su una riga sua alta due righe: così le barre sotto non
+  // ballano mai quando cambia la fase del ciclo.
   $('#zDati').innerHTML =
     '<h4>Vettore istantaneo</h4><div class="zgrid">' +
     '<div><span>Modulo</span><b id="zMod">—</b></div>' +
-    '<div><span>Fase</span><b id="zFase" style="font-size:12.5px">—</b></div>' +
-    '<div><span>Asse frontale</span><b id="zFront">—</b></div>' +
-    '<div><span>Asse orizzontale</span><b id="zOriz">—</b></div></div>' +
+    '<div><span title="Asse frontale">Asse frontale</span><b id="zFront">—</b></div>' +
+    '<div><span title="Asse orizzontale">Asse orizz.</span><b id="zOriz">—</b></div></div>' +
+    '<div class="zfase"><span>Fase</span><b id="zFase">—</b></div>' +
     '<h4>Proiezione sulle dodici derivazioni</h4><div id="zLeads"></div>' +
     '<p class="note" style="margin-top:10px">La barra è la proiezione del vettore sull’asse della derivazione: a destra positiva, a sinistra negativa. È esattamente ciò che la punta scrive sulla carta in quell’istante.</p>';
   $('#zLeads').innerHTML = LEADS.map(L =>
     '<div class="zlead"><i>' + L.id + '</i><div class="zbaro"><i id="zb-' + L.id + '"></i></div><u id="zv-' + L.id + '">0,00</u></div>').join('');
 }
-let zT = 0;
+let zT = 0, zScala = 0.6;
 function zAggiorna(now) {
   if (!zenOn || !stream) return;
   $('#zenTitolo').textContent = $('#scTitle').textContent;
@@ -782,7 +785,12 @@ function zAggiorna(now) {
     e('zOriz').textContent = mod > 0.04 ? grado(oriz) : '—';
     e('zFase').textContent = scene.phase || '—';
   }
-  const scala = Math.max(0.6, Math.max.apply(null, zLv.map(Math.abs)) * 1.15);
+  // la scala non si ricalcola a ogni fotogramma: cresce subito e cala piano,
+  // altrimenti a vettore piccolo le barre resterebbero lunghe e sembrerebbero
+  // impazzite. Così la lunghezza della barra è confrontabile nel tempo.
+  const picco = Math.max.apply(null, zLv.map(Math.abs)) * 1.15;
+  zScala = Math.max(0.6, picco, zScala * 0.992);
+  const scala = zScala;
   LEADS.forEach((L, i) => {
     const b = document.getElementById('zb-' + L.id), u = document.getElementById('zv-' + L.id);
     if (!b) return;

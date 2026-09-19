@@ -179,6 +179,109 @@
   /* ---------- scena ---------- */
   let sc, cam, ren, root, segMesh = {}, ramiMesh = {}, lbl = [], raf = 0, inited = false;
   let rot = { x: -0.22, y: 0.7 }, dist = 3.25, occl = null, minuti = 0;
+  let asse = null, pos = 0, disco = null;   // percorso corrente, posizione del piano di sezione, mesh
+
+  /* ---------- piano di sezione scorrevole lungo il vaso ----------
+     Il vaso scelto viene campionato punto per punto e misurato in lunghezza
+     reale. Il piano nero è un tappo perpendicolare all'asse del vaso: dove si
+     ferma, tutto ciò che sta a valle si chiude, e i rami che nascono prima
+     restano perfusi. È la differenza fra occludere la LAD prima o dopo la
+     prima settale. */
+  const V_LAD = ['lad1', 'lad2', 'lad3'], V_CX = ['cx1', 'cx2'], V_RCA = ['rca1', 'rca2', 'rca3'];
+  const ASSI = { lad1: V_LAD, lad2: V_LAD, lad3: V_LAD, cx1: V_CX, cx2: V_CX, rca1: V_RCA, rca2: V_RCA, rca3: V_RCA, pda: ['pda'] };
+  const NOMI = {
+    ri: ['Ramo intermedio', 'RI'], s3: ['Terza settale', 'S3'], am2: ['Secondo marginale acuto', 'AM2'],
+    rvb: ['Ramo ventricolare destro', 'RVB'], sp1: ['Prima settale posteriore', 'SP1'], sp2: ['Seconda settale posteriore', 'SP2']
+  };
+  const nomeDi = id => (ALBERO[id] && ALBERO[id].nome) || (NOMI[id] && NOMI[id][0]) || id;
+  const siglaDi = id => (ALBERO[id] && ALBERO[id].sigla) || (NOMI[id] && NOMI[id][1]) || id;
+
+  const puntoVia = v => v.length === 4 ? new THREE.Vector3(v[0], v[1], v[2]) : ISO_CUORE.P(v[0], v[1], v[2]);
+
+  function costruisciAsse(ids) {
+    const pts = [];
+    ids.forEach(id => {
+      const c = new THREE.CatmullRomCurve3(ISO_CUORE.CORO[id].via.map(puntoVia), false, 'centripetal');
+      for (let i = pts.length ? 1 : 0; i <= 48; i++) pts.push({ p: c.getPoint(i / 48), id: id });
+    });
+    let L = 0; pts[0].d = 0;
+    for (let i = 1; i < pts.length; i++) { L += pts[i].p.distanceTo(pts[i - 1].p); pts[i].d = L; }
+    pts.forEach(q => q.u = L ? q.d / L : 0);
+    const inizio = {}, ostii = {};
+    ids.forEach(id => { const q = pts.find(x => x.id === id); inizio[id] = q ? q.u : 0; });
+    // ostio di ogni collaterale: punto dell'asse più vicino al suo primo punto
+    const F = ISO_CUORE.FIGLI || {};
+    ids.forEach(id => (F[id] || []).forEach(f => {
+      if (ids.indexOf(f) >= 0 || !ISO_CUORE.CORO[f]) return;
+      const p0 = puntoVia(ISO_CUORE.CORO[f].via[0]);
+      let bu = inizio[id], bd = Infinity;
+      pts.forEach(q => { const d = q.p.distanceToSquared(p0); if (d < bd) { bd = d; bu = q.u; } });
+      ostii[f] = bu;
+    }));
+    return { ids: ids, pts: pts, lung: L, inizio: inizio, ostii: ostii };
+  }
+
+  function campionaA(u) {
+    const pts = asse.pts;
+    let i = 1; while (i < pts.length - 1 && pts[i].u < u) i++;
+    const a = pts[i - 1], b = pts[i];
+    const k = b.u > a.u ? (u - a.u) / (b.u - a.u) : 0;
+    return {
+      p: a.p.clone().lerp(b.p, k),
+      t: b.p.clone().sub(a.p).normalize(),
+      id: k > 0.5 ? b.id : a.id
+    };
+  }
+
+  /* Stato dell'occlusione tenendo conto di dove si trova il morsetto:
+     segmento colpito, collaterali risparmiati, territorio e rischio residui. */
+  function sede() {
+    if (!occl) return null;
+    const base = OCCL[occl];
+    if (!asse || !base) return base ? { id: occl, o: base, risp: [], chiusi: ISO_CUORE.aValle(occl), seg: base.seg, rischio: base.rischio, vd: base.vd } : null;
+    const c = campionaA(pos), id = ISO_CUORE.CORO[c.id] ? c.id : occl;
+    const o = OCCL[id] || base;
+    const F = ISO_CUORE.FIGLI || {};
+    const figli = F[id] || [];
+    // rami che nascono a monte del morsetto: restano perfusi, con tutto il loro albero
+    const risp = figli.filter(f => asse.ids.indexOf(f) < 0 && asse.ostii[f] != null && asse.ostii[f] < pos - 0.004);
+    const salvi = {}; risp.forEach(f => ISO_CUORE.aValle(f).forEach(x => salvi[x] = 1));
+    const chiusi = ISO_CUORE.aValle(id).filter(x => !salvi[x]);
+    // territorio a rischio: quello del segmento colpito meno i rami risparmiati,
+    // più quello di tutti i rami che restano a valle del morsetto
+    const fuori = {};
+    risp.forEach(f => ((OCCL[f] || {}).seg || []).forEach(n => fuori[n] = 1));
+    const dentro = {};
+    (o.seg || []).forEach(n => { if (!fuori[n]) dentro[n] = 1; });
+    chiusi.forEach(b => { if (b !== id) ((OCCL[b] || {}).seg || []).forEach(n => dentro[n] = 1); });
+    const seg = Object.keys(dentro).map(Number).sort((a, b) => a - b);
+    // l'area non può scendere sotto quella dei rami che restano occlusi a valle
+    const distali = figli.filter(f => risp.indexOf(f) < 0 && OCCL[f]);
+    let rischio = o.rischio;
+    risp.forEach(f => { if (OCCL[f]) rischio -= OCCL[f].rischio; });
+    distali.forEach(f => { rischio = Math.max(rischio, OCCL[f].rischio); });
+    const succ = asse.ids[asse.ids.indexOf(id) + 1];
+    let vd = o.vd || 0;
+    risp.forEach(f => { if (['cono', 'rvb', 'am', 'am2'].indexOf(f) >= 0) vd -= 0.35; });
+    if (succ && OCCL[succ]) vd = Math.max(vd, OCCL[succ].vd || 0);
+    return { id: id, o: o, risp: risp, chiusi: chiusi, seg: seg, punto: c, rischio: Math.max(2, Math.round(rischio)), vd: Math.max(0, vd) };
+  }
+
+  function mostraDisco(st) {
+    if (!disco) {
+      disco = new THREE.Mesh(new THREE.CircleGeometry(1, 30),
+        new THREE.MeshBasicMaterial({ color: 0x05070d, side: THREE.DoubleSide }));
+      const anello = new THREE.Mesh(new THREE.RingGeometry(0.97, 1.22, 30),
+        new THREE.MeshBasicMaterial({ color: 0xffd166, side: THREE.DoubleSide, transparent: true, opacity: 0.95, depthTest: false }));
+      anello.renderOrder = 4; disco.add(anello); root.add(disco);
+    }
+    if (!st || !st.punto) { disco.visible = false; return; }
+    const r = (ISO_CUORE.CORO[st.id] || { r: 0.02 }).r * 2.1;
+    disco.visible = true;
+    disco.scale.setScalar(r);
+    disco.position.copy(st.punto.p);
+    disco.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), st.punto.t);
+  }
 
   function makeLabel(t) {
     const c = document.createElement('canvas'), x = c.getContext('2d');
@@ -235,49 +338,53 @@
 
   /* ---------- stato e colori ---------- */
   function aggiorna() {
-    const chiusi = occl ? ISO_CUORE.aValle(occl) : [];
+    const st = sede();
+    const chiusi = st ? st.chiusi : [];
     Object.keys(ramiMesh).forEach(id => {
       const m = ramiMesh[id];
       const closed = chiusi.indexOf(id) >= 0;
       m.material.color.setHex(closed ? 0x5d6675 : 0xd3283c);
       m.material.opacity = closed ? 0.85 : 1; m.material.transparent = true;
     });
-    const o = occl ? OCCL[occl] : null;
+    mostraDisco(st);
+    const o = st ? st.o : null;
     const f = frazione(minuti);
     ISO_CUORE.SEG.forEach(sg => {
       const m = segMesh[sg.n];
-      const colpito = o && o.seg.indexOf(sg.n) >= 0;
+      const colpito = st && st.seg.indexOf(sg.n) >= 0;
       if (!colpito) { m.material.color.setHex(0xd98f92); m.material.emissive && m.material.emissive.setHex(0x000000); return; }
       // giallo: area a rischio ancora viva; grigio-blu: necrosi
       const vivo = new THREE.Color(0xf2c14e), morto = new THREE.Color(0x4a5568);
       m.material.color.copy(vivo.clone().lerp(morto, f));
     });
     if (segMesh.rv) {
-      const q = o ? o.vd : 0;
+      const q = st ? st.vd : 0;
       segMesh.rv.material.color.copy(new THREE.Color(0xc98a8e).lerp(new THREE.Color(0xf2c14e).lerp(new THREE.Color(0x4a5568), f), q));
     }
-    pannello(o, f);
+    pannello(st, f);
     draw();
   }
 
-  function pannello(o, f) {
+  function pannello(st, f) {
     const box = document.getElementById('corOut');
     if (!box) return;
-    if (!o) { box.innerHTML = '<p class="note">Scegli un\u2019arteria e un ramo: l\u2019albero a valle si chiude, il territorio colpito si colora e qui compare il tipo di infarto che ne deriva.</p>'; return; }
-    const b = ALBERO[occl];
-    const segNomi = o.seg.map(n => (ISO_CUORE.SEG.find(s => s.n === n) || {}).nome).filter(Boolean);
-    const perse = Math.round(o.rischio * f);
+    if (!st) { box.innerHTML = '<p class="note">Scegli un\u2019arteria e un ramo: l\u2019albero a valle si chiude, il territorio colpito si colora e qui compare il tipo di infarto che ne deriva. Poi sposta il punto di occlusione lungo il vaso: il disco nero è la sezione chiusa, e i rami che nascono prima restano perfusi.</p>'; return; }
+    const o = st.o;
+    const segNomi = st.seg.map(n => (ISO_CUORE.SEG.find(s => s.n === n) || {}).nome).filter(Boolean);
+    const perse = Math.round(st.rischio * f);
     box.innerHTML =
-      '<h3>' + esc(b.nome) + '</h3>' +
+      '<h3>' + esc(nomeDi(st.id)) + '</h3>' +
       '<p class="cortipo">' + esc(o.tipo) + '</p>' +
-      '<div class="corgrid"><div><span class="corlab">Area a rischio</span><b>' + o.rischio + '% del ventricolo sinistro</b></div>' +
+      (st.risp.length ? '<p class="coronda">Il morsetto è a valle dell\u2019origine di ' + esc(st.risp.map(siglaDi).join(', ')) +
+        ': quel territorio resta perfuso e fuori dall\u2019area a rischio.</p>' : '') +
+      '<div class="corgrid"><div><span class="corlab">Area a rischio</span><b>' + st.rischio + '% del ventricolo sinistro</b></div>' +
       '<div><span class="corlab">Necrosi a ' + fmtMin(minuti) + '</span><b>' + Math.round(f * 100) + '% dell\u2019area a rischio, cioè ' + perse + '% del ventricolo</b></div></div>' +
       '<p class="coronda">' + esc(testoOnda(minuti)) + '</p>' +
       '<h4>ECG atteso</h4><p>' + esc(o.ecg) + '</p>' +
       '<h4>Immagini speculari</h4><p>' + esc(o.rec) + '</p>' +
       '<h4>Complicanze da attendersi</h4><p>' + esc(o.comp) + '</p>' +
       (segNomi.length ? '<h4>Segmenti colpiti</h4><p>' + esc(segNomi.join('; ')) + '</p>' : '') +
-      (o.vd ? '<p class="note">Coinvolgimento del ventricolo destro: registra sempre V3R e V4R.</p>' : '') +
+      (st.vd ? '<p class="note">Coinvolgimento del ventricolo destro: registra sempre V3R e V4R.</p>' : '') +
       '<button class="btn" id="corApri">Apri il quadro ECG corrispondente</button>' +
       '<p class="src">Territori secondo il modello a 17 segmenti AHA; corrispondenze arteria-derivazioni da ESC 2023 e dalla quinta definizione universale di infarto; tempi di necrosi dagli studi sperimentali di Reimer e Jennings, indicativi e molto dipendenti dai circoli collaterali.</p>';
     const btn = document.getElementById('corApri');
@@ -309,7 +416,30 @@
     voci.forEach(v => { const o = document.createElement('option'); o.value = v[0]; o.textContent = v[1]; sel.appendChild(o); });
     sel.disabled = voci.length === 0;
   }
-  function setOccl(id) { occl = id || null; aggiorna(); }
+  function setOccl(id) {
+    occl = id || null;
+    asse = null; pos = 0;
+    if (occl && ISO_CUORE.CORO[occl]) {
+      asse = costruisciAsse(ASSI[occl] || [occl]);
+      pos = Math.min(0.995, (asse.inizio[occl] || 0) + 0.012);   // appena dentro il segmento scelto
+    }
+    sincSlider();
+    aggiorna();
+  }
+  function sincSlider() {
+    const sl = document.getElementById('corPos'), out = document.getElementById('corPosOut');
+    if (!sl) return;
+    sl.disabled = !asse;
+    sl.value = Math.round(pos * 1000);
+    if (out) out.textContent = etichettaPos();
+  }
+  function etichettaPos() {
+    if (!asse) return '—';
+    const st = sede();
+    if (!st) return '—';
+    const mm = (pos * asse.lung * 60).toFixed(0);   // il cuore del modello è alto ~1.3 unità ≈ 8 cm
+    return siglaDi(st.id) + ' · ' + mm + ' mm dall\u2019ostio';
+  }
   function initSel() {
     const a = document.getElementById('corArt'), b = document.getElementById('corVaso'), c = document.getElementById('corSede');
     riempi(b, [], '— tutta l\u2019arteria —'); riempi(c, [], '— tutto il vaso —');
@@ -349,8 +479,16 @@
       initSel();
       const sl = document.getElementById('corTempo');
       sl.addEventListener('input', e => { minuti = +e.target.value; document.getElementById('corTempoOut').textContent = fmtMin(minuti); aggiorna(); });
+      const sp = document.getElementById('corPos');
+      sp.addEventListener('input', e => {
+        if (!asse) return;
+        pos = Math.min(0.995, Math.max(0.005, (+e.target.value) / 1000));
+        document.getElementById('corPosOut').textContent = etichettaPos();
+        aggiorna();
+      });
       document.getElementById('corReset').addEventListener('click', () => {
-        occl = null; minuti = 0; l1 = ''; l2 = ''; sl.value = 0;
+        occl = null; minuti = 0; l1 = ''; l2 = ''; sl.value = 0; asse = null; pos = 0;
+        sincSlider();
         document.getElementById('corTempoOut').textContent = '0 minuti';
         document.getElementById('corArt').value = '';
         riempi(document.getElementById('corVaso'), [], '— tutta l\u2019arteria —');

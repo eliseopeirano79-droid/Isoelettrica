@@ -65,12 +65,16 @@ M.pLeftAtrial = (amp = 1) => [B(dirAG(40, -60), 0.13 * amp, 45, 20, 20)];
 M.qrsNormal = (o = {}) => {
   const r = o.r == null ? 1 : o.r, q = o.q == null ? 1 : o.q, s = o.s == null ? 1 : o.s;
   const ax = o.aR == null ? 0 : o.aR - 50;
+  // I quattro vettori si sovrappongono nel tempo: un QRS reale è un movimento
+  // continuo, non quattro colpi separati. Con componenti troppo strette e
+  // distanziate le derivazioni dove le proiezioni sono piccole e dello stesso
+  // segno (DIII, V2) mostravano due gobbe invece di un complesso unico.
   return {
     w: 94, c: [
-      B(dirAG(165, 45), 0.26 * q, 13, 7, 7),
-      B(dirAG(40 + ax, 30), 0.62 * r, 32, 9, 9),
-      B(dirAG(55 + ax, -30), 0.92 * r, 48, 10, 10),
-      B(dirAG(-125, -55), 0.34 * s, 68, 9, 11)
+      B(dirAG(178, 28), 0.24 * q, 15, 9, 9),          // setto: a destra, avanti, appena in alto
+      B(dirAG(42 + ax, 22), 0.60 * r, 33, 12, 12),    // parete libera, prima metà
+      B(dirAG(56 + ax, -28), 0.94 * r, 49, 12, 12),   // parete libera, vettore principale
+      B(dirAG(-122, -52), 0.34 * s, 68, 10, 12)       // basi: in alto, a destra, indietro
     ]
   };
 };

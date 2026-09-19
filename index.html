@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=26">
+<link rel="manifest" href="manifest.webmanifest?v=28">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -313,7 +313,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .zen[hidden]{display:none!important}
 .zbar{display:flex;align-items:center;gap:12px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .zbar b{font-size:15px}
-.zmis{font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.zmis{font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .zmis b{color:var(--fg)}
 .zbar .btn{margin-left:auto}
 .zbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px}
@@ -322,11 +322,16 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .zdati{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px 14px 30px}
 .zdati h4{margin:14px 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
 .zdati h4:first-child{margin-top:0}
-.zgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.zgrid div{background:var(--chip);border-radius:8px;padding:6px 8px}
-.zgrid span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.zgrid b{font-size:16px;font-variant-numeric:tabular-nums}
-.zlead{display:grid;grid-template-columns:34px 1fr 58px;align-items:center;gap:6px;font-size:12px;padding:1.5px 0}
+.zgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.zgrid div{background:var(--chip);border-radius:8px;padding:6px 8px;height:50px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.zgrid span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zgrid b{font-size:15.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* la fase è testo di lunghezza variabile: altezza fissa a due righe, così
+   nulla di quel che sta sotto si sposta quando cambia il momento del ciclo */
+.zfase{background:var(--chip);border-radius:8px;padding:6px 8px;margin-top:6px;height:52px;overflow:hidden}
+.zfase span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.zfase b{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.3;font-weight:600}
+.zlead{display:grid;grid-template-columns:34px 1fr 58px;align-items:center;gap:6px;font-size:12px;height:18px;padding:0}
 .zlead i{font-style:normal;color:var(--muted);font-weight:600}
 .zlead u{text-decoration:none;font-variant-numeric:tabular-nums;text-align:right;color:var(--muted)}
 .zbaro{position:relative;height:9px;background:var(--chip);border-radius:3px;overflow:hidden}
@@ -466,6 +471,8 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
         <select id="corVaso"></select>
         <label class="corlab" for="corSede">Sede lungo il vaso</label>
         <select id="corSede"></select>
+        <div class="ctrl"><div class="lab"><span>Punto di occlusione</span><output class="num" id="corPosOut">—</output></div>
+          <input id="corPos" type="range" min="0" max="1000" step="1" value="0" disabled></div>
         <div class="ctrl"><div class="lab"><span>Tempo dall’occlusione</span><output class="num" id="corTempoOut">0 minuti</output></div>
           <input id="corTempo" type="range" min="0" max="1440" step="10" value="0"></div>
         <button class="btn" id="corReset">Riapri l’arteria</button>
@@ -540,13 +547,13 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 
 <!-- Alla prossima pubblicazione cambia il numero dopo ?v= qui sotto e VERSION in sw.js:
      è quello che costringe iPad a scaricare davvero i file nuovi. -->
-<script src="three.min.js?v=26"></script>
-<script src="cuore3d.js?v=26"></script>
-<script src="engine.js?v=26"></script>
-<script src="ipertrofie.js?v=26"></script>
-<script src="data.js?v=26"></script>
-<script src="atlante-digitale.js?v=26"></script>
-<script src="app.js?v=26"></script>
-<script src="coronarie.js?v=26"></script>
+<script src="three.min.js?v=28"></script>
+<script src="cuore3d.js?v=28"></script>
+<script src="engine.js?v=28"></script>
+<script src="ipertrofie.js?v=28"></script>
+<script src="data.js?v=28"></script>
+<script src="atlante-digitale.js?v=28"></script>
+<script src="app.js?v=28"></script>
+<script src="coronarie.js?v=28"></script>
 </body>
 </html>

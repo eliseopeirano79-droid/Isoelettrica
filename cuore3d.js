@@ -169,5 +169,5 @@
   function setOpacity(h, v) {
     h.group.traverse(o => { if (o.isMesh) { o.material.transparent = v < 0.999; o.material.opacity = v; o.material.depthWrite = v > 0.6; o.material.needsUpdate = true; } });
   }
-  root.ISO_CUORE = { build, setOpacity, SEG, CORO, aValle, P, R };
+  root.ISO_CUORE = { build, setOpacity, SEG, CORO, FIGLI, aValle, P, R };
 })(typeof window !== 'undefined' ? window : this);
