@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Isoelettrica — revisione dei tracciati digitalizzati</title>
+<style>
+:root{--bg:#eceff3;--panel:#fbfcfd;--fg:#141a24;--muted:#5a6473;--line:#d6dce4;--chip:#e7ebf0;
+ --accent:#c21d3b;--ok:#17784c;--bad:#c21d3b;--paper:#fff8f6;--grid:#f5d5cd;--grid2:#e3a193;--trace:#161b24;
+ color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0a0e14;--panel:#111721;--fg:#e4e9f1;--muted:#8c97a8;--line:#222c3a;
+ --chip:#1a2230;--accent:#ff5d78;--ok:#48d38f;--bad:#ff5d78;--paper:#07110d;--grid:#10261b;--grid2:#1c4632;--trace:#79f5ab;
+ color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+ padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 60px max(12px,env(safe-area-inset-left))}
+h1{font-size:21px;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 14px;max-width:70ch}
+.bar{position:sticky;top:0;z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+ padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{border:1px solid var(--line);background:var(--chip);border-radius:9px;padding:7px 12px;font:inherit;font-size:13.5px;color:inherit;cursor:pointer}
+.btn.ok{border-color:var(--ok);color:var(--ok)} .btn.no{border-color:var(--bad);color:var(--bad)}
+.btn.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.conta{margin-left:auto;font-size:13px;color:var(--muted)}
+.caso{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:16px}
+.caso h2{font-size:15.5px;margin:0 0 2px}
+.caso .meta{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.due{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:900px){.due{grid-template-columns:1fr}}
+.due img{width:100%;height:auto;display:block;border-radius:8px;background:#0d1117}
+canvas{width:100%;display:block;border-radius:8px}
+.azioni{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.tag{font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--line)}
+.tag.ok{color:var(--ok);border-color:var(--ok)} .tag.no{color:var(--bad);border-color:var(--bad)}
+textarea{flex:1;min-width:200px;border:1px solid var(--line);background:var(--bg);color:inherit;border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;resize:vertical}
+pre{white-space:pre-wrap;word-break:break-all;background:var(--chip);border-radius:8px;padding:10px;font-size:12px}
+</style>
+</head>
+<body>
+<h1>Revisione dei tracciati digitalizzati</h1>
+<p class="sub">A sinistra la scansione originale della slide, a destra il segnale che il programma ne ha estratto,
+ridisegnato su carta millimetrata. Se le due cose combaciano nella forma, il tracciato è buono.
+Le scelte restano su questo dispositivo; alla fine premi «Esporta» e mandami l’elenco.</p>
+
+<div class="bar">
+  <button class="btn on" data-f="tutti">Tutti</button>
+  <button class="btn" data-f="davedere">Da vedere</button>
+  <button class="btn" data-f="ok">Approvati</button>
+  <button class="btn" data-f="no">Da rifare</button>
+  <button class="btn" id="esporta">Esporta l’elenco</button>
+  <span class="conta" id="conta"></span>
+</div>
+<pre id="uscita" hidden></pre>
+<div id="lista"></div>
+
+<script src="atlante-digitale.js"></script>
+<script>
+(function(){
+'use strict';
+var D = window.ISO_ATLANTE_DIG || {};
+var ORD = ['I','II','III','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6'];
+var KEY = 'isoelettrica.revisione';
+var stato = {};
+try { stato = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e) { stato = {}; }
+function salva(){ try{ localStorage.setItem(KEY, JSON.stringify(stato)); }catch(e){} }
+
+function decodifica(b64){
+  var bin = atob(b64), n = bin.length >> 1, out = new Float32Array(n);
+  for (var i=0;i<n;i++){ var v = bin.charCodeAt(2*i) | (bin.charCodeAt(2*i+1)<<8); if (v>32767) v-=65536; out[i]=v/100; }
+  return out;
+}
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+function disegna(cv, rec){
+  var d = Math.min(window.devicePixelRatio||1, 2);
+  var W = cv.clientWidth || 600;
+  var der = Object.keys(rec.d);
+  var dodici = der.length >= 10;
+  var righe = dodici ? 3 : der.length, colonne = dodici ? 4 : 1;
+  var mm = W / (colonne * 62.5 + 8);            // 62,5 mm per pannello = 2,5 s
+  var rowmm = dodici ? 26 : 30;
+  var H = Math.round(mm * (righe * rowmm + 6));
+  cv.width = Math.round(W*d); cv.height = Math.round(H*d); cv.style.height = H+'px';
+  var c = cv.getContext('2d'); c.scale(d,d);
+  c.fillStyle = css('--paper'); c.fillRect(0,0,W,H);
+  var i;
+  for (i=0; i*mm<=W; i++){ c.strokeStyle = (i%5)?css('--grid'):css('--grid2'); c.lineWidth=(i%5)?0.5:0.8;
+    c.beginPath(); c.moveTo(Math.round(i*mm)+.5,0); c.lineTo(Math.round(i*mm)+.5,H); c.stroke(); }
+  for (i=0; i*mm<=H; i++){ c.strokeStyle = (i%5)?css('--grid'):css('--grid2'); c.lineWidth=(i%5)?0.5:0.8;
+    c.beginPath(); c.moveTo(0,Math.round(i*mm)+.5); c.lineTo(W,Math.round(i*mm)+.5); c.stroke(); }
+  c.strokeStyle = css('--trace'); c.fillStyle = css('--trace'); c.lineWidth = 1.2; c.lineJoin='round';
+  c.font = '600 ' + Math.max(9, Math.round(3.4*mm)) + 'px -apple-system, system-ui, sans-serif';
+  var nomi = dodici ? ORD : der;
+  nomi.forEach(function(n, k){
+    var s = rec.d[n] ? decodifica(rec.d[n]) : null; if (!s) return;
+    var col = dodici ? Math.floor(k/3) : 0, row = dodici ? k%3 : k;
+    var x0 = 4*mm + col*62.5*mm, base = (3 + row*rowmm + rowmm*0.55)*mm;
+    c.fillText(n, x0+1.5*mm, (3 + row*rowmm + 4)*mm);
+    c.beginPath();
+    for (var j=0;j<s.length;j++){
+      var x = x0 + (j/rec.fs)*25*mm, y = base - s[j]*10*mm;
+      if (j===0) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.stroke();
+  });
+}
+
+function render(){
+  var filtro = document.querySelector('.bar .btn.on').dataset.f;
+  var ids = Object.keys(D).sort().filter(function(id){
+    var v = stato[id] && stato[id].v;
+    if (filtro==='ok') return v==='ok';
+    if (filtro==='no') return v==='no';
+    if (filtro==='davedere') return !v;
+    return true;
+  });
+  var nOk = Object.keys(stato).filter(function(k){return stato[k].v==='ok';}).length;
+  var nNo = Object.keys(stato).filter(function(k){return stato[k].v==='no';}).length;
+  document.getElementById('conta').textContent =
+    Object.keys(D).length + ' tracciati · ' + nOk + ' approvati · ' + nNo + ' da rifare · ' +
+    (Object.keys(D).length-nOk-nNo) + ' da vedere';
+  var box = document.getElementById('lista'); box.innerHTML = '';
+  ids.forEach(function(id){
+    var rec = D[id], st = stato[id] || {};
+    var el = document.createElement('div'); el.className='caso';
+    el.innerHTML =
+      '<h2>' + rec.t + ' <span class="tag' + (st.v==='ok'?' ok':st.v==='no'?' no':'') + '">' +
+        (st.v==='ok'?'approvato':st.v==='no'?'da rifare':'da vedere') + '</span></h2>' +
+      '<div class="meta">' + id + ' · ' + rec.f + ' · ' + Object.keys(rec.d).length + ' derivazioni · ' +
+        rec.fs.toFixed(0) + ' Hz · ' + (rec.n/rec.fs).toFixed(2) + ' s</div>' +
+      '<div class="due"><img loading="lazy" src="atlante/' + id + '.jpg" alt=""><canvas></canvas></div>' +
+      '<div class="azioni"><button class="btn ok">Va bene</button><button class="btn no">Da rifare</button>' +
+      '<textarea rows="1" placeholder="nota (facoltativa)">' + (st.nota||'') + '</textarea></div>';
+    box.appendChild(el);
+    var cv = el.querySelector('canvas');
+    requestAnimationFrame(function(){ disegna(cv, rec); });
+    el.querySelector('.btn.ok').addEventListener('click', function(){ stato[id]=Object.assign({},stato[id],{v:'ok'}); salva(); render(); });
+    el.querySelector('.btn.no').addEventListener('click', function(){ stato[id]=Object.assign({},stato[id],{v:'no'}); salva(); render(); });
+    el.querySelector('textarea').addEventListener('change', function(e){ stato[id]=Object.assign({},stato[id],{nota:e.target.value}); salva(); });
+  });
+}
+document.querySelectorAll('.bar .btn[data-f]').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.bar .btn[data-f]').forEach(function(x){ x.classList.toggle('on', x===b); });
+    render();
+  });
+});
+document.getElementById('esporta').addEventListener('click', function(){
+  var u = document.getElementById('uscita');
+  u.hidden = false; u.textContent = JSON.stringify(stato, null, 1);
+  u.scrollIntoView({behavior:'smooth'});
+});
+window.addEventListener('resize', function(){
+  document.querySelectorAll('.caso').forEach(function(el,i){
+    var id = Object.keys(D).sort()[i]; if (D[id]) disegna(el.querySelector('canvas'), D[id]);
+  });
+});
+render();
+})();
+</script>
+</body>
+</html>

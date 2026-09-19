@@ -2,12 +2,12 @@
    Strategia: codice e pagine sempre dalla rete saltando la cache HTTP (è quella
    che teneva bloccata l'app installata sul Dock), immagini dalla cache perché
    non cambiano mai. Offline si ricade sull'ultima copia salvata. */
-const VERSION = '24';
+const VERSION = '25';
 const CACHE = 'isoelettrica-v' + VERSION;
 const Q = '?v=' + VERSION;
 const CORE = ['./', './index.html', './anatomia.html',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png', './manifest.webmanifest' + Q]
-  .concat(['app.js', 'engine.js', 'ipertrofie.js', 'data.js', 'three.min.js', 'cuore3d.js', 'coronarie.js']
+  .concat(['app.js', 'engine.js', 'ipertrofie.js', 'data.js', 'atlante-digitale.js', 'three.min.js', 'cuore3d.js', 'coronarie.js']
     .map(f => './' + f + Q));
 const IMMUTABILE = /\.(jpg|jpeg|png|gif|webp|svg|woff2?|ttf)$/i;
 

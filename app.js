@@ -1,7 +1,8 @@
 /* Isoelettrica — interfaccia */
 (function () {
 'use strict';
-const { LEADS, Stream, dirAG } = window.ECG;
+const { LEADS, Stream, Sampled, dirAG } = window.ECG;
+const DIG = window.ISO_ATLANTE_DIG || {};
 const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G } = window.ISO_DATA;
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -530,6 +531,7 @@ function buildStream(sc, p, keepTime) {
 }
 function loadScenario(id, keepTime) {
   const sc = byId[id]; if (!sc) return;
+  digCur = null;
   S.sc = id; store.sc = id; save();
   $('#scTitle').textContent = sc.name; $('#scCat').textContent = sc.cat;
   $$('#libList .item').forEach(b => b.classList.toggle('on', b.dataset.id === id));
@@ -580,6 +582,41 @@ function renderCard(sc) {
     '<div class="sec"><p class="src"><b>Criteri:</b> ' + esc(c.fonte) + '</p>' + (c.manuale ? '<p class="src"><b>Sul manuale:</b> ' + esc(c.libro || '') + ' — ' + esc(c.manuale) + '</p>' : '') + (c.slide ? '<p class="src"><b>A lezione:</b> ' + esc(c.corsoFonte || '') + ' — ' + esc(c.slide) + '</p>' : '') + '</div>' + FIRMA;
   $$('#p-card .chip').forEach(b => b.addEventListener('click', () => mon.opts.onSelect(b.dataset.l)));
 }
+/* ---------- tracciati reali digitalizzati dall'atlante ---------- */
+let digCur = null;
+function apriDigitalizzato(id) {
+  const rec = DIG[id]; if (!rec) return;
+  digCur = id;
+  stream = new Sampled(rec, 1);
+  curCfg = stream.cfg;
+  mon.setStream(stream, false);
+  mon.setHighlight([]);
+  scene.setScenario({});
+  $('#scTitle').textContent = rec.t;
+  $('#scCat').textContent = 'Tracciato reale — ' + rec.f;
+  $$('#libList .item').forEach(b => b.classList.remove('on'));
+  const q = rec.q && byId[rec.q] ? byId[rec.q] : null;
+  const der = Object.keys(rec.d).length;
+  $('#p-card').innerHTML =
+    '<div class="sec"><p class="lead">' + esc(rec.t) + '</p>' +
+    '<p class="note">Segnale estratto dalla scansione della slide: ' + der + ' derivazioni, ' +
+    fmt(rec.fs) + ' campioni al secondo, ' + fmt(rec.n / rec.fs, 1) + ' secondi che si ripetono in ciclo.</p></div>' +
+    '<div class="sec"><h3>Come leggerlo</h3><p>I millivolt sono ricostruiti dalla geometria della carta: ' +
+    'la larghezza di ogni pannello vale 2,5 secondi a 25 mm/s. Sono attendibili per la morfologia e per gli intervalli, ' +
+    'meno per i voltaggi assoluti. Per i criteri di ipertrofia continua a fidarti del tracciato simulato.</p></div>' +
+    (q ? '<div class="sec"><h3>Quadro corrispondente</h3><p>' + esc(q.name) + '</p>' +
+         '<ul class="crit">' + q.card.criteri.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
+         '<button class="btn" id="digQuadro">Apri il quadro simulato</button></div>' : '') +
+    '<div class="sec"><p class="src"><b>Origine:</b> ' + esc(rec.f) + '</p></div>' + FIRMA;
+  const bq = $('#digQuadro');
+  if (bq) bq.addEventListener('click', () => loadScenario(rec.q, false));
+  $('#p-params').innerHTML = '<div class="sec"><h3>Parametri</h3><p class="note">Questo è un tracciato registrato su un paziente vero: non ha parametri da muovere. Scegli un quadro nella libreria per tornare al simulatore.</p></div>';
+  renderVolt();
+  aggiornaEctUI();
+  closeLib();
+  setPlaying(true);
+}
+
 let rebuildT = null;
 function renderParams(sc) {
   const p = paramsFor(sc); const box = $('#p-params'); box.innerHTML = '';
@@ -716,6 +753,14 @@ $('#hOpac').addEventListener('input', e => { S.opac = +e.target.value / 100; sce
 
 /* misure dal tracciato */
 function measure(st, t) {
+  if (st.cfg.mode === 'sampled') {
+    const B = st.battiti || [];
+    if (B.length < 2) return '<span>Tracciato reale digitalizzato</span>';
+    const rr = (B[B.length-1] - B[0]) / (B.length - 1);
+    return '<span>FC <b>' + fmt(60000/rr) + '/min</b></span><span>RR medio <b>' + fmt(rr) + ' ms</b></span>' +
+      '<span>' + B.length + ' battiti nel segmento</span>' +
+      '<span class="note">Usa il compasso per PR, QRS e QT: su un tracciato reale si misurano, non si leggono da un modello</span>';
+  }
   const cont = st.cfg.mode === 'continuous';
   if (cont) return '<span>Nessun QRS riconoscibile: le misure non sono applicabili</span>';
   const Vs = st.ev.filter(e => e.kind === 'V' && e.t <= t);
@@ -972,7 +1017,7 @@ function renderAtlas() {
     const b = document.createElement('button');
     b.className = 'acard';
     b.innerHTML = (window.ISO_NOATLAS ? '' : '<img loading="lazy" decoding="async" src="atlante/' + a.id + '.jpg" alt="' + esc(a.t) + '" onerror="this.style.display=\'none\'">') +
-      '<div class="at">' + esc(a.t) + '</div><div class="as">' + esc(a.f) + '</div>';
+      '<div class="at">' + esc(a.t) + '</div><div class="as">' + (DIG[a.id] ? '▶ animabile · ' : '') + esc(a.f) + '</div>';
     b.addEventListener('click', () => openLightbox(a));
     grid.appendChild(b);
   });
@@ -995,6 +1040,7 @@ function openLightbox(a) {
   $('#lbNote').hidden = !a.n;
   $('#lbSrc').textContent = 'Slide del corso — ' + a.f;
   $('#lbOpen').hidden = !a.q;
+  $('#lbAnim').hidden = !DIG[a.id];
   $('#lwrap').classList.remove('zoom');
   $('#lwrap').scrollTop = 0; $('#lwrap').scrollLeft = 0;
   $('#lbox').hidden = false;
@@ -1006,6 +1052,7 @@ $('#lbZoom').addEventListener('click', () => {
   $('#lbZoom').textContent = z ? 'Riduci' : 'Ingrandisci';
 });
 $('#lbOpen').addEventListener('click', () => { if (!lbCur || !lbCur.q) return; closeLightbox(); showView('trace'); loadScenario(lbCur.q, false); });
+$('#lbAnim').addEventListener('click', () => { if (!lbCur || !DIG[lbCur.id]) return; closeLightbox(); showView('trace'); apriDigitalizzato(lbCur.id); });
 $('#lbImg').addEventListener('click', () => $('#lbZoom').click());
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#lbox').hidden) closeLightbox(); });
 let aTimer = null;

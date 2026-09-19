@@ -621,6 +621,76 @@ function applyVariation(cfg, seed, opt) {
   return cfg;
 }
 
-const API = { LEADS, M, B, PL, dirAG, Stream, rng, buildV, buildA, applyVariation };
+/* ---------- tracciato campionato ----------
+   Riproduce un ECG reale digitalizzato dall'atlante con la stessa interfaccia
+   di Stream, così il monitor, il compasso e le misure funzionano senza modifiche.
+   I campioni arrivano quantizzati a 0,01 mV in Int16 base64. */
+function decodifica(b64) {
+  const bin = typeof atob === 'function' ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
+  const n = bin.length >> 1, out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let v = bin.charCodeAt(2*i) | (bin.charCodeAt(2*i+1) << 8);
+    if (v > 32767) v -= 65536;
+    out[i] = v / 100;
+  }
+  return out;
+}
+function Sampled(rec, seed) {
+  this.cfg = { mode: 'sampled', titolo: rec.t, fonte: rec.f, quadro: rec.q };
+  this.fs = rec.fs; this.n = rec.n;
+  this.dur = rec.n / rec.fs * 1000;
+  this.sig = LEADS.map(L => rec.d[L.id] ? decodifica(rec.d[L.id]) : null);
+  this.uni = this.sig.every(x => !x) ? decodifica(rec.d[Object.keys(rec.d)[0]]) : null;
+  this.noise = 0; this.amp = 1; this.rot = 0; this.ev = []; this.tShift = 0;
+  this.rilevaR();
+}
+Sampled.prototype.ensure = function () {};
+Sampled.prototype.prune = function () {};
+Sampled.prototype.campiona = function (i, tau) {
+  const s = this.sig[i] || this.uni; if (!s) return 0;
+  let x = (tau % this.dur) / 1000 * this.fs;
+  if (x < 0) x += s.length;
+  const a = Math.floor(x), f = x - a;
+  return s[a % s.length] * (1 - f) + s[(a + 1) % s.length] * f;
+};
+Sampled.prototype.vec = function (tau, out) { out[0] = 0; out[1] = 0; out[2] = 0; return out; };
+Sampled.prototype.leads = function (tau, vec, outArr) {
+  for (let i = 0; i < 12; i++) outArr[i] = this.campiona(i, tau);
+  return outArr;
+};
+Sampled.prototype.eventsAround = function () { return { A: null, V: null }; };
+Sampled.prototype.qrsAmplitudes = function () {
+  const R = {}, S = {};
+  LEADS.forEach((L, i) => {
+    const s = this.sig[i]; R[L.id] = 0; S[L.id] = 0;
+    if (!s) return;
+    for (let k = 0; k < s.length; k++) { if (s[k] > R[L.id]) R[L.id] = s[k]; if (-s[k] > S[L.id]) S[L.id] = -s[k]; }
+  });
+  return { R, S, qrsMs: 0, t: 0, tipo: 'campionato' };
+};
+/* battiti riconosciuti sul segnale, così le misure di FC e RR restano vive */
+Sampled.prototype.rilevaR = function () {
+  const s = this.sig[1] || this.sig[0] || this.uni; if (!s) return;
+  let mx = 0; for (let i = 0; i < s.length; i++) mx = Math.max(mx, Math.abs(s[i]));
+  const soglia = mx * 0.45, rifr = Math.round(0.25 * this.fs);
+  const picchi = [];
+  for (let i = 1; i < s.length - 1; i++) {
+    const v = Math.abs(s[i]);
+    if (v < soglia || v < Math.abs(s[i-1]) || v < Math.abs(s[i+1])) continue;
+    if (picchi.length && i - picchi[picchi.length-1] < rifr) {
+      if (v > Math.abs(s[picchi[picchi.length-1]])) picchi[picchi.length-1] = i;
+    } else picchi.push(i);
+  }
+  this.battiti = picchi.map(i => i / this.fs * 1000);
+  // eventi finti su più giri, per il pannello delle misure
+  const ev = [];
+  for (let g = 0; g < 12; g++) this.battiti.forEach(t => ev.push({
+    t: t + g * this.dur, kind: 'V', comps: [], span: [0, 0],
+    meta: { type: 'conducted', w: 0, qt: 0 }
+  }));
+  this.ev = ev;
+};
+
+const API = { LEADS, M, B, PL, dirAG, Stream, Sampled, rng, buildV, buildA, applyVariation };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ECG = API;
 })(typeof window !== 'undefined' ? window : this);
