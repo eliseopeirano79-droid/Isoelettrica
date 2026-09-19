@@ -704,11 +704,95 @@ segInit('#speedSeg', 's', S.speed, v => { S.speed = mon.speed = +v; store.speed 
 segInit('#gainSeg', 'g', S.gain, v => { S.gain = mon.gain = +v; store.gain = +v; save(); mon.cal = []; mon.layout(); });
 segInit('#slowSeg', 't', 1, v => { S.slow = +v; });
 $('#calBtn').addEventListener('click', () => { mon.calOn = !mon.calOn; mon.cal = []; $('#calBtn').classList.toggle('on', mon.calOn); $('#calBtn').setAttribute('aria-pressed', mon.calOn); if (mon.calOn) setPlaying(false); mon.drawOverlay(); });
-$$('#cardTabs button').forEach(b => b.addEventListener('click', () => {
-  $$('#cardTabs button').forEach(x => x.classList.toggle('on', x === b));
+$$('#cardTabs button[data-p]').forEach(b => b.addEventListener('click', () => {
+  $$('#cardTabs button[data-p]').forEach(x => x.classList.toggle('on', x === b));
   $$('.card .pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p));
   if (b.dataset.p === 'volt') renderVolt();
 }));
+
+/* ---------- scheda a schermo intero ----------
+   La stessa scheda, con una colonna di lettura larga e il testo grande: è la
+   teoria del quadro che stai guardando, senza uscire dal tracciato. */
+function zenCard(on) {
+  document.body.classList.toggle('zen-card', on);
+  const b = $('#cardFull');
+  b.textContent = on ? '⤡' : '⤢';
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  b.title = on ? 'Torna alla vista affiancata' : 'Leggi a schermo intero';
+  if (!on) requestAnimationFrame(() => { mon.layout(); scene.resize(); });
+}
+$('#cardFull').addEventListener('click', () => zenCard(!document.body.classList.contains('zen-card')));
+
+/* ---------- laboratorio vettoriale a schermo intero ----------
+   Sposta davvero la scena 3D e il tracciato dentro il contenitore a tutto
+   schermo, così restano un unico oggetto sincronizzato, e affianca i numeri:
+   vettore istantaneo, assi, proiezione su ognuna delle dodici derivazioni. */
+let zenOn = false;
+const zVec = [0, 0, 0], zLv = new Array(12).fill(0);
+function zenStage(on) {
+  if (on === zenOn) return;
+  zenOn = on;
+  const zen = $('#zen'), stage = $('#stage'), ecg = $('#ecgWrap');
+  if (on) {
+    if (document.body.classList.contains('zen-card')) zenCard(false);
+    $('#zStage').appendChild(stage);
+    $('#zBottom').appendChild(ecg);
+    zen.hidden = false;
+    document.body.style.overflow = 'hidden';
+    $('#zenTitolo').textContent = $('#scTitle').textContent;
+    zDati();
+  } else {
+    $('.lower').insertBefore(stage, $('.lower').firstChild);
+    $('.main').insertBefore(ecg, $('.lower'));
+    zen.hidden = true;
+    document.body.style.overflow = '';
+  }
+  $('#zenBtn').textContent = on ? '⤡ Riduci' : '⤢ Schermo intero';
+  requestAnimationFrame(() => { mon.layout(); scene.resize(); });
+}
+$('#zenBtn').addEventListener('click', () => zenStage(!zenOn));
+$('#zenEsci').addEventListener('click', () => zenStage(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (zenOn) zenStage(false); else if (document.body.classList.contains('zen-card')) zenCard(false); } });
+
+function zDati() {
+  $('#zDati').innerHTML =
+    '<h4>Vettore istantaneo</h4><div class="zgrid">' +
+    '<div><span>Modulo</span><b id="zMod">—</b></div>' +
+    '<div><span>Fase</span><b id="zFase" style="font-size:12.5px">—</b></div>' +
+    '<div><span>Asse frontale</span><b id="zFront">—</b></div>' +
+    '<div><span>Asse orizzontale</span><b id="zOriz">—</b></div></div>' +
+    '<h4>Proiezione sulle dodici derivazioni</h4><div id="zLeads"></div>' +
+    '<p class="note" style="margin-top:10px">La barra è la proiezione del vettore sull’asse della derivazione: a destra positiva, a sinistra negativa. È esattamente ciò che la punta scrive sulla carta in quell’istante.</p>';
+  $('#zLeads').innerHTML = LEADS.map(L =>
+    '<div class="zlead"><i>' + L.id + '</i><div class="zbaro"><i id="zb-' + L.id + '"></i></div><u id="zv-' + L.id + '">0,00</u></div>').join('');
+}
+let zT = 0;
+function zAggiorna(now) {
+  if (!zenOn || !stream) return;
+  $('#zenTitolo').textContent = $('#scTitle').textContent;
+  stream.vec(mon.t, zVec); stream.leads(mon.t, zVec, zLv);
+  const mod = Math.hypot(zVec[0], zVec[1], zVec[2]);
+  const front = Math.atan2(-zVec[1], zVec[0]) / DEG;
+  const oriz = Math.atan2(zVec[2], zVec[0]) / DEG;
+  const grado = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)) + '°';
+  const e = id => document.getElementById(id);
+  if (e('zMod')) {
+    e('zMod').textContent = fmt(mod, 2) + ' mV';
+    e('zFront').textContent = mod > 0.04 ? grado(front) : '—';
+    e('zOriz').textContent = mod > 0.04 ? grado(oriz) : '—';
+    e('zFase').textContent = scene.phase || '—';
+  }
+  const scala = Math.max(0.6, Math.max.apply(null, zLv.map(Math.abs)) * 1.15);
+  LEADS.forEach((L, i) => {
+    const b = document.getElementById('zb-' + L.id), u = document.getElementById('zv-' + L.id);
+    if (!b) return;
+    const f = Math.max(-1, Math.min(1, zLv[i] / scala));
+    b.style.left = (f >= 0 ? 50 : 50 + f * 50) + '%';
+    b.style.width = Math.abs(f) * 50 + '%';
+    u.textContent = (zLv[i] >= 0 ? '+' : '−') + fmt(Math.abs(zLv[i]), 2);
+  });
+  if (now - zT > 400) { zT = now; $('#zenMisure').innerHTML = measure(stream, mon.t); }
+}
 $('#markBtn').addEventListener('click', () => {
   mon.marks = !mon.marks;
   $('#markBtn').classList.toggle('on', mon.marks);
@@ -1148,6 +1232,8 @@ function cmpShow() {
    NAVIGAZIONE, TEMA, LOOP
    ===================================================================== */
 function showView(v) {
+  if (zenOn && v !== 'trace') zenStage(false);
+  if (v !== 'trace') document.body.classList.remove('zen-card');
   S.view = v; $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'v-' + v));
   if (v === 'trace') { requestAnimationFrame(() => { mon.layout(); scene.resize(); }); }
@@ -1186,6 +1272,7 @@ function loop(now) {
     mon.draw();
     scene.update(mon.t, stream);
     if (mon.marks) mon.drawOverlay();
+    if (zenOn) zAggiorna(now);
     if (now - mT > 500) { mT = now; $('#measures').innerHTML = measure(stream, mon.t); if ($('#p-volt').classList.contains('on')) renderVolt(); }
     if (now - phT > 120) { phT = now; $('#phase3d').textContent = scene.phase; }
   } else if (S.view === 'quiz' && Q.stream && Q.mode !== 'atlas') {

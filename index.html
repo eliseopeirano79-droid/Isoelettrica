@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=25">
+<link rel="manifest" href="manifest.webmanifest?v=26">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -297,6 +297,44 @@ body.zen #v-theory.on{grid-template-columns:minmax(0,1fr)}
 body.zen .article{padding-top:calc(30px + env(safe-area-inset-top))}
 body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article ol{max-width:76ch}
 .qnote{flex-basis:100%;margin:2px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+
+/* --- scheda a schermo intero --- */
+.tabs .tabfull{margin-left:auto;border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-size:14px;line-height:1.2;color:var(--muted);align-self:center;margin-bottom:6px}
+body.zen-card .card{position:fixed;inset:0;z-index:70;border-left:none;background:var(--panel)}
+body.zen-card .card .pane{padding:10px max(28px,env(safe-area-inset-right)) 60px max(28px,env(safe-area-inset-left))}
+body.zen-card .card .tabs{padding-top:max(8px,env(safe-area-inset-top))}
+body.zen-card .card .pane .sec{max-width:78ch;margin-inline:auto}
+body.zen-card .card .pane .sec p,body.zen-card .card .pane ul.crit li,body.zen-card .card .pane ul.dd li{font-size:16px;line-height:1.62}
+body.zen-card .card .pane .sec p.lead{font-size:19px;line-height:1.55}
+body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
+
+/* --- laboratorio vettoriale a schermo intero --- */
+.zen{position:fixed;inset:0;z-index:75;background:var(--bg);display:flex;flex-direction:column}
+.zen[hidden]{display:none!important}
+.zbar{display:flex;align-items:center;gap:12px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.zbar b{font-size:15px}
+.zmis{font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.zmis b{color:var(--fg)}
+.zbar .btn{margin-left:auto}
+.zbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px}
+.zstage{position:relative;min-width:0;background:var(--stage);overflow:hidden}
+.zstage .stage{position:absolute;inset:0;height:100%}
+.zdati{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px 14px 30px}
+.zdati h4{margin:14px 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.zdati h4:first-child{margin-top:0}
+.zgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.zgrid div{background:var(--chip);border-radius:8px;padding:6px 8px}
+.zgrid span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.zgrid b{font-size:16px;font-variant-numeric:tabular-nums}
+.zlead{display:grid;grid-template-columns:34px 1fr 58px;align-items:center;gap:6px;font-size:12px;padding:1.5px 0}
+.zlead i{font-style:normal;color:var(--muted);font-weight:600}
+.zlead u{text-decoration:none;font-variant-numeric:tabular-nums;text-align:right;color:var(--muted)}
+.zbaro{position:relative;height:9px;background:var(--chip);border-radius:3px;overflow:hidden}
+.zbaro::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.zbaro i{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:2px}
+.zbottom{height:clamp(190px,30vh,330px);border-top:1px solid var(--line);background:var(--paper);overflow:auto;-webkit-overflow-scrolling:touch}
+.zbottom .ecgwrap{border-bottom:none}
+@media (max-width:900px){.zbody{grid-template-columns:minmax(0,1fr)}.zdati{display:none}.zbottom{height:170px}}
 .updbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:80;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;box-shadow:0 8px 30px rgba(0,0,0,.28);max-width:min(560px,94vw);font-size:13.5px}
 .credit{cursor:pointer}
 
@@ -369,7 +407,8 @@ body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article 
       <div class="ecgwrap" id="ecgWrap"><canvas id="ecg"></canvas><canvas id="ecgOv" class="ov"></canvas></div>
       <div class="lower">
         <div class="stage" id="stage">
-          <div class="hud tl"><div class="phase" id="phase3d">—</div></div>
+          <div class="hud tl"><div class="phase" id="phase3d">—</div>
+            <button class="hudbtn" id="zenBtn" title="Apri il laboratorio vettoriale a schermo intero">⤢ Schermo intero</button></div>
           <div class="hud tr" id="hud3d">
             <button class="hudbtn on" data-cam="iso">3D</button>
             <button class="hudbtn" data-cam="front">Frontale</button>
@@ -383,7 +422,7 @@ body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article 
           <div class="hud bl" id="hint3d">Tocca una derivazione nel tracciato per vederne la proiezione</div>
         </div>
         <div class="card">
-          <div class="tabs" id="cardTabs"><button data-p="card" class="on">Scheda</button><button data-p="params">Parametri</button><button data-p="volt">Voltaggi</button></div>
+          <div class="tabs" id="cardTabs"><button data-p="card" class="on">Scheda</button><button data-p="params">Parametri</button><button data-p="volt">Voltaggi</button><button class="tabfull" id="cardFull" title="Leggi a schermo intero" aria-pressed="false">⤢</button></div>
           <div class="pane on" id="p-card"></div>
           <div class="pane" id="p-params"></div>
           <div class="pane" id="p-volt"></div>
@@ -450,6 +489,20 @@ body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article 
     </div>
   </section>
 
+  <!-- LABORATORIO VETTORIALE a schermo intero -->
+  <div class="zen" id="zen" hidden>
+    <div class="zbar">
+      <b id="zenTitolo">—</b>
+      <span class="zmis num" id="zenMisure"></span>
+      <button class="btn" id="zenEsci">Esci</button>
+    </div>
+    <div class="zbody">
+      <div class="zstage" id="zStage"></div>
+      <aside class="zdati" id="zDati"></aside>
+    </div>
+    <div class="zbottom" id="zBottom"></div>
+  </div>
+
   <div class="lbox" id="lbox" hidden>
     <div class="lbar">
       <b id="lbTitle"></b>
@@ -487,13 +540,13 @@ body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article 
 
 <!-- Alla prossima pubblicazione cambia il numero dopo ?v= qui sotto e VERSION in sw.js:
      è quello che costringe iPad a scaricare davvero i file nuovi. -->
-<script src="three.min.js?v=25"></script>
-<script src="cuore3d.js?v=25"></script>
-<script src="engine.js?v=25"></script>
-<script src="ipertrofie.js?v=25"></script>
-<script src="data.js?v=25"></script>
-<script src="atlante-digitale.js?v=25"></script>
-<script src="app.js?v=25"></script>
-<script src="coronarie.js?v=25"></script>
+<script src="three.min.js?v=26"></script>
+<script src="cuore3d.js?v=26"></script>
+<script src="engine.js?v=26"></script>
+<script src="ipertrofie.js?v=26"></script>
+<script src="data.js?v=26"></script>
+<script src="atlante-digitale.js?v=26"></script>
+<script src="app.js?v=26"></script>
+<script src="coronarie.js?v=26"></script>
 </body>
 </html>
