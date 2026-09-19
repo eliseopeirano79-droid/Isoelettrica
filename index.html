@@ -80,6 +80,8 @@ button{cursor:pointer}
 .seg button{border:none;background:transparent;padding:5px 10px;font-size:12.5px;color:var(--muted);border-right:1px solid var(--line)}
 .seg button:last-child{border-right:none}
 .seg button.on{background:var(--chip);color:var(--fg);font-weight:600}
+.seg .seglab{display:inline-flex;align-items:center;padding:5px 8px;font-size:11px;color:var(--muted);background:var(--chip);border-right:1px solid var(--line);letter-spacing:.02em;white-space:nowrap}
+.seg button.flash{background:var(--accent);color:#fff}
 .play{width:34px;height:34px;border-radius:50%;border:none;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
 .play svg{width:13px;height:13px;fill:currentColor}
 .tool.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
@@ -160,6 +162,10 @@ ul.dd{margin:4px 0;padding-left:18px;color:var(--muted)}
 .opts button.wrong{border-color:var(--bad);background:var(--accent-soft)}
 .opts button:disabled{cursor:default}
 .qfilter{display:flex;flex-wrap:wrap;gap:5px}
+.qimg{background:#0d1117;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;max-height:64vh;min-height:220px}
+.qimg img{max-width:100%;height:auto;display:block}
+.qimg.zoom{justify-content:flex-start}
+.qimg.zoom img{max-width:none;width:220%}
 
 /* drawer libreria su schermi stretti */
 .libbtn{display:none}
@@ -264,6 +270,33 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 .cmpcard .src{font-size:11.5px;color:var(--muted)}
 @media (max-width:860px){.cmpgrid{grid-template-columns:1fr}.cmpcol{border-right:none;border-bottom:1px solid var(--line)}.cmpwrap{height:230px}}
 
+/* Confronto: ogni colonna scorre per conto suo, così i parametri sotto il tracciato
+   restano sempre raggiungibili e non finiscono coperti dall'ECG. */
+@media (min-width:861px){
+  #v-cmp.on{display:block;overflow:hidden}
+  .cmpgrid{height:100%;min-height:0}
+  .cmpcol{min-height:0;overflow:hidden}
+  .cmphead,.cmpmeas,.cmpwrap{flex:none}
+  .cmpwrap{height:clamp(190px,32vh,300px)}
+  .cmpbody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px}
+}
+
+/* iOS: niente sfocature di sfondo, sono la causa dell'alone in alto su iPad */
+@supports (-webkit-touch-callout:none){
+  .top,.hudbtn,.phase{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .hudbtn,.phase{background:rgba(8,12,20,.86)}
+}
+
+/* Teoria a schermo intero */
+#v-theory{position:relative}
+.thfull{position:absolute;right:max(14px,env(safe-area-inset-right));top:10px;z-index:6;background:var(--panel)}
+body.zen .top{display:none}
+body.zen #v-theory .toc{display:none}
+body.zen #v-theory.on{grid-template-columns:minmax(0,1fr)}
+body.zen .article{padding-top:calc(30px + env(safe-area-inset-top))}
+body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article ol{max-width:76ch}
+.qnote{flex-basis:100%;margin:2px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+
 #v-cor.on{display:grid;grid-template-columns:minmax(0,1fr) 380px}
 .corleft{display:flex;flex-direction:column;min-width:0}
 .corctrl{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--panel)}
@@ -320,10 +353,12 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
         <div class="ctrls">
         <button class="play" id="playBtn" aria-label="Pausa"></button>
         <div class="seg" id="modeSeg"><button data-m="print" class="on">12 derivazioni</button><button data-m="monitor">Monitor</button></div>
-        <div class="seg" id="speedSeg" aria-label="Velocità carta"><button data-s="25" class="on">25 mm/s</button><button data-s="50">50</button></div>
-        <div class="seg" id="gainSeg" aria-label="Guadagno in mm/mV"><button data-g="5">5</button><button data-g="10" class="on">10</button><button data-g="20">20</button></div>
+        <div class="seg" id="speedSeg" aria-label="Velocità della carta in mm al secondo"><span class="seglab">mm/s</span><button data-s="25" class="on">25</button><button data-s="50">50</button></div>
+        <div class="seg" id="gainSeg" aria-label="Guadagno in mm per millivolt"><span class="seglab">mm/mV</span><button data-g="5">5</button><button data-g="10" class="on">10</button><button data-g="20">20</button></div>
         <div class="seg" id="slowSeg" aria-label="Tempo"><button data-t="1" class="on">1×</button><button data-t="0.25">¼×</button></div>
+        <div class="seg" id="ectSeg" aria-label="Inserisci un battito prematuro"><span class="seglab">Extrasistole</span><button data-e="pvc" title="Battito ectopico ventricolare (tasto E)">BEV</button><button data-e="pac" title="Battito ectopico sopraventricolare (tasto A)">BESV</button></div>
         <button class="iconbtn tool" id="calBtn" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M5 2v12M11 2v12M5 8h6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Compasso</button>
+        <button class="iconbtn tool" id="markBtn" aria-pressed="false" title="Mostra PR e P bloccate sulla striscia lunga"><svg viewBox="0 0 16 16"><path d="M3 11V5M13 11V5M3 7h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Intervalli</button>
         </div>
       </div>
       <div class="measures num" id="measures"></div>
@@ -344,9 +379,10 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
           <div class="hud bl" id="hint3d">Tocca una derivazione nel tracciato per vederne la proiezione</div>
         </div>
         <div class="card">
-          <div class="tabs" id="cardTabs"><button data-p="card" class="on">Scheda</button><button data-p="params">Parametri</button></div>
+          <div class="tabs" id="cardTabs"><button data-p="card" class="on">Scheda</button><button data-p="params">Parametri</button><button data-p="volt">Voltaggi</button></div>
           <div class="pane on" id="p-card"></div>
           <div class="pane" id="p-params"></div>
+          <div class="pane" id="p-volt"></div>
         </div>
       </div>
     </div>
@@ -356,6 +392,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <section class="view" id="v-theory">
     <nav class="toc" id="toc"></nav>
     <article class="article" id="article"></article>
+    <button class="iconbtn thfull" id="thFull" aria-pressed="false" title="Leggi a schermo intero"><svg viewBox="0 0 16 16"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Schermo intero</button>
   </section>
 
   <!-- CONFRONTA -->
@@ -426,13 +463,16 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <section class="view" id="v-quiz">
     <div class="qhead">
       <h2>Che ECG è?</h2>
+      <div class="seg" id="qModeSeg" aria-label="Tipo di quiz"><button data-qm="gen" class="on">Tracciati generati</button><button data-qm="atlas">Immagini del corso</button></div>
       <div class="qfilter" id="qFilter"></div>
       <button class="btn" id="qPause" aria-label="Metti in pausa il tracciato">Pausa</button>
       <span class="score num" id="score"></span>
+      <p class="qnote">Ogni ECG viene rigenerato con asse, voltaggi, onda P, onda T, frequenza e rumore leggermente diversi: la stessa patologia non si presenta mai due volte identica. <i>«Non esistono le malattie, esistono i malati»</i> — Armand Trousseau.</p>
     </div>
     <div class="qbody">
       <div class="qleft">
         <div class="ecgwrap" id="qEcgWrap"><canvas id="qEcg"></canvas><canvas id="qEcgOv" class="ov"></canvas></div>
+        <div class="qimg" id="qImg" hidden><img id="qImgEl" alt="Tracciato dalle slide del corso"></div>
         <div class="measures num" id="qMeasures"><span>Le misure compaiono dopo la risposta</span></div>
       </div>
       <div class="qright" id="qRight"></div>
@@ -443,6 +483,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="three.min.js"></script>
 <script src="cuore3d.js"></script>
 <script src="engine.js"></script>
+<script src="ipertrofie.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script src="coronarie.js"></script>

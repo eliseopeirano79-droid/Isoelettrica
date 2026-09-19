@@ -110,13 +110,15 @@ M.qrsWPW = () => ({
     B(dirAG(-110, -50), 0.3, 98, 10, 12)
   ]
 });
-M.qrsLVH = () => ({
-  w: 100, c: [
-    B(dirAG(160, 45), 0.22, 13, 7, 7),
-    B(dirAG(35, -28), 2.0, 44, 13, 12),
-    B(dirAG(-120, -60), 0.6, 72, 10, 12)
+// Ipertrofia sinistra: voltaggi tarati perché Sokolow-Lyon e Cornell risultino
+// davvero positivi sul tracciato generato. k scala tutti i voltaggi.
+M.qrsLVH = (k) => { k = k == null ? 1 : k; return {
+  w: 104, c: [
+    B(dirAG(158, 45), 0.20 * k, 13, 7, 7),
+    B(dirAG(4, -28), 2.30 * k, 44, 13, 12),
+    B(dirAG(-120, -60), 0.95 * k, 74, 10, 12)
   ]
-});
+}; };
 M.qrsRVH = () => ({
   w: 100, c: [
     B(dirAG(165, 45), 0.2, 13, 7, 7),
@@ -163,7 +165,8 @@ function buildV(tv, qrs, rr, opt) {
   const qt0 = (opt.qtc || 400) * Math.sqrt(Math.max(0.25, rr / 1000));
   const scale = opt.qrsScale || 1;
   const w = qrs.w * scale;
-  const QT = Math.max(w + 150, Math.min(720, qt0 + (w - 92) * 0.5));
+  // il QT non può occupare tutto il ciclo: alle frequenze molto alte si accorcia
+  const QT = Math.min(Math.max(w + 150, Math.min(720, qt0 + (w - 92) * 0.5)), Math.max(w + 60, rr * 0.88));
   const T = opt.T || M.tNormal;
   const peaked = opt.peaked || 0; // 0..1 T appuntita
   let sr = QT * (0.105 - 0.04 * peaked), sl = QT * (0.16 - 0.085 * peaked);
@@ -432,12 +435,17 @@ function Stream(cfg, seed) {
   this.noise = cfg.noise || 0;
   this.nR = rng(this.seed + 99);
   this.np = LEADS.map(() => this.nR() * 6.28);
+  this.amp = cfg.ampScale == null ? 1 : cfg.ampScale;      // abito costituzionale
+  this.rot = (cfg.axisRot || 0) * DEG;                     // rotazione dell'asse nel piano frontale
+  this.baseQrs = cfg.qrs || M.qrsNormal();
+  this.basePR = cfg.pr || 160;
+  this.tShift = 0;   // sfasamento permanente dopo un reset del nodo del seno
 }
 Stream.prototype.ensure = function (tMax) {
   let guard = 0;
   while (this.tGen < tMax + 2500 && guard++ < 500) {
     const r = this.gen.next(); if (r.done) break;
-    r.value.forEach(e => { if (e) { this.ev.push(e); if (e.t > this.tGen) this.tGen = e.t; } });
+    r.value.forEach(e => { if (e) { e.t += this.tShift; this.ev.push(e); if (e.t > this.tGen) this.tGen = e.t; } });
   }
   this.ev.sort((a, b) => a.t - b.t);
 };
@@ -458,12 +466,17 @@ Stream.prototype.vec = function (tau, out) {
     evalComps(e.comps, rel, out);
   }
   if (this.cont) this.cont(tau, out);
+  if (this.rot) {
+    // ruota il vettore nel piano frontale: +rot = asse che scende verso destra (convenzione ECG)
+    const c = Math.cos(this.rot), sn = Math.sin(this.rot), x = out[0], y = out[1];
+    out[0] = x * c + y * sn; out[1] = y * c - x * sn;
+  }
   return out;
 };
 Stream.prototype.leads = function (tau, vec, outArr) {
   for (let i = 0; i < 12; i++) {
     const w = LEADS[i].w;
-    let v = vec[0] * w[0] + vec[1] * w[1] + vec[2] * w[2];
+    let v = (vec[0] * w[0] + vec[1] * w[1] + vec[2] * w[2]) * this.amp;
     if (this.noise) {
       const s = tau / 1000;
       v += this.noise * (0.06 * Math.sin(2 * Math.PI * 0.21 * s + this.np[i]) + 0.012 * Math.sin(2 * Math.PI * 47 * s + i) + 0.01 * Math.sin(2 * Math.PI * 31.7 * s + 2 * i));
@@ -484,6 +497,130 @@ Stream.prototype.eventsAround = function (tau) {
   return { A: lastA, V: lastV };
 };
 
-const API = { LEADS, M, B, PL, dirAG, Stream, rng, buildV };
+/* ---------- ampiezze del QRS, derivazione per derivazione ----------
+   Campiona il battito di base davvero generato e restituisce R e S in mV,
+   così gli indici di ipertrofia si calcolano sul tracciato e non su valori scritti a mano. */
+const BASE_TYPES = { conducted: 1, 'escape-j': 1, 'escape-v': 1, vt: 1 };
+Stream.prototype.qrsAmplitudes = function (tRef) {
+  this.ensure(tRef);
+  let b = null;
+  for (let i = this.ev.length - 1; i >= 0; i--) {
+    const e = this.ev[i];
+    if (e.t > tRef) continue;
+    if (e.kind === 'V' && BASE_TYPES[e.meta.type]) { b = e; break; }
+    if (tRef - e.t > 8000) break;
+  }
+  if (!b) return null;
+  const w = b.meta.w || 100;
+  const vec = [0, 0, 0], lv = new Array(12);
+  const proj = tau => {
+    this.vec(b.t + tau, vec);
+    for (let i = 0; i < 12; i++) {
+      const wv = LEADS[i].w;
+      lv[i] = (vec[0] * wv[0] + vec[1] * wv[1] + vec[2] * wv[2]) * this.amp;
+    }
+  };
+  proj(-40); const base = lv.slice();                 // linea isoelettrica prima della q
+  const R = {}, S = {};
+  LEADS.forEach(L => { R[L.id] = 0; S[L.id] = 0; });
+  for (let tau = -10; tau <= w + 14; tau += 1.5) {
+    proj(tau);
+    for (let i = 0; i < 12; i++) {
+      const d = lv[i] - base[i], id = LEADS[i].id;
+      if (d > R[id]) R[id] = d;
+      if (-d > S[id]) S[id] = -d;
+    }
+  }
+  return { R, S, qrsMs: Math.round(w), t: b.t, tipo: b.meta.type };
+};
+
+/* ---------- battito prematuro inserito dall'utente ----------
+   kind: 'pvc' (ventricolare, pausa compensatoria) oppure 'pac' (sopraventricolare,
+   P prematura di morfologia diversa e pausa non compensatoria). */
+Stream.prototype.injectEctopic = function (tNow, kind) {
+  this.ensure(tNow + 2600);
+  const Vs = this.ev.filter(e => e.kind === 'V');
+  if (!Vs.length) return null;
+  let last = null, next = null;
+  for (let i = 0; i < Vs.length; i++) {
+    if (Vs[i].t <= tNow + 40) last = Vs[i];
+    else if (!next) next = Vs[i];
+  }
+  if (!last) return null;
+  const prev = Vs[Vs.indexOf(last) - 1];
+  const rr = prev ? last.t - prev.t : 840;
+  const vOpt = { qtc: this.cfg.qtc || 400 };
+  const limite = next ? next.t - 150 : tNow + 2000;
+
+  if (kind === 'pac') {
+    const pr = this.basePR;
+    let tp = Math.max(tNow + 90, last.t + 0.56 * rr);
+    if (tp + pr > limite) tp = Math.max(tNow + 60, limite - pr);
+    if (tp <= last.t + 200) return null;
+    const tv = tp + pr + 10;
+    // il nodo del seno viene resettato dalla P prematura: tutto ciò che segue slitta
+    let ref = last.t - pr;
+    for (let i = this.ev.length - 1; i >= 0; i--) {
+      const e = this.ev[i];
+      if (e.kind === 'A' && e.t < last.t && last.t - e.t < 520 && e.meta.type === 'sinus') { ref = e.t; break; }
+    }
+    const shift = tp - ref;
+    if (shift > 0) {
+      for (let i = 0; i < this.ev.length; i++) if (this.ev[i].t > tp + 20) this.ev[i].t += shift;
+      this.tShift += shift;
+      this.tGen += shift;
+    }
+    this.ev.push(buildA(tp, M.pLowAtrial(0.95), { type: 'pac', injected: true }));
+    this.ev.push(buildV(tv, this.baseQrs, tv - last.t,
+      Object.assign({}, vOpt, { T: this.cfg.T, meta: { type: 'conducted', pac: true, injected: true } })));
+    this.ev.sort((a, b2) => a.t - b2.t);
+    return { kind: 'pac', t: tv };
+  }
+
+  let te = Math.max(tNow + 90, last.t + 0.52 * rr);
+  if (te > limite) te = Math.max(tNow + 60, limite);
+  if (te <= last.t + 180) return null;
+  const q = (this.cfg.pvcQrs) || M.qrsPVC_RVOT();
+  this.ev.push(buildV(te, q, te - last.t, Object.assign({}, vOpt, {
+    T: { a: -95, g: 35, amp: 0.45 }, st: null, meta: { type: 'pvc', injected: true }
+  })));
+  // pausa compensatoria: la P successiva cade nel periodo refrattario e non conduce
+  if (next && next.meta && next.meta.type === 'conducted') {
+    this.ev = this.ev.filter(e => e !== next);
+    for (let i = 0; i < this.ev.length; i++) {
+      const e = this.ev[i];
+      if (e.kind === 'A' && Math.abs(e.t - (next.t - (next.meta.pr || this.basePR))) < 60) {
+        e.meta = Object.assign({}, e.meta, { blocked: true, refractory: true });
+      }
+    }
+  }
+  this.ev.sort((a, b2) => a.t - b2.t);
+  return { kind: 'pvc', t: te };
+};
+
+/* ---------- variabilità biologica ----------
+   Stessa patologia, persone diverse: asse, voltaggi, onda P, onda T, frequenza e
+   rumore vengono spostati entro margini fisiologici, senza uscire dai criteri
+   diagnostici. Il seme rende la variazione riproducibile. */
+function applyVariation(cfg, seed, opt) {
+  const R = rng(((seed || 1) >>> 0) + 7919);
+  const o = Object.assign({ asse: 10, ampiezza: 0.15, onT: 0.18, onP: 0.28, fc: 0.07, qrs: 0.05, rumore: true }, opt || {});
+  const u = () => R() * 2 - 1;
+  cfg.axisRot = (cfg.axisRot || 0) + u() * o.asse;
+  cfg.ampScale = (cfg.ampScale == null ? 1 : cfg.ampScale) * (1 + u() * o.ampiezza);
+  cfg.qrsScale = (cfg.qrsScale == null ? 1 : cfg.qrsScale) * (1 + u() * o.qrs);
+  if (cfg.rate) cfg.rate = Math.round(cfg.rate * (1 + u() * o.fc));
+  if (cfg.vRate) cfg.vRate = Math.round(cfg.vRate * (1 + u() * o.fc));
+  if (cfg.escRate) cfg.escRate = Math.round(cfg.escRate * (1 + u() * o.fc * 0.6));
+  if (!cfg.pComps) cfg.pAmp = (cfg.pAmp == null ? 1 : cfg.pAmp) * (1 + u() * o.onP);
+  const T = cfg.T || M.tNormal;
+  cfg.T = { a: T.a + u() * 10, g: T.g + u() * 10, amp: T.amp * (1 + u() * o.onT) };
+  cfg.jit = (cfg.jit == null ? 12 : cfg.jit) + Math.abs(u()) * 16;
+  if (o.rumore) cfg.noise = 0.16 + R() * 0.42;
+  cfg.varSeed = seed;
+  return cfg;
+}
+
+const API = { LEADS, M, B, PL, dirAG, Stream, rng, buildV, buildA, applyVariation };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ECG = API;
 })(typeof window !== 'undefined' ? window : this);

@@ -24,7 +24,7 @@ if (store.theme === 'light' || store.theme === 'dark') document.documentElement.
 
 /* ---------- colori ---------- */
 let css = {};
-function readVars() { const s = getComputedStyle(document.documentElement); const g = n => s.getPropertyValue(n).trim(); css = { paper: g('--paper'), grid: g('--grid'), grid2: g('--grid2'), trace: g('--trace'), accent: g('--accent'), hl: g('--hl'), muted: g('--muted'), fg: g('--fg'), stage: g('--stage') }; }
+function readVars() { const s = getComputedStyle(document.documentElement); const g = n => s.getPropertyValue(n).trim(); css = { paper: g('--paper'), grid: g('--grid'), grid2: g('--grid2'), trace: g('--trace'), accent: g('--accent'), hl: g('--hl'), muted: g('--muted'), fg: g('--fg'), stage: g('--stage'), bad: g('--bad'), ok: g('--ok') }; }
 readVars();
 
 /* =====================================================================
@@ -141,6 +141,52 @@ class Monitor {
     if (Math.random() < 0.02) st.prune(this.t - 15000);
   }
   setHighlight(ids) { this.hl = ids || []; this.drawOverlay(); }
+  /* Marcatori sugli intervalli: bracket del PR sopra ogni battito condotto e croce
+     sulle P bloccate. Serve a vedere a colpo d'occhio l'allungamento progressivo
+     del PR nel Wenckebach e la costanza del PR nel Mobitz 2. */
+  drawMarks() {
+    const st = this.stream; if (!st || !this.W) return;
+    const c = this.octx, d = this.dpr, P = this.pageMs(), t0 = this.pageStart;
+    const p = this.panels.find(x => x.strip) || this.panels.find(x => x.id === 'II') || this.panels[0];
+    if (!p) return;
+    const gr = this.groups[p.g];
+    const xOf = t => (gr.x0 + (p.tw0 + ((t - t0) / P) * (p.tw1 - p.tw0)) * gr.w) * d;
+    const tEnd = Math.min(this.t, t0 + P);
+    const ev = st.ev.filter(e => e.t >= t0 - 60 && e.t <= tEnd);
+    if (ev.length > 90) return;
+    const yl = (p.top + 1.4 * this.pxmm) * d, yb = yl + 13 * d;
+    c.save();
+    c.font = '600 ' + Math.round(9.5 * d) + 'px -apple-system, system-ui, sans-serif';
+    c.textBaseline = 'top'; c.textAlign = 'center'; c.lineWidth = 1.2 * d;
+    c.strokeStyle = css.bad || css.accent; c.fillStyle = css.bad || css.accent;
+    ev.forEach(a => {
+      if (a.kind !== 'A' || !a.meta.blocked) return;
+      const xa = xOf(a.t);
+      c.beginPath();
+      c.moveTo(xa - 3.5 * d, yb - 3 * d); c.lineTo(xa + 3.5 * d, yb + 4 * d);
+      c.moveTo(xa + 3.5 * d, yb - 3 * d); c.lineTo(xa - 3.5 * d, yb + 4 * d);
+      c.stroke();
+    });
+    c.strokeStyle = css.accent; c.fillStyle = css.accent;
+    ev.forEach(v => {
+      if (v.kind !== 'V' || v.meta.type !== 'conducted') return;
+      let a = null;
+      for (let i = st.ev.length - 1; i >= 0; i--) {
+        const e = st.ev[i];
+        if (e.kind !== 'A' || e.t >= v.t || v.t - e.t > 520) continue;
+        if (e.meta.blocked || e.meta.type === 'retro') continue;
+        a = e; break;
+      }
+      if (!a || a.t < t0 - 60) return;
+      const x1 = xOf(a.t), x2 = xOf(v.t);
+      if (x2 - x1 < 5 * d || x2 < gr.x0 * d) return;
+      c.beginPath();
+      c.moveTo(x1, yb + 4 * d); c.lineTo(x1, yb); c.lineTo(x2, yb); c.lineTo(x2, yb + 4 * d);
+      c.stroke();
+      c.fillText(Math.round(v.t - a.t), (x1 + x2) / 2, yl);
+    });
+    c.restore();
+  }
   setSelected(id) { this.sel = id; this.drawOverlay(); }
   panelAt(x, y) { return this.panels.find(p => { const gw = this.groups[p.g]; const xa = gw.x0 + p.tw0 * gw.w - (p.tw0 === 0 ? 8 * this.pxmm : 0), xb = gw.x0 + p.tw1 * gw.w; return x >= xa && x < xb && y >= p.top && y < p.top + p.h; }); }
   onPointer(e) {
@@ -163,6 +209,7 @@ class Monitor {
       if (this.hl.includes(p.id) && !p.strip) { c.fillStyle = css.hl; c.fillRect(xa, p.top * d, xb - xa, p.h * d); }
       if (this.sel === p.id && !p.strip) { c.strokeStyle = css.accent; c.lineWidth = 2 * d; c.strokeRect(xa + d, p.top * d + d, xb - xa - 2 * d, p.h * d - 2 * d); }
     });
+    if (this.marks) this.drawMarks();
     if (this.cal.length) {
       c.strokeStyle = css.accent; c.fillStyle = css.accent; c.lineWidth = 1.5 * d; c.setLineDash([5 * d, 4 * d]);
       this.cal.forEach(pt => { c.beginPath(); c.moveTo(pt.x * d, 0); c.lineTo(pt.x * d, this.H * d); c.stroke(); });
@@ -444,7 +491,7 @@ const S = {
   sc: byId[store.sc] ? store.sc : 'normale',
   mode: store.mode || 'print', speed: store.speed || 25, gain: store.gain || 10, slow: 1,
   playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  sel: null, noise: store.noise == null ? 0.35 : store.noise, view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 0.6 : store.opac
+  sel: null, noise: store.noise == null ? 0.35 : store.noise, sesso: store.sesso === 'F' ? 'F' : 'M', view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 0.6 : store.opac
 };
 let stream = null, curCfg = null, seed = 1;
 const mon = new Monitor($('#ecg'), $('#ecgOv'), { onSelect: id => { S.sel = S.sel === id ? null : id; mon.setSelected(S.sel); scene.selectLead(S.sel); $$('#p-card .chip').forEach(c => c.classList.toggle('on', c.dataset.l === S.sel)); } });
@@ -467,7 +514,7 @@ function loadScenario(id, keepTime) {
   $$('#libList .item').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   buildStream(sc, paramsFor(sc), keepTime);
   mon.setHighlight(sc.look || []);
-  renderCard(sc); renderParams(sc);
+  renderCard(sc); renderParams(sc); renderVolt();
   closeLib();
 }
 const LIBIDX = SCENARIOS.map(s => {
@@ -536,6 +583,50 @@ function renderParams(sc) {
   ni.addEventListener('input', () => { S.noise = +ni.value; store.noise = S.noise; no.textContent = Math.round(S.noise * 100) + '%'; save(); if (stream) stream.noise = S.noise; });
   box.appendChild(g);
 }
+/* ---------- Voltaggi e indici di ipertrofia ----------
+   Le ampiezze vengono misurate sul battito davvero generato, derivazione per
+   derivazione. Le soglie sono in mV: valgono a qualunque guadagno, anche a 5 o
+   20 mm/mV, perché in millimetri cambierebbero. */
+const ORD_LEADS = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'];
+function renderVolt() {
+  const box = $('#p-volt'); if (!box) return;
+  const IP = window.ISO_IPERTROFIE;
+  const amp = stream && stream.qrsAmplitudes ? stream.qrsAmplitudes(mon.t) : null;
+  if (!IP || !amp) {
+    const attesa = mon.t < 2500 && stream && stream.cfg.mode !== 'continuous';
+    box.innerHTML = '<div class="sec"><h3>Voltaggi</h3><p class="note">' +
+      (attesa ? 'Le ampiezze compaiono dopo i primi battiti: lascia scorrere il tracciato.'
+              : 'Su questo quadro non c\u2019è un QRS di base misurabile: i voltaggi si calcolano sui battiti condotti o di scappamento.') +
+      '</p></div>' + FIRMA;
+    return;
+  }
+  const r = IP.calcola(amp, { sesso: S.sesso });
+  const sc = byId[S.sc] || {};
+  const riga = i => '<li style="display:flex;gap:8px;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line)">' +
+    '<span><b>' + esc(i.nome) + '</b><br><span class="note">' + esc(i.formula) + (i.nota ? ' — ' + esc(i.nota) : '') + '</span></span>' +
+    '<span class="num" style="white-space:nowrap;text-align:right;color:' + (i.positivo ? 'var(--bad)' : 'var(--muted)') + ';font-weight:600">' +
+    esc(IP.testo(i)) + '<br>' + (i.positivo ? 'positivo' : 'negativo') + '</span></li>';
+  const lista = a => '<ul style="list-style:none;margin:4px 0;padding:0">' + a.map(riga).join('') + '</ul>';
+  const tab = '<table class="ttab num"><tr><th>Derivazione</th>' + ORD_LEADS.map(l => '<th>' + l + '</th>').join('') + '</tr>' +
+    '<tr><td>R (mm)</td>' + ORD_LEADS.map(l => '<td>' + fmt(IP.mvToMm(amp.R[l]), 1) + '</td>').join('') + '</tr>' +
+    '<tr><td>S (mm)</td>' + ORD_LEADS.map(l => '<td>' + fmt(IP.mvToMm(amp.S[l]), 1) + '</td>').join('') + '</tr></table>';
+  const avviso = S.gain !== 10
+    ? '<p class="note" style="color:var(--warn)">Il tracciato è visualizzato a ' + S.gain + ' mm/mV: i millimetri qui sotto sono sempre riferiti allo standard di 10 mm/mV, perché le soglie classiche valgono solo a quel guadagno.</p>'
+    : '<p class="note">Valori a 10 mm/mV, il guadagno standard a cui sono definite tutte le soglie.</p>';
+  const ord = sc.indici === 'destra' ? [['Ventricolo destro', r.destra], ['Ventricolo sinistro', r.sinistra]]
+                                     : [['Ventricolo sinistro', r.sinistra], ['Ventricolo destro', r.destra]];
+  box.innerHTML =
+    '<div class="sec"><h3>Ampiezze misurate sul tracciato</h3>' + avviso +
+    '<div style="overflow-x:auto">' + tab + '</div>' +
+    '<p class="note">QRS ' + fmt(amp.qrsMs) + ' ms. Le ampiezze sono lette sul battito di base, dalla linea isoelettrica al picco.</p></div>' +
+    '<div class="sec"><div class="lab" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>Sesso del paziente <span class="note">(cambia le soglie di Cornell e Peguero)</span></span>' +
+    '<select id="voltSex" style="width:auto;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px"><option value="M"' + (S.sesso === 'M' ? ' selected' : '') + '>Uomo</option><option value="F"' + (S.sesso === 'F' ? ' selected' : '') + '>Donna</option></select></div></div>' +
+    ord.map(x => '<div class="sec"><h3>' + x[0] + '</h3>' + lista(x[1]) + '</div>').join('') +
+    '<div class="sec"><p class="src"><b>Criteri:</b> Sokolow-Lyon 1949; Casale 1987 (Cornell); Molloy 1992 (Cornell product); Peguero 2017; Romhilt-Estes 1968; AHA/ACCF/HRS 2009 parte V.</p></div>' + FIRMA;
+  const sx = $('#voltSex');
+  if (sx) sx.addEventListener('change', e => { S.sesso = e.target.value; store.sesso = S.sesso; save(); renderVolt(); });
+}
+
 function setParam(sc, k, v) {
   store.params[sc.id] = Object.assign({}, store.params[sc.id] || {}, { [k]: v }); save();
   clearTimeout(rebuildT); rebuildT = setTimeout(() => buildStream(sc, paramsFor(sc), true), 90);
@@ -554,7 +645,34 @@ segInit('#speedSeg', 's', S.speed, v => { S.speed = mon.speed = +v; store.speed 
 segInit('#gainSeg', 'g', S.gain, v => { S.gain = mon.gain = +v; store.gain = +v; save(); mon.cal = []; mon.layout(); });
 segInit('#slowSeg', 't', 1, v => { S.slow = +v; });
 $('#calBtn').addEventListener('click', () => { mon.calOn = !mon.calOn; mon.cal = []; $('#calBtn').classList.toggle('on', mon.calOn); $('#calBtn').setAttribute('aria-pressed', mon.calOn); if (mon.calOn) setPlaying(false); mon.drawOverlay(); });
-$$('#cardTabs button').forEach(b => b.addEventListener('click', () => { $$('#cardTabs button').forEach(x => x.classList.toggle('on', x === b)); $$('.card .pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p)); }));
+$$('#cardTabs button').forEach(b => b.addEventListener('click', () => {
+  $$('#cardTabs button').forEach(x => x.classList.toggle('on', x === b));
+  $$('.card .pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p));
+  if (b.dataset.p === 'volt') renderVolt();
+}));
+$('#markBtn').addEventListener('click', () => {
+  mon.marks = !mon.marks;
+  $('#markBtn').classList.toggle('on', mon.marks);
+  $('#markBtn').setAttribute('aria-pressed', mon.marks);
+  mon.drawOverlay();
+});
+/* battito prematuro su richiesta: BEV con pausa compensatoria, BESV con P prematura */
+function ectopia(kind) {
+  if (!stream || !stream.injectEctopic) return;
+  const r = stream.injectEctopic(mon.t, kind);
+  const b = $('#ectSeg button[data-e="' + kind + '"]');
+  if (b) { b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 240); }
+  if (!r && b) { b.classList.remove('flash'); }
+}
+$$('#ectSeg button').forEach(b => b.addEventListener('click', () => ectopia(b.dataset.e)));
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+  if (S.view !== 'trace') return;
+  if (e.key === 'e' || e.key === 'E') { e.preventDefault(); ectopia('pvc'); }
+  if (e.key === 'a' || e.key === 'A') { e.preventDefault(); ectopia('pac'); }
+});
 $$('#hud3d [data-cam]').forEach(b => b.addEventListener('click', () => { $$('#hud3d [data-cam]').forEach(x => x.classList.toggle('on', x === b)); scene.cam(b.dataset.cam); }));
 $$('#hud3d [data-tg]').forEach(b => b.addEventListener('click', () => {
   const k = b.dataset.tg; S.tgl[k] = !S.tgl[k];
@@ -603,6 +721,21 @@ function renderTheory() {
   if ($('#w-fc')) widgetFC($('#w-fc'));
   if ($('#w-asse')) widgetAxis($('#w-asse'));
 }
+function setZen(on) {
+  document.body.classList.toggle('zen', on);
+  const b = $('#thFull');
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  b.lastChild.textContent = on ? 'Esci' : 'Schermo intero';
+  const el = $('#v-theory');
+  try {
+    if (on && el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  } catch (err) {}
+}
+$('#thFull').addEventListener('click', () => setZen(!document.body.classList.contains('zen')));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('zen')) setZen(false); });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('zen')) setZen(false); });
+
 function widgetFC(el) {
   el.innerHTML = '<div class="wrow"><div class="ctrl"><div class="lab"><span>Distanza tra due R</span><output class="num"></output></div><input type="range" min="8" max="75" step="1" value="20"></div><div><div class="big num" id="fcOut"></div><div class="note" id="fcNote"></div></div></div><canvas height="120"></canvas>';
   const inp = el.querySelector('input'), out = el.querySelector('output'), cv = el.querySelector('canvas');
@@ -646,18 +779,79 @@ function widgetAxis(el) {
    QUIZ
    ===================================================================== */
 const qmon = new Monitor($('#qEcg'), $('#qEcgOv'), {});
-const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null };
+const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null, mode: store.qmode === 'atlas' ? 'atlas' : 'gen' };
+/* immagini dell'atlante utilizzabili come domanda: quelle con un quadro collegato */
+const QATL = ATLAS.filter(a => a.q && byId[a.q]);
 $('#qPause').addEventListener('click', () => {
   Q.playing = !Q.playing;
   $('#qPause').textContent = Q.playing ? 'Pausa' : 'Riprendi';
   $('#qPause').classList.toggle('on', !Q.playing);
 });
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function catDisponibili() {
+  if (Q.mode !== 'atlas') return CATS;
+  const set = {}; QATL.forEach(a => { set[byId[a.q].cat] = 1; });
+  return CATS.filter(c => set[c]);
+}
 function renderQFilter() {
   const box = $('#qFilter'); box.innerHTML = '';
-  ['Tutte'].concat(CATS).forEach(c => { const b = document.createElement('button'); b.className = 'chip' + (Q.cat === c ? ' on' : ''); b.textContent = c; b.addEventListener('click', () => { Q.cat = c; renderQFilter(); newQuestion(); }); box.appendChild(b); });
+  const cats = catDisponibili();
+  if (Q.cat !== 'Tutte' && cats.indexOf(Q.cat) < 0) Q.cat = 'Tutte';
+  ['Tutte'].concat(cats).forEach(c => { const b = document.createElement('button'); b.className = 'chip' + (Q.cat === c ? ' on' : ''); b.textContent = c; b.addEventListener('click', () => { Q.cat = c; renderQFilter(); newQuestion(); }); box.appendChild(b); });
   $('#score').textContent = 'Corrette ' + store.quiz.ok + ' su ' + store.quiz.tot;
 }
+$$('#qModeSeg button').forEach(b => b.addEventListener('click', () => {
+  $$('#qModeSeg button').forEach(x => x.classList.toggle('on', x === b));
+  Q.mode = b.dataset.qm; store.qmode = Q.mode; save();
+  renderQFilter(); newQuestion();
+}));
+if (Q.mode === 'atlas') $$('#qModeSeg button').forEach(b => b.classList.toggle('on', b.dataset.qm === 'atlas'));
+function opzioni(sc) {
+  const same = shuffle(SCENARIOS.filter(x => x.id !== sc.id && x.cat === sc.cat));
+  const other = shuffle(SCENARIOS.filter(x => x.id !== sc.id && x.cat !== sc.cat));
+  return shuffle([sc].concat(same.slice(0, 2), other).slice(0, 4));
+}
+function feedback(sc, ok, extra) {
+  const c = sc.card;
+  return '<div class="sec"><h3>' + (ok ? 'Corretto' : 'Era: ' + esc(sc.name)) + '</h3><p>' + esc(c.def) + '</p>' +
+    (extra || '') +
+    '<ul class="crit">' + c.criteri.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
+    '<p><b>Dove guardare:</b> ' + esc(c.guarda) + '</p>' +
+    (c.trappole ? '<p><b>Trappola:</b> ' + esc(c.trappole) + '</p>' : '') + '</div>';
+}
+function newQuestionAtlas() {
+  const pool = QATL.filter(a => Q.cat === 'Tutte' || byId[a.q].cat === Q.cat);
+  if (!pool.length) { Q.mode = 'gen'; return newQuestion(); }
+  let a = pool[Math.floor(Math.random() * pool.length)];
+  if (Q.cur && Q.cur.atl && pool.length > 1 && a.id === Q.cur.atl.id) a = pool[(pool.indexOf(a) + 1) % pool.length];
+  const sc = byId[a.q];
+  $('#qEcgWrap').hidden = true; $('#qImg').hidden = false;
+  const img = $('#qImgEl');
+  img.onerror = () => { img.alt = 'Immagine non disponibile in questa copia dell\u2019app.'; };
+  img.src = 'atlante/' + a.id + '.jpg';
+  $('#qImg').classList.remove('zoom'); $('#qImg').scrollTop = 0; $('#qImg').scrollLeft = 0;
+  $('#qMeasures').innerHTML = '<span>Tracciato reale dalle slide del corso — ' + esc(a.f) + '</span>';
+  const opts = opzioni(sc);
+  Q.cur = { sc, atl: a, opts }; Q.done = false;
+  const r = $('#qRight');
+  r.innerHTML = '<p class="note">Leggi il tracciato e scegli la diagnosi. Tocca l\u2019immagine per ingrandirla.</p><div class="opts">' +
+    opts.map(o => '<button data-id="' + o.id + '">' + esc(o.name) + '</button>').join('') + '</div><div id="qFeed"></div>';
+  r.querySelectorAll('.opts button').forEach(b => b.addEventListener('click', () => answerAtlas(b)));
+}
+function answerAtlas(btn) {
+  if (Q.done) return; Q.done = true;
+  const a = Q.cur.atl, sc = Q.cur.sc;
+  const ok = btn.dataset.id === sc.id;
+  store.quiz.tot++; if (ok) store.quiz.ok++; save();
+  $$('#qRight .opts button').forEach(b => { b.disabled = true; if (b.dataset.id === sc.id) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); });
+  const commento = a.n ? '<div class="sec corso"><h3>Il commento del professore</h3><p>' + esc(a.n) + '</p><p class="src">' + esc(a.f) + '</p></div>' : '';
+  $('#qFeed').innerHTML = feedback(sc, ok) + commento +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="qNext">Prossima immagine</button><button class="btn" id="qOpen">Apri il quadro simulato</button></div>';
+  $('#qNext').addEventListener('click', newQuestion);
+  $('#qOpen').addEventListener('click', () => { showView('trace'); loadScenario(sc.id, false); });
+  renderQFilter();
+}
+$('#qImg').addEventListener('click', () => $('#qImg').classList.toggle('zoom'));
 const QZ = { 'iperk.k': [6.4, 8.6], 'ipok.k': [1.9, 2.9], 'qtlungo.qtc': [500, 620], 'bav1.pr': [240, 380], 'wpw.pr': [88, 112], 'normale.axis': [-20, 90], 'pericardite.st': [1.5, 3.5], 'normale.hr': [60, 95], 'aritmiasinusale.sa': [12, 28], 'esa.prob': [18, 40] };
 function randomParams(sc) {
   const p = {};
@@ -672,17 +866,25 @@ function randomParams(sc) {
   return p;
 }
 function newQuestion() {
+  if (Q.mode === 'atlas') return newQuestionAtlas();
+  $('#qEcgWrap').hidden = false; $('#qImg').hidden = true;
+  qmon.layout();
   const pool = SCENARIOS.filter(s => s.quiz && (Q.cat === 'Tutte' || s.cat === Q.cat));
   let sc = pool[Math.floor(Math.random() * pool.length)];
   if (Q.cur && pool.length > 1 && sc.id === Q.cur.sc.id) sc = pool[(pool.indexOf(sc) + 1) % pool.length];
   const p = randomParams(sc);
   const cfg = sc.build(p); cfg.noise = 0.35;
-  Q.stream = new Stream(cfg, Math.floor(Math.random() * 1e6));
+  // stessa patologia, paziente diverso: asse, voltaggi, P, T, frequenza e rumore
+  const qSeed = Math.floor(Math.random() * 1e6);
+  if (window.ECG.applyVariation) {
+    const stretto = sc.cat === 'Ipertrofie' || sc.indici;   // qui i voltaggi sono la diagnosi
+    window.ECG.applyVariation(cfg, qSeed, stretto ? { ampiezza: 0.05, asse: 6, onT: 0.12 } : null);
+  }
+  Q.stream = new Stream(cfg, qSeed);
+  Q.seed = qSeed;
   qmon.setStream(Q.stream, false);
   qmon.t = qmon.pageMs() - 40; qmon.draw();
-  const same = shuffle(SCENARIOS.filter(s => s.id !== sc.id && s.cat === sc.cat));
-  const other = shuffle(SCENARIOS.filter(s => s.id !== sc.id && s.cat !== sc.cat));
-  const opts = shuffle([sc].concat(same.slice(0, 2), other).slice(0, 4));
+  const opts = opzioni(sc);
   Q.cur = { sc, p, opts }; Q.done = false;
   $('#qMeasures').innerHTML = '<span>Le misure compaiono dopo la risposta. Usa il tempo: guarda ritmo, P, PR, QRS, ST, T.</span>';
   const r = $('#qRight');
@@ -694,8 +896,7 @@ function answer(btn) {
   const ok = btn.dataset.id === Q.cur.sc.id;
   store.quiz.tot++; if (ok) store.quiz.ok++; save();
   $$('#qRight .opts button').forEach(b => { b.disabled = true; if (b.dataset.id === Q.cur.sc.id) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); });
-  const c = Q.cur.sc.card;
-  $('#qFeed').innerHTML = '<div class="sec"><h3>' + (ok ? 'Corretto' : 'Era: ' + esc(Q.cur.sc.name)) + '</h3><p>' + esc(c.def) + '</p><ul class="crit">' + c.criteri.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul><p><b>Dove guardare:</b> ' + esc(c.guarda) + '</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="qNext">Prossimo ECG</button><button class="btn" id="qOpen">Apri nel Tracciato</button></div>';
+  $('#qFeed').innerHTML = feedback(Q.cur.sc, ok) + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="qNext">Prossimo ECG</button><button class="btn" id="qOpen">Apri nel Tracciato</button></div>';
   $('#qNext').addEventListener('click', newQuestion);
   $('#qOpen').addEventListener('click', () => { store.params[Q.cur.sc.id] = Q.cur.p; save(); showView('trace'); loadScenario(Q.cur.sc.id, true); });
   qmon.setHighlight(Q.cur.sc.look || []);
@@ -905,9 +1106,10 @@ function loop(now) {
     if (S.playing) mon.t += dt * S.slow;
     mon.draw();
     scene.update(mon.t, stream);
-    if (now - mT > 500) { mT = now; $('#measures').innerHTML = measure(stream, mon.t); }
+    if (mon.marks) mon.drawOverlay();
+    if (now - mT > 500) { mT = now; $('#measures').innerHTML = measure(stream, mon.t); if ($('#p-volt').classList.contains('on')) renderVolt(); }
     if (now - phT > 120) { phT = now; $('#phase3d').textContent = scene.phase; }
-  } else if (S.view === 'quiz' && Q.stream) {
+  } else if (S.view === 'quiz' && Q.stream && Q.mode !== 'atlas') {
     if (Q.playing) qmon.t += dt;
     qmon.draw();
   } else if (S.view === 'cmp' && CMP.ready) {

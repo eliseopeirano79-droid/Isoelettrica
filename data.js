@@ -432,8 +432,9 @@ function stemiCard(terr) {
 /* ================= IPERTROFIE ================= */
 add({
   id: 'ivs', cat: 'Ipertrofie', name: 'Ipertrofia ventricolare sinistra con strain', quiz: true,
-  params: [F.hr(70, 50, 100), { k: 'strain', label: 'Sovraccarico (strain)', type: 'select', def: '1', opts: [['0', 'Assente'], ['1', 'Presente']] }],
-  build: p => ({ rate: p.hr, pr: 170, qtc: 430, qrs: M.qrsLVH(), pComps: M.pSinus(1, 1.12, 1, 1.5), T: +p.strain ? { a: 160, g: 45, amp: 0.36 } : { a: 40, g: 18, amp: 0.4 }, st: +p.strain ? { a: 160, g: 45, amp: 0.08 } : null }), look: ['V1', 'V5', 'V6', 'aVL'],
+  params: [F.hr(70, 50, 100), { k: 'strain', label: 'Sovraccarico (strain)', type: 'select', def: '1', opts: [['0', 'Assente'], ['1', 'Presente']] },
+    { k: 'volt', label: 'Voltaggi del QRS', unit: '×', min: 0.7, max: 1.4, step: 0.05, def: 1 }],
+  build: p => ({ rate: p.hr, pr: 170, qtc: 430, qrs: M.qrsLVH(+p.volt || 1), pComps: M.pSinus(1, 1.12, 1, 1.5), T: +p.strain ? { a: 160, g: 45, amp: 0.36 } : { a: 40, g: 18, amp: 0.4 }, st: +p.strain ? { a: 160, g: 45, amp: 0.08 } : null }), look: ['V1', 'V5', 'V6', 'aVL'], indici: 'sinistra',
   card: {
     def: 'Aumento dei voltaggi del QRS da incremento della massa ventricolare sinistra, con possibili alterazioni secondarie della ripolarizzazione.',
     criteri: ['Sokolow-Lyon: S in V1 + R in V5 o V6 ≥ 35 mm', 'Cornell: R in aVL + S in V3 > 28 mm nell\u2019uomo, > 20 mm nella donna', 'Strain: ST sottoslivellato e T asimmetrica negativa in DI, aVL, V5, V6', 'Segni associati: ingrandimento atriale sinistro, deviazione assiale sinistra, R peak time allungato'],
@@ -448,7 +449,7 @@ add({
 add({
   id: 'ivd', cat: 'Ipertrofie', name: 'Ipertrofia ventricolare destra', quiz: true,
   params: [F.hr(80, 50, 110)],
-  build: p => ({ rate: p.hr, pr: 160, qtc: 420, qrs: M.qrsRVH(), pComps: M.pSinus(1, 1, 1.9, 0.8), T: { a: 55, g: -40, amp: 0.34 }, st: { a: 55, g: -40, amp: 0.05 } }), look: ['V1', 'V2', 'I', 'V6'],
+  build: p => ({ rate: p.hr, pr: 160, qtc: 420, qrs: M.qrsRVH(), pComps: M.pSinus(1, 1, 1.9, 0.8), T: { a: 55, g: -40, amp: 0.34 }, st: { a: 55, g: -40, amp: 0.05 } }), look: ['V1', 'V2', 'I', 'V6'], indici: 'destra',
   card: {
     def: 'Predominio delle forze elettriche del ventricolo destro per ipertrofia della sua parete.',
     criteri: ['Deviazione assiale destra (> +90°)', 'R dominante in V1 (R/S > 1, R ≥ 7 mm)', 'S profonde in V5–V6', 'Strain destro: ST sottoslivellato e T negative in V1–V3', 'P polmonare (P ≥ 2,5 mm in DII)'],
@@ -1865,7 +1866,115 @@ const APPRO = {
 };
 THEORY.forEach(ch => { if (APPRO[ch.id]) ch.html += APPRO[ch.id]; });
 
-const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', 'Elettroliti e altro'];
+/* ================= QUADRI COMBINATI =================
+   Associazioni che esistono davvero e che all'esame arrivano insieme.
+   Nota sulle combinazioni impossibili: due gradi diversi di blocco AV non
+   convivono come diagnosi separate, la fibrillazione atriale esclude qualunque
+   reperto che riguardi l'onda P (BAV di I grado compreso, e l'anomalia atriale),
+   e un ritmo sinusale non può coesistere con un flutter. */
+const COMB = 'Quadri combinati';
+const qrsEP = () => ({ w: 116, c: [
+  B(dirAG(-60, 10), 0.22, 14, 8, 8),          // vettore iniziale in alto a sinistra: q in DIII
+  B(dirAG(48, 5), 0.78, 42, 12, 12),
+  B(dirAG(175, -20), 0.46, 80, 11, 14)        // vettore terminale a destra: S larga in DI e V6
+] });
+const qrsIvsEas = (k) => { k = k == null ? 1 : k; return { w: 112, c: [
+  B(dirAG(120, 35), 0.28, 14, 8, 8),
+  B(dirAG(-52, -14), 1.95 * k, 46, 13, 13),
+  B(dirAG(-108, -52), 0.62 * k, 80, 11, 12)
+] }; };
+
+add({
+  id: 'fa-bbdx', cat: COMB, name: 'Fibrillazione atriale con blocco di branca destra', quiz: true,
+  params: [{ k: 'vr', label: 'Risposta ventricolare media', unit: '/min', min: 50, max: 160, step: 1, def: 96 },
+    { k: 'f', label: 'Onde f', type: 'select', def: '1', opts: [['0.5', 'Fini'], ['1', 'Medie'], ['2', 'Grossolane']] }],
+  build: p => ({ atrial: 'af', vRate: p.vr, qtc: 430, cont: 'af', fAmp: 0.04 * (+p.f), pComps: [], qrs: M.qrsRBBB(), T: { a: 35, g: -30, amp: 0.3 }, via: 'rbbb' }),
+  look: ['V1', 'V6', 'II'],
+  card: {
+    def: 'Due reperti indipendenti sullo stesso tracciato: il ritmo è fibrillato, la conduzione intraventricolare è bloccata a destra.',
+    criteri: ['Assenza di onde P, linea di base fibrillata', 'RR completamente irregolari', 'QRS ≥ 120 ms con rsR\u2032 in V1 e S larga in DI e V6', 'La morfologia del QRS resta la stessa battito dopo battito'],
+    meccanismo: 'La fibrillazione riguarda gli atri, il blocco di branca il sistema His-Purkinje: i due piani non si influenzano.',
+    vettori: 'Nessun vettore atriale organizzato; il vettore terminale lento va a destra e in avanti come in ogni BBDx.',
+    guarda: 'DII per il ritmo, V1 e V6 per il QRS.',
+    dd: ['Fibrillazione con conduzione aberrante intermittente (qui invece è fissa)', 'Tachicardia ventricolare (ma lì il ritmo è regolare)', 'Fibrillazione preeccitata (QRS di larghezza variabile)'],
+    trappole: 'Su questo tracciato non si può diagnosticare un BAV di I grado né un\u2019anomalia atriale: senza onda P quei criteri non sono valutabili.',
+    fonte: SRC.af + '; ' + SRC.aha3
+  }
+});
+
+add({
+  id: 'stemi-inf-bav3', cat: COMB, name: 'STEMI inferiore con BAV completo', quiz: true,
+  params: [{ k: 'hr', label: 'Frequenza atriale', unit: '/min', min: 60, max: 110, step: 1, def: 82 },
+    { k: 'st', label: 'Sopraslivellamento', unit: 'mm', min: 1, max: 6, step: 0.5, def: 3 }],
+  build: p => ({ rate: p.hr, av: 'III', escape: 'giunzionale', escRate: 42, qtc: 430,
+    T: { a: 105, g: -5, amp: 0.5 }, st: { a: 105, g: -5, amp: p.st / 10 * 0.25 } }),
+  look: ['II', 'III', 'aVF'],
+  card: {
+    def: 'Occlusione della coronaria destra: infarto inferiore e blocco atrio-ventricolare completo nello stesso momento.',
+    criteri: ['Sopraslivellamento del tratto ST in DII, DIII e aVF', 'Dissociazione atrio-ventricolare completa', 'Scappamento giunzionale a QRS stretto, 40-60/min', 'Sottoslivellamento speculare in DI e aVL'],
+    meccanismo: 'Nel 90% dei casi il nodo AV è irrorato dalla coronaria destra, la stessa che irrora la parete inferiore: il blocco è nodale, spesso transitorio e responsivo all\u2019atropina.',
+    vettori: 'Il vettore di lesione punta in basso verso la parete inferiore; i QRS di scappamento nascono dalla giunzione e restano stretti.',
+    guarda: 'DII, DIII e aVF per lo ST; DII in striscia lunga per la dissociazione.',
+    dd: ['BAV completo isolato degenerativo (QRS spesso largo, nessun ST)', 'Infarto anteriore con BAV (lì il blocco è infranodale e prognosticamente peggiore)'],
+    trappole: 'La combinazione è tipica e va cercata: davanti a un infarto inferiore si controllano sempre la conduzione AV e le derivazioni destre V3R-V4R.',
+    fonte: SRC.acs + '; ' + SRC.brady
+  }
+});
+
+add({
+  id: 'ivs-eas', cat: COMB, name: 'Ipertrofia ventricolare sinistra con emiblocco anteriore', quiz: true,
+  params: [F.hr(68, 50, 100), { k: 'volt', label: 'Voltaggi del QRS', unit: '×', min: 0.7, max: 1.4, step: 0.05, def: 1 }],
+  build: p => ({ rate: p.hr, pr: 170, qtc: 440, qrs: qrsIvsEas(+p.volt || 1), pComps: M.pSinus(1, 1.14, 1, 1.6),
+    T: { a: 150, g: 40, amp: 0.34 }, st: { a: 150, g: 40, amp: 0.07 }, via: 'lafb' }),
+  look: ['I', 'aVL', 'II', 'III', 'aVF', 'V6'], indici: 'sinistra',
+  card: {
+    def: 'Cuore ipertrofico e fascicolo anteriore bloccato: voltaggi alti e asse marcatamente deviato a sinistra.',
+    criteri: ['Asse frontale tra −45° e −90°', 'rS in DII, DIII e aVF con qR in aVL', 'Voltaggi aumentati: R in aVL elevata, S profonde nelle precordiali destre', 'QRS < 120 ms', 'Possibile strain: ST sottoslivellato e T negativa in DI, aVL, V5-V6'],
+    meccanismo: 'L\u2019ipertensione di lunga durata ispessisce il ventricolo e danneggia il fascicolo anteriore, che è sottile e con una sola sorgente di irrorazione.',
+    vettori: 'Il vettore principale è grande e ruotato in alto a sinistra: somma l\u2019aumento di massa e la sequenza di attivazione alterata.',
+    guarda: 'aVL per il voltaggio e la morfologia qR, le inferiori per le rS, V5-V6 per lo strain.',
+    dd: ['Emiblocco anteriore isolato (voltaggi normali)', 'Infarto inferiore pregresso (QS invece di rS nelle inferiori)', 'Blocco di branca sinistra (QRS ≥ 120 ms)'],
+    trappole: 'L\u2019emiblocco anteriore gonfia la R in aVL: il criterio di Cornell perde specificità e va letto con prudenza.',
+    fonte: SRC.aha3 + '; ' + SRC.aha5
+  }
+});
+
+add({
+  id: 'bav1-bbsx', cat: COMB, name: 'BAV di I grado con blocco di branca sinistra', quiz: true,
+  params: [F.hr(64, 45, 95), F.pr(250, 210, 380)],
+  build: p => ({ rate: p.hr, pr: p.pr, av: 'I', qtc: 450, qrs: M.qrsLBBB(), T: { a: 165, g: 42, amp: 0.4 }, st: { a: 165, g: 42, amp: 0.09 }, via: 'lbbb' }),
+  look: ['II', 'V1', 'V6'],
+  card: {
+    def: 'Conduzione rallentata a monte e blocco completo della branca sinistra: malattia diffusa del sistema di conduzione.',
+    criteri: ['PR > 200 ms costante, ogni P condotta', 'QRS ≥ 120 ms con R larga in DI, aVL, V5-V6 e assenza di q settali', 'ST e T discordanti rispetto al QRS'],
+    meccanismo: 'Degenerazione fibrotica che coinvolge sia il nodo AV sia la branca sinistra (malattia di Lenègre-Lev), spesso in un paziente anziano.',
+    vettori: 'Vettore di attivazione lento e diretto a sinistra e indietro, come in ogni BBSx; il ritardo AV non modifica i vettori, solo la loro cadenza.',
+    guarda: 'DII per il PR, V1 e V6 per il QRS.',
+    dd: ['BAV di I grado isolato', 'BBSx isolato', 'Blocco bifascicolare con PR lungo'],
+    trappole: 'Il PR lungo qui non dice dove sia il rallentamento: può essere nodale o infrahissiano, e solo lo studio elettrofisiologico lo distingue. Attenzione: BAV di I e II grado non si diagnosticano insieme, perché o tutte le P conducono o qualcuna cade.',
+    fonte: SRC.brady + '; ' + SRC.aha3
+  }
+});
+
+add({
+  id: 'ep-s1q3t3', cat: COMB, name: 'Embolia polmonare: tachicardia sinusale, S1Q3T3 e BBDx incompleto', quiz: true,
+  params: [F.hr(112, 90, 150)],
+  build: p => ({ rate: p.hr, pr: 150, qtc: 420, qrs: qrsEP(), pComps: M.pSinus(1, 1, 1.7, 0.9),
+    T: { a: 20, g: -72, amp: 0.3 } }),
+  look: ['I', 'III', 'V1', 'V2', 'V3'],
+  card: {
+    def: 'Il quadro classico del cuore polmonare acuto: nessun segno è sensibile da solo, la combinazione orienta.',
+    criteri: ['Tachicardia sinusale: il reperto più frequente in assoluto', 'S profonda in DI, onda q e T negativa in DIII (S1Q3T3)', 'T negative da V1 a V4 per sovraccarico del ventricolo destro', 'Deviazione assiale destra e ritardo di conduzione destro, spesso incompleto', 'Rotazione oraria con transizione spostata a sinistra'],
+    meccanismo: 'L\u2019aumento improvviso delle resistenze polmonari dilata il ventricolo destro: cambia l\u2019asse, si allunga la conduzione destra e il subepicardio destro si ripolarizza male.',
+    vettori: 'Il vettore terminale si sposta a destra (S in DI e V6) e il vettore T si allontana dal ventricolo destro dilatato: T negative nelle precordiali destre.',
+    guarda: 'DI, DIII, V1-V4 e la frequenza.',
+    dd: ['Infarto inferiore (lì la q in DIII si accompagna a sopraslivellamento e a q in DII e aVF)', 'Sindrome coronarica acuta con T negative anteriori (quadro di Wellens)', 'BPCO riacutizzata', 'Ipertrofia ventricolare destra cronica'],
+    trappole: 'S1Q3T3 compare in meno di un quarto dei casi e un ECG normale non esclude l\u2019embolia: l\u2019esame serve soprattutto a escludere altre diagnosi e a stimare la gravità.',
+    fonte: 'ESC 2019, Embolia polmonare acuta; slide del corso su TVP ed embolia polmonare'
+  }
+});
+
+const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', COMB, 'Elettroliti e altro'];
 const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ISO_DATA = API;
 })(typeof window !== 'undefined' ? window : this);
