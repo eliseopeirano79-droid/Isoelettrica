@@ -491,7 +491,8 @@ const S = {
   sc: byId[store.sc] ? store.sc : 'normale',
   mode: store.mode || 'print', speed: store.speed || 25, gain: store.gain || 10, slow: 1,
   playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  sel: null, noise: store.noise == null ? 0.35 : store.noise, sesso: store.sesso === 'F' ? 'F' : 'M', view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 0.6 : store.opac
+  sel: null, noise: store.noise == null ? 0.35 : store.noise, sesso: store.sesso === 'F' ? 'F' : 'M',
+  ectTipo: store.ectTipo === 'pac' ? 'pac' : 'pvc', ectPat: store.ectPat || 'off', view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 0.6 : store.opac
 };
 let stream = null, curCfg = null, seed = 1;
 const mon = new Monitor($('#ecg'), $('#ecgOv'), { onSelect: id => { S.sel = S.sel === id ? null : id; mon.setSelected(S.sel); scene.selectLead(S.sel); $$('#p-card .chip').forEach(c => c.classList.toggle('on', c.dataset.l === S.sel)); } });
@@ -501,8 +502,28 @@ if (S.tgl.anat && S.tgl.heart) S.tgl.anat = false;
 Object.keys(S.tgl).forEach(k => { scene.toggle(k, S.tgl[k]); const b = $('#hud3d [data-tg="' + k + '"]'); if (b) b.classList.toggle('on', S.tgl[k]); });
 
 function paramsFor(sc) { const p = {}; sc.params.forEach(q => { p[q.k] = q.def; }); Object.assign(p, store.params[sc.id] || {}); return p; }
+/* Schema di ripetizione delle extrasistoli applicato al quadro corrente.
+   Funziona sui ritmi con base sinusale: negli altri (FA, flutter, TV, blocco
+   completo, ritmi continui) il concetto di bigeminismo non ha senso. */
+function ritmoSinusale(cfg) {
+  return !cfg.mode && !cfg.atrial && !cfg.cont && cfg.av !== 'III' && cfg.av !== 'dissoc';
+}
+function applicaEctopia(cfg) {
+  if (!S.ectPat || S.ectPat === 'off' || !ritmoSinusale(cfg)) return;
+  cfg.ectopy = {
+    type: S.ectTipo, pattern: S.ectPat, prob: 0.18, coupling: 0.52,
+    qrs: S.ectTipo === 'pvc' ? window.ECG.M.qrsPVC_RVOT() : null
+  };
+}
+function aggiornaEctUI() {
+  const sel = $('#ectPat'); if (sel) sel.value = S.ectPat;
+  $$('#ectSeg button').forEach(b => b.classList.toggle('on', b.dataset.e === S.ectTipo));
+  const ok = curCfg ? ritmoSinusale(curCfg) : true;
+  if (sel) { sel.disabled = !ok; sel.title = ok ? 'Fa comparire le extrasistoli in modo continuo secondo uno schema' : 'Lo schema di ripetizione vale solo sui ritmi a base sinusale'; }
+}
 function buildStream(sc, p, keepTime) {
   curCfg = sc.build(p); curCfg.noise = S.noise; curCfg.t0 = keepTime ? mon.t : 0;
+  applicaEctopia(curCfg);
   stream = new Stream(curCfg, ++seed);
   mon.setStream(stream, keepTime);
   scene.setScenario(curCfg);
@@ -513,6 +534,7 @@ function loadScenario(id, keepTime) {
   $('#scTitle').textContent = sc.name; $('#scCat').textContent = sc.cat;
   $$('#libList .item').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   buildStream(sc, paramsFor(sc), keepTime);
+  aggiornaEctUI();
   mon.setHighlight(sc.look || []);
   renderCard(sc); renderParams(sc); renderVolt();
   closeLib();
@@ -656,15 +678,25 @@ $('#markBtn').addEventListener('click', () => {
   $('#markBtn').setAttribute('aria-pressed', mon.marks);
   mon.drawOverlay();
 });
-/* battito prematuro su richiesta: BEV con pausa compensatoria, BESV con P prematura */
+/* Battito prematuro su richiesta. Ventricolare: QRS largo senza P, pausa
+   compensatoria. Atriale: P prematura di forma diversa, QRS normale, pausa non
+   compensatoria perché il nodo del seno viene resettato. */
 function ectopia(kind) {
+  S.ectTipo = kind; store.ectTipo = kind; save();
+  $$('#ectSeg button').forEach(b => b.classList.toggle('on', b.dataset.e === kind));
   if (!stream || !stream.injectEctopic) return;
+  if (!S.playing) setPlaying(true);            // ferma il tracciato non si vedrebbe
   const r = stream.injectEctopic(mon.t, kind);
   const b = $('#ectSeg button[data-e="' + kind + '"]');
-  if (b) { b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 240); }
-  if (!r && b) { b.classList.remove('flash'); }
+  if (b && r) { b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 260); }
 }
 $$('#ectSeg button').forEach(b => b.addEventListener('click', () => ectopia(b.dataset.e)));
+$('#ectPat').addEventListener('change', e => {
+  S.ectPat = e.target.value; store.ectPat = S.ectPat; save();
+  buildStream(byId[S.sc], paramsFor(byId[S.sc]), true);
+  aggiornaEctUI();
+});
+aggiornaEctUI();
 document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
@@ -1125,5 +1157,70 @@ setPlaying(S.playing);
 loadScenario(S.sc, false);
 showView('trace');
 requestAnimationFrame(loop);
-if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+/* =====================================================================
+   AGGIORNAMENTI DELL'APP INSTALLATA
+   L'app aggiunta al Dock resta sospesa e non ricarica mai da sola: qui si
+   controlla a ogni riapertura se sul sito c'è una versione più recente.
+   ===================================================================== */
+let swReg = null, ricaricando = false, ultimoCheck = 0;
+function barraAggiornamento() {
+  if (document.getElementById('updBar')) return;
+  const d = document.createElement('div');
+  d.id = 'updBar'; d.className = 'updbar';
+  d.innerHTML = '<span>È pronta una versione aggiornata di Isoelettrica.</span>' +
+    '<button class="btn primary" id="updGo">Aggiorna adesso</button>' +
+    '<button class="btn" id="updNo">Più tardi</button>';
+  document.body.appendChild(d);
+  document.getElementById('updGo').addEventListener('click', () => {
+    const w = swReg && (swReg.waiting || swReg.installing);
+    if (w) w.postMessage({ type: 'skipWaiting' });
+    setTimeout(() => { if (!ricaricando) { ricaricando = true; location.reload(); } }, 600);
+  });
+  document.getElementById('updNo').addEventListener('click', () => d.remove());
+}
+function controllaAggiornamenti(forza) {
+  const ora = Date.now();
+  if (!forza && ora - ultimoCheck < 20000) return;
+  ultimoCheck = ora;
+  if (swReg) swReg.update().catch(() => {});
+}
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (ricaricando) return; ricaricando = true; location.reload();
+  });
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'version') {
+      const el = $('#credit');
+      if (el) el.textContent = 'App made by Eliseo Peirano · 2026 · v' + e.data.version;
+    }
+  });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(r => {
+      swReg = r;
+      if (r.waiting && navigator.serviceWorker.controller) barraAggiornamento();
+      r.addEventListener('updatefound', () => {
+        const nw = r.installing; if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) barraAggiornamento();
+        });
+      });
+      controllaAggiornamenti(true);
+      if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'version' });
+    }).catch(() => {});
+  });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') controllaAggiornamenti(); });
+  window.addEventListener('focus', () => controllaAggiornamenti());
+  /* tocca la firma in alto a destra per forzare il controllo e, se serve, ripulire tutto */
+  const cr = $('#credit');
+  if (cr) cr.addEventListener('click', () => {
+    controllaAggiornamenti(true);
+    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'version' });
+    const t = cr.textContent; cr.textContent = 'Controllo aggiornamenti…';
+    setTimeout(() => { if (!document.getElementById('updBar')) cr.textContent = t + ' · aggiornata'; }, 1600);
+  });
+  if (cr) cr.addEventListener('dblclick', () => {
+    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'purge' });
+    setTimeout(() => { ricaricando = true; location.reload(); }, 400);
+  });
+}
 })();

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest?v=24">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -82,6 +82,7 @@ button{cursor:pointer}
 .seg button.on{background:var(--chip);color:var(--fg);font-weight:600}
 .seg .seglab{display:inline-flex;align-items:center;padding:5px 8px;font-size:11px;color:var(--muted);background:var(--chip);border-right:1px solid var(--line);letter-spacing:.02em;white-space:nowrap}
 .seg button.flash{background:var(--accent);color:#fff}
+.toolsel{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:9px;padding:0 8px;height:34px;font-size:12.5px;max-width:190px}
 .play{width:34px;height:34px;border-radius:50%;border:none;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
 .play svg{width:13px;height:13px;fill:currentColor}
 .tool.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
@@ -296,6 +297,8 @@ body.zen #v-theory.on{grid-template-columns:minmax(0,1fr)}
 body.zen .article{padding-top:calc(30px + env(safe-area-inset-top))}
 body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article ol{max-width:76ch}
 .qnote{flex-basis:100%;margin:2px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+.updbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:80;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;box-shadow:0 8px 30px rgba(0,0,0,.28);max-width:min(560px,94vw);font-size:13.5px}
+.credit{cursor:pointer}
 
 #v-cor.on{display:grid;grid-template-columns:minmax(0,1fr) 380px}
 .corleft{display:flex;flex-direction:column;min-width:0}
@@ -335,7 +338,7 @@ body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article 
       <button data-v="quiz">Quiz</button>
     </nav>
     <div class="spacer"></div>
-    <span class="credit">App made by Eliseo Peirano · 2026</span>
+    <span class="credit" id="credit" title="Tocca per cercare una versione più recente">App made by Eliseo Peirano · 2026</span>
     <button class="iconbtn" id="themeBtn" aria-label="Cambia tema chiaro o scuro" title="Tema"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
   </header>
 
@@ -356,7 +359,8 @@ body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article 
         <div class="seg" id="speedSeg" aria-label="Velocità della carta in mm al secondo"><span class="seglab">mm/s</span><button data-s="25" class="on">25</button><button data-s="50">50</button></div>
         <div class="seg" id="gainSeg" aria-label="Guadagno in mm per millivolt"><span class="seglab">mm/mV</span><button data-g="5">5</button><button data-g="10" class="on">10</button><button data-g="20">20</button></div>
         <div class="seg" id="slowSeg" aria-label="Tempo"><button data-t="1" class="on">1×</button><button data-t="0.25">¼×</button></div>
-        <div class="seg" id="ectSeg" aria-label="Inserisci un battito prematuro"><span class="seglab">Extrasistole</span><button data-e="pvc" title="Battito ectopico ventricolare (tasto E)">BEV</button><button data-e="pac" title="Battito ectopico sopraventricolare (tasto A)">BESV</button></div>
+        <div class="seg" id="ectSeg" aria-label="Inserisci un battito prematuro"><span class="seglab">Extrasistole</span><button data-e="pvc" class="on" title="Inserisce subito un battito prematuro ventricolare, con pausa compensatoria (tasto E)">Ventricolare</button><button data-e="pac" title="Inserisce subito un battito prematuro atriale, con P diversa e pausa non compensatoria (tasto A)">Atriale</button></div>
+        <select id="ectPat" class="toolsel" aria-label="Schema di ripetizione delle extrasistoli" title="Fa comparire le extrasistoli in modo continuo secondo uno schema"><option value="off">Nessuna ripetizione</option><option value="isolate">Sparse</option><option value="bigeminismo">Bigeminismo</option><option value="trigeminismo">Trigeminismo</option><option value="quadrigeminismo">Quadrigeminismo</option><option value="coppie">Coppie</option><option value="triplette">Triplette</option><option value="salve">Salve (TV non sostenuta)</option></select>
         <button class="iconbtn tool" id="calBtn" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M5 2v12M11 2v12M5 8h6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Compasso</button>
         <button class="iconbtn tool" id="markBtn" aria-pressed="false" title="Mostra PR e P bloccate sulla striscia lunga"><svg viewBox="0 0 16 16"><path d="M3 11V5M13 11V5M3 7h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Intervalli</button>
         </div>
@@ -480,12 +484,14 @@ body.zen .article h1,body.zen .article p,body.zen .article ul,body.zen .article 
   </section>
 </div>
 
-<script src="three.min.js"></script>
-<script src="cuore3d.js"></script>
-<script src="engine.js"></script>
-<script src="ipertrofie.js"></script>
-<script src="data.js"></script>
-<script src="app.js"></script>
-<script src="coronarie.js"></script>
+<!-- Alla prossima pubblicazione cambia il numero dopo ?v= qui sotto e VERSION in sw.js:
+     è quello che costringe iPad a scaricare davvero i file nuovi. -->
+<script src="three.min.js?v=24"></script>
+<script src="cuore3d.js?v=24"></script>
+<script src="engine.js?v=24"></script>
+<script src="ipertrofie.js?v=24"></script>
+<script src="data.js?v=24"></script>
+<script src="app.js?v=24"></script>
+<script src="coronarie.js?v=24"></script>
 </body>
 </html>

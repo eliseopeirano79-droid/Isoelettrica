@@ -604,7 +604,7 @@ Stream.prototype.injectEctopic = function (tNow, kind) {
    diagnostici. Il seme rende la variazione riproducibile. */
 function applyVariation(cfg, seed, opt) {
   const R = rng(((seed || 1) >>> 0) + 7919);
-  const o = Object.assign({ asse: 10, ampiezza: 0.15, onT: 0.18, onP: 0.28, fc: 0.07, qrs: 0.05, rumore: true }, opt || {});
+  const o = Object.assign({ asse: 14, ampiezza: 0.19, onT: 0.20, onP: 0.30, fc: 0.09, qrs: 0.05, rumore: true }, opt || {});
   const u = () => R() * 2 - 1;
   cfg.axisRot = (cfg.axisRot || 0) + u() * o.asse;
   cfg.ampScale = (cfg.ampScale == null ? 1 : cfg.ampScale) * (1 + u() * o.ampiezza);
