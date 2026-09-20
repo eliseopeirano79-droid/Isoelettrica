@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=34">
+<link rel="manifest" href="manifest.webmanifest?v=36">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -381,6 +381,15 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .coronda{font-size:13px;color:var(--fg);background:var(--accent-soft);border-radius:9px;padding:8px 10px}
 .corout .src{font-size:11.5px;color:var(--muted)}
 @media (max-width:900px){#v-cor.on{grid-template-columns:minmax(0,1fr);overflow:auto}.corout{border-left:none;border-top:1px solid var(--line)}.corstage{min-height:300px;height:44vh}}
+
+/* atlante: selettore della fonte e schede dei tracciati reali */
+.afonti{display:flex;gap:6px;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid var(--bordo,#2a2f3a)}
+.afonte{flex:1;padding:8px 6px;border-radius:9px;border:1px solid var(--bordo,#2a2f3a);background:transparent;color:inherit;font:inherit;font-size:.82rem;cursor:pointer}
+.afonte.on{background:var(--acc,#3b82f6);border-color:var(--acc,#3b82f6);color:#fff}
+.acard.areale{display:flex;flex-direction:column;gap:6px;padding:12px;min-height:0;text-align:left}
+.ascp{display:flex;flex-wrap:wrap;gap:4px}
+.ascp span{font-size:.68rem;padding:2px 6px;border-radius:5px;background:rgba(127,127,127,.18);letter-spacing:.02em}
+.arealenota{opacity:.6;font-size:.72rem;margin-top:14px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -586,15 +595,15 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=34"></script>
-<script src="cuore3d.js?v=34"></script>
-<script src="engine.js?v=34"></script>
-<script src="ipertrofie.js?v=34"></script>
-<script src="data.js?v=34"></script>
-<script src="atlante-digitale.js?v=34"></script>
+<script src="three.min.js?v=36"></script>
+<script src="cuore3d.js?v=36"></script>
+<script src="engine.js?v=36"></script>
+<script src="ipertrofie.js?v=36"></script>
+<script src="data.js?v=36"></script>
+<script src="atlante-digitale.js?v=36"></script>
 <!-- facoltativo: ECG reali da PTB-XL, prodotti con ptbxl.py. Se il file non c'è, l'app parte lo stesso -->
-<script src="atlante-reale.js?v=34" onerror="this.dataset.ok=0"></script>
-<script src="app.js?v=34"></script>
-<script src="coronarie.js?v=34"></script>
+<script src="atlante-reale.js?v=36" onerror="this.dataset.ok=0"></script>
+<script src="app.js?v=36"></script>
+<script src="coronarie.js?v=36"></script>
 </body>
 </html>

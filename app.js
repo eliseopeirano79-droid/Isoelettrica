@@ -683,9 +683,10 @@ function renderCard(sc) {
 }
 /* ---------- tracciati reali digitalizzati dall'atlante ---------- */
 let digCur = null;
-function apriDigitalizzato(id) {
-  const rec = DIG[id]; if (!rec) return;
+function apriDigitalizzato(id, recDato) {
+  const rec = recDato || DIG[id]; if (!rec) return;
   digCur = id;
+  const reale = !!rec.reale;
   stream = new Sampled(rec, 1);
   curCfg = stream.cfg;
   mon.setStream(stream, false);
@@ -698,11 +699,19 @@ function apriDigitalizzato(id) {
   const der = Object.keys(rec.d).length;
   $('#p-card').innerHTML =
     '<div class="sec"><p class="lead">' + esc(rec.t) + '</p>' +
-    '<p class="note">Segnale estratto dalla scansione della slide: ' + der + ' derivazioni, ' +
+    '<p class="note">' + (reale
+      ? 'Registrazione reale a 12 derivazioni su paziente: '
+      : 'Segnale estratto dalla scansione della slide: ' + der + ' derivazioni, ') +
     fmt(rec.fs) + ' campioni al secondo, ' + fmt(rec.n / rec.fs, 1) + ' secondi che si ripetono in ciclo.</p></div>' +
-    '<div class="sec"><h3>Come leggerlo</h3><p>I millivolt sono ricostruiti dalla geometria della carta: ' +
+    (reale
+      ? '<div class="sec"><h3>Come leggerlo</h3><p>È un elettrocardiogramma vero, registrato in ospedale e refertato da uno o due cardiologi. ' +
+        'I voltaggi sono quelli misurati dall\u2019apparecchio, quindi i criteri di ipertrofia e gli intervalli valgono davvero. ' +
+        'Il rumore, la deriva della linea di base e gli artefatti fanno parte del tracciato: è questa la differenza con il simulatore.</p>' +
+        (rec.scp && rec.scp.length ? '<p class="note">Codici del referto: ' + esc(rec.scp.join(', ')) + '</p>' : '') + '</div>'
+      : '') +
+    (reale ? '' : '<div class="sec"><h3>Come leggerlo</h3><p>I millivolt sono ricostruiti dalla geometria della carta: ' +
     'la larghezza di ogni pannello vale 2,5 secondi a 25 mm/s. Sono attendibili per la morfologia e per gli intervalli, ' +
-    'meno per i voltaggi assoluti. Per i criteri di ipertrofia continua a fidarti del tracciato simulato.</p></div>' +
+    'meno per i voltaggi assoluti. Per i criteri di ipertrofia continua a fidarti del tracciato simulato.</p></div>') +
     (q ? '<div class="sec"><h3>Quadro corrispondente</h3><p>' + esc(q.name) + '</p>' +
          '<ul class="crit">' + q.card.criteri.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
          '<button class="btn" id="digQuadro">Apri il quadro simulato</button></div>' : '') +
@@ -1211,9 +1220,16 @@ const qmon = new Monitor($('#qEcg'), $('#qEcgOv'), {});
 /* Senza atlante (versione senza i riferimenti al corso) la linguetta e il quiz
    sulle immagini non hanno più niente da mostrare: spariscono. */
 if (!ATLAS.length) {
-  const t = document.querySelector('[data-v="atlas"]'); if (t) t.hidden = true;
   const q = document.querySelector('[data-qm="atlas"]'); if (q) q.hidden = true;
   const seg = $('#qModeSeg'); if (seg) seg.hidden = true;
+  /* La linguetta però resta se ci sono i tracciati reali: quelli sono
+     pubblicabili, e senza le slide del corso l'atlante diventa proprio loro.
+     Lo si sa solo dopo aver letto l'indice, quindi si decide lì. */
+  const t = document.querySelector('[data-v="atlas"]');
+  if (t) {
+    t.hidden = true;
+    caricaIndiceReale().then(r => { if (r && r.voci.length) { t.hidden = false; atlasFonte = 'reale'; } });
+  }
 }
 const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null, mode: (store.qmode === 'atlas' && ATLAS.length) ? 'atlas' : 'gen' };
 /* immagini dell'atlante utilizzabili come domanda: quelle con un quadro collegato */
@@ -1346,6 +1362,34 @@ function answer(btn) {
    ===================================================================== */
 let atlasG = store.atlasG || (ATLAS_G[0] ? ATLAS_G[0].id : '');
 let atlasQ = '';
+/* ---------- atlante dei tracciati reali (PTB-XL, CC BY 4.0) ----------
+   Sezione separata da quelle delle slide. L'indice è un file solo, leggero; il
+   segnale di ogni tracciato si scarica quando lo apri, così la raccolta può
+   contenerne migliaia senza appesantire l'avvio. Se la cartella non c'è,
+   la sezione semplicemente non compare. */
+let atlasFonte = store.atlasFonte || 'corso';
+let REALE = null, realeG = store.realeG || '', realeCache = {};
+function caricaIndiceReale() {
+  if (REALE !== null) return Promise.resolve(REALE);
+  return fetch('atlante-reale/indice.json').then(r => r.ok ? r.json() : null)
+    .catch(() => null)
+    .then(d => { REALE = d || { voci: [], gruppi: [], licenza: '' }; return REALE; });
+}
+function gruppiReali() {
+  const g = [];
+  (REALE.gruppi || []).forEach(x => { if (REALE.voci.some(v => v.g === x.id)) g.push(x); });
+  return g;
+}
+function apriReale(v) {
+  const fatto = rec => {
+    rec = Object.assign({}, rec, { reale: true, t: v.t, f: v.f, q: v.q, scp: v.scp });
+    apriDigitalizzato(v.i, rec);
+  };
+  if (realeCache[v.i]) return fatto(realeCache[v.i]);
+  fetch('atlante-reale/' + v.i + '.json').then(r => r.json()).then(rec => {
+    realeCache[v.i] = rec; fatto(rec);
+  }).catch(() => alert('Non riesco a caricare questo tracciato. Se stai usando l\u2019app senza rete, aprilo una prima volta da collegato.'));
+}
 function atlasFiltered() {
   const q = atlasQ.trim().toLowerCase();
   if (q) return ATLAS.filter(a => (a.t + ' ' + a.n + ' ' + a.f).toLowerCase().indexOf(q) >= 0);
@@ -1353,6 +1397,21 @@ function atlasFiltered() {
 }
 function renderAtlas() {
   const toc = $('#atoc'); toc.innerHTML = '';
+  if (REALE && REALE.voci.length) {
+    const barra = document.createElement('div'); barra.className = 'afonti';
+    [['corso', 'Slide del corso', ATLAS.length], ['reale', 'ECG reali', REALE.voci.length]].forEach(([id, nome, n]) => {
+      const b = document.createElement('button');
+      b.className = 'afonte' + (atlasFonte === id ? ' on' : '');
+      b.textContent = nome + ' (' + n + ')';
+      b.addEventListener('click', () => {
+        atlasFonte = id; atlasQ = ''; const c = $('#aSearch'); if (c) c.value = '';
+        store.atlasFonte = id; save(); renderAtlas(); const w = $('.agrid-wrap'); if (w) w.scrollTop = 0;
+      });
+      barra.appendChild(b);
+    });
+    toc.appendChild(barra);
+  }
+  if (atlasFonte === 'reale' && REALE) return renderAtlasReale(toc);
   ATLAS_G.forEach(g => {
     const n = ATLAS.filter(a => a.g === g.id).length;
     const b = document.createElement('button');
@@ -1380,6 +1439,39 @@ function renderAtlas() {
     b.addEventListener('click', () => openLightbox(a));
     grid.appendChild(b);
   });
+}
+function renderAtlasReale(toc) {
+  const gr = gruppiReali();
+  if (!realeG || !gr.some(g => g.id === realeG)) realeG = gr.length ? gr[0].id : '';
+  gr.forEach(g => {
+    const n = REALE.voci.filter(v => v.g === g.id).length;
+    const b = document.createElement('button');
+    b.textContent = g.nome + ' (' + n + ')';
+    b.classList.toggle('on', !atlasQ && g.id === realeG);
+    b.addEventListener('click', () => { realeG = g.id; atlasQ = ''; const c = $('#aSearch'); if (c) c.value = ''; store.realeG = g.id; save(); renderAtlas(); const w = $('.agrid-wrap'); if (w) w.scrollTop = 0; });
+    toc.appendChild(b);
+  });
+  const grid = $('#agrid'); grid.innerHTML = '';
+  const q = atlasQ.trim().toLowerCase();
+  const list = q
+    ? REALE.voci.filter(v => (v.t + ' ' + (v.scp || []).join(' ') + ' ' + v.gn).toLowerCase().indexOf(q) >= 0)
+    : REALE.voci.filter(v => v.g === realeG);
+  const head = document.createElement('p'); head.className = 'ahead';
+  head.textContent = q ? list.length + ' tracciati trovati' : (gr.find(g => g.id === realeG) || {}).nome || '';
+  grid.appendChild(head);
+  if (!list.length) { grid.insertAdjacentHTML('beforeend', '<p class="ahead">Nessun tracciato trovato</p>'); return; }
+  list.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'acard areale';
+    b.innerHTML = '<div class="at">' + esc(v.t) + '</div>' +
+      '<div class="ascp">' + (v.scp || []).slice(0, 5).map(c => '<span>' + esc(c) + '</span>').join('') + '</div>' +
+      '<div class="as">▶ ' + fmt(v.n / v.fs, 0) + ' s · ' + esc(v.f) + '</div>';
+    b.addEventListener('click', () => apriReale(v));
+    grid.appendChild(b);
+  });
+  const nota = document.createElement('p'); nota.className = 'ahead arealenota';
+  nota.textContent = REALE.licenza || '';
+  grid.appendChild(nota);
 }
 let lbCur = null;
 function openLightbox(a) {
@@ -1515,7 +1607,7 @@ function showView(v) {
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'v-' + v));
   if (v === 'trace') { requestAnimationFrame(() => { mon.layout(); scene.resize(); }); }
   if (v === 'theory') renderTheory();
-  if (v === 'atlas') renderAtlas();
+  if (v === 'atlas') caricaIndiceReale().then(renderAtlas);
   if (v === 'cmp') cmpShow();
   if (v === 'cor' && window.ISO_CORONARIE) window.ISO_CORONARIE.init();
   if (v === 'anat') {

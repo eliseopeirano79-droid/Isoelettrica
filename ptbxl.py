@@ -65,6 +65,25 @@ MAPPA = {
     'LNGQT': ('qtlungo', 'QT lungo'),
     'ELECTRICAL_ALTERNANS': ('tamponamento', 'Alternanza elettrica'),
 }
+# gruppi dell'atlante reale: come sono organizzate le sezioni nell'app
+GRUPPI = {
+    'normali': ('Tracciati normali', ['NORM', 'SR', 'SBRAD', 'STACH', 'SARRH']),
+    'sopraventricolari': ('Aritmie sopraventricolari', ['AFIB', 'AFLT', 'SVTAC', 'PSVT', 'PAC']),
+    'bav': ('Blocchi atrioventricolari', ['1AVB', '2AVB', '3AVB']),
+    'branca': ('Blocchi di branca ed emiblocchi', ['CRBBB', 'IRBBB', 'CLBBB', 'ILBBB', 'LAFB', 'LPFB', 'IVCD']),
+    'ischemia': ('Cardiopatia ischemica', ['IMI', 'ILMI', 'AMI', 'ASMI', 'ALMI', 'LMI', 'IPLMI', 'IPMI']),
+    'ipertrofia': ('Ipertrofie e ingrandimenti', ['LVH', 'RVH', 'LAO/LAE', 'RAO/RAE']),
+    'ventricolari': ('Aritmie ventricolari', ['PVC']),
+    'stimolazione': ('Stimolazione e preeccitazione', ['PACE', 'WPW']),
+    'altro': ('Altri quadri', ['LNGQT', 'ELECTRICAL_ALTERNANS']),
+}
+def gruppo_di(c):
+    for gid, (nome, codici) in GRUPPI.items():
+        if c in codici: return gid, nome
+    return 'altro', 'Altri quadri'
+
+# solo le otto derivazioni indipendenti: le altre quattro l'app le ricostruisce
+INDIP = ['I', 'II', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
 ORDINE = ['I', 'II', 'III', 'AVR', 'AVL', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']
 NOSTRI = {'I': 'I', 'II': 'II', 'III': 'III', 'AVR': 'aVR', 'AVL': 'aVL', 'AVF': 'aVF',
           'V1': 'V1', 'V2': 'V2', 'V3': 'V3', 'V4': 'V4', 'V5': 'V5', 'V6': 'V6'}
@@ -146,6 +165,8 @@ def main():
     ap.add_argument('--sorgente', required=True, help='cartella di ptb-xl (quella con ptbxl_database.csv)')
     ap.add_argument('--out', default='atlante-reale.js')
     ap.add_argument('--per-classe', type=int, default=8)
+    ap.add_argument('--modo', choices=['cartella', 'file'], default='cartella',
+                    help="cartella: indice + un file per tracciato, caricati solo all'apertura (per migliaia di ECG). file: tutto in un unico .js")
     ap.add_argument('--tutti', action='store_true', help='non filtrare per validazione umana e rumore')
     a = ap.parse_args()
 
@@ -162,7 +183,12 @@ def main():
         scelti, conta = scegli(db, a.per_classe, False, False)
     print('%d tracciati scelti su %d classi' % (len(scelti), len(conta)))
 
-    rec = []
+    cartella = a.modo == 'cartella'
+    dirout = a.out if cartella else None
+    if cartella:
+        if dirout.endswith('.js'): dirout = 'atlante-reale'
+        os.makedirs(dirout, exist_ok=True)
+    rec, indice = [], []
     for r, c, tutti_i_codici in scelti:
         base = os.path.join(a.sorgente, r['filename_lr'])
         try:
@@ -170,11 +196,12 @@ def main():
             sig, n = leggi_dat(base + '.dat', hea)
         except Exception as e:
             print('  salto %s: %s' % (r['ecg_id'], e)); continue
+        campi = INDIP if cartella else ORDINE
         d = {}
-        for nome in ORDINE:
+        for nome in campi:
             if nome in sig:
                 d[NOSTRI[nome]] = codifica(sig[nome])
-        if len(d) < 12:
+        if len(d) < len(campi):
             continue
         quadro, etichetta = MAPPA[c]
         eta = r.get('age', ''); sesso = {'0': 'uomo', '1': 'donna'}.get(r.get('sex', ''), '')
@@ -182,9 +209,30 @@ def main():
         if eta and sesso:
             try: titolo += ' — %s, %d anni' % (sesso, int(float(eta)))
             except Exception: pass
-        rec.append({'t': titolo, 'f': 'PTB-XL #%s (CC BY 4.0)' % r['ecg_id'], 'q': quadro,
-                    'fs': int(hea['fs']), 'n': n, 'scp': [x for x in tutti_i_codici], 'd': d})
+        gid, gnome = gruppo_di(c)
+        ident = 'ptbxl-%s' % r['ecg_id']
+        voce = {'t': titolo, 'f': 'PTB-XL #%s (CC BY 4.0)' % r['ecg_id'], 'q': quadro,
+                'fs': int(hea['fs']), 'n': n, 'scp': list(tutti_i_codici), 'd': d}
+        if cartella:
+            with open(os.path.join(dirout, ident + '.json'), 'w', encoding='utf-8') as f:
+                json.dump(voce, f, ensure_ascii=False, separators=(',', ':'))
+            indice.append({'i': ident, 't': titolo, 'g': gid, 'gn': gnome, 'q': quadro,
+                           'f': voce['f'], 'scp': list(tutti_i_codici), 'n': n, 'fs': voce['fs']})
+        else:
+            voce['i'] = ident; rec.append(voce)
 
+    CIT = ('Wagner P, Strodthoff N, Bousseljot R-D, Samek W, Schaeffter T. '
+           'PTB-XL, a large publicly available electrocardiography dataset (v1.0.3). '
+           'PhysioNet. https://doi.org/10.13026/kfzx-aw45 — licenza CC BY 4.0')
+    if cartella:
+        with open(os.path.join(dirout, 'indice.json'), 'w', encoding='utf-8') as f:
+            json.dump({'licenza': CIT, 'gruppi': [{'id': k, 'nome': v[0]} for k, v in GRUPPI.items()],
+                       'voci': indice}, f, ensure_ascii=False, separators=(',', ':'))
+        tot = sum(os.path.getsize(os.path.join(dirout, x)) for x in os.listdir(dirout))
+        print('scritta la cartella %s — %d tracciati, %.1f MB in tutto, indice %.0f kB'
+              % (dirout, len(indice), tot / 1048576, os.path.getsize(os.path.join(dirout, 'indice.json')) / 1024))
+        for k in sorted(conta): print('   %-6s %d' % (k, conta[k]))
+        return
     testa = ('/* Tracciati reali da PTB-XL, PhysioNet, licenza CC BY 4.0.\n'
              '   Wagner P, Strodthoff N, Bousseljot R-D, Samek W, Schaeffter T.\n'
              '   PTB-XL, a large publicly available electrocardiography dataset (v1.0.3).\n'

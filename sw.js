@@ -2,14 +2,17 @@
    Strategia: codice e pagine sempre dalla rete saltando la cache HTTP (è quella
    che teneva bloccata l'app installata sul Dock), immagini dalla cache perché
    non cambiano mai. Offline si ricade sull'ultima copia salvata. */
-const VERSION = '34';
+const VERSION = '36';
 const CACHE = 'isoelettrica-v' + VERSION;
 const Q = '?v=' + VERSION;
 const CORE = ['./', './index.html', './anatomia.html',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png', './manifest.webmanifest' + Q]
   .concat(['app.js', 'engine.js', 'ipertrofie.js', 'data.js', 'atlante-digitale.js', 'three.min.js', 'cuore3d.js', 'coronarie.js']
     .map(f => './' + f + Q));
-const IMMUTABILE = /\.(jpg|jpeg|png|gif|webp|svg|woff2?|ttf)$/i;
+/* I tracciati reali di PTB-XL si comportano come le immagini: non cambiano mai
+   e sono troppi per stare nella cache iniziale. Li conserviamo man mano che li
+   apri, così dalla seconda volta ci sono anche senza rete. */
+const IMMUTABILE = /\.(jpg|jpeg|png|gif|webp|svg|woff2?|ttf)$|atlante-reale\//i;
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {

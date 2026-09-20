@@ -2361,6 +2361,97 @@ add({
   }
 });
 
+/* Lesione subendocardica: il vettore punta dalla parete verso la cavità, cioè
+   dalla parte opposta rispetto allo STEMI. Le derivazioni che guardano la zona
+   lo vedono allontanarsi e scrivono un sottoslivellamento. Nella forma diffusa
+   da tronco comune o malattia trivasale il subendocardio soffre tutto insieme e
+   il vettore punta alla spalla destra: sottoslivellamento quasi ovunque e
+   sopraslivellamento nella sola aVR. */
+function subendoCfg(terr, mm, hr, soloT) {
+  if (terr === 'diffuso') {
+    // direzione tarata perché il sottoslivellamento arrivi a sette derivazioni
+    // con aVR e V1 sopraslivellate: è il quadro del tronco comune
+    const a = -145, g = -6;
+    return {
+      rate: hr, pr: 158, qtc: 435, qrs: M.qrsNormal(),
+      st: soloT ? null : { a, g, amp: mm / 10 / 0.95 },
+      T: { a, g, amp: 0.30 }
+    };
+  }
+  const t = TERR[terr], a = t.inj[0] + 180, g = -t.inj[1];
+  // la T larga e concorde ricade dentro il tratto ST: il fattore 1.55 fa sì che
+  // il cursore indichi i millimetri che si misurano davvero al punto J
+  return {
+    rate: hr, pr: 158, qtc: 440, qrs: M.qrsNormal(),
+    st: soloT ? null : { a, g, amp: mm / 10 / t.k / 1.55 },
+    T: { a, g, amp: soloT ? 0.58 : 0.44 }, tShape: 'broad'
+  };
+}
+const TERR_SUB = {
+  k: 'terr', label: 'Territorio', type: 'select', def: 'anteriore',
+  opts: [['anteriore', 'Anteriore'], ['laterale', 'Laterale'], ['inferiore', 'Inferiore'], ['diffuso', 'Diffuso (tronco comune o trivasale)']]
+};
+
+add({
+  id: 'nstemi', cat: 'Ischemia', name: 'NSTEMI', quiz: true,
+  params: [TERR_SUB, { k: 'st', label: 'Sottoslivellamento massimo', unit: 'mm', min: 0.5, max: 4, step: 0.5, def: 2 }, F.hr(84, 55, 120)],
+  build: p => subendoCfg(p.terr, p.st, p.hr, false),
+  look: ['V4', 'V5', 'II', 'aVR'],
+  card: {
+    def: 'Infarto miocardico senza sopraslivellamento persistente del tratto ST, con necrosi documentata dal rialzo della troponina.',
+    criteri: [
+      'Sottoslivellamento ST nuovo, orizzontale o discendente, ≥ 0,5 mm in due derivazioni contigue',
+      'Oppure inversione dell’onda T ≥ 1 mm in due derivazioni contigue con onda R prominente o rapporto R/S > 1',
+      'Oppure ECG normale: succede in un terzo abbondante dei casi e non esclude nulla',
+      'Rialzo e successiva caduta della troponina ad alta sensibilità: è questo a fare la diagnosi',
+      'Sottoslivellamento ≥ 1 mm in sei o più derivazioni, con sopraslivellamento in aVR e V1: sospetta occlusione del tronco comune o malattia trivasale',
+      'Alterazioni dinamiche, che cambiano con il dolore: un ECG solo non basta, si ripete a 15-30 minuti'
+    ],
+    meccanismo: 'La placca si rompe o si erode e il trombo occlude il vaso solo in parte, oppure lo occlude del tutto ma un circolo collaterale tiene in vita l’epicardio. Il subendocardio è lo strato che soffre per primo: è il più lontano dalle coronarie epicardiche, il più compresso durante la sistole e quello con il maggiore fabbisogno. La necrosi c’è, ma non attraversa la parete.',
+    vettori: 'Il vettore di lesione è rovesciato rispetto allo STEMI: punta dalla parete verso la cavità, cioè si allontana dalle derivazioni che guardano la zona malata. Per questo scrive un sottoslivellamento invece di un sopraslivellamento, e per questo il sottoslivellamento non localizza bene: non ha un’immagine speculare che lo confermi.',
+    guarda: 'Forma del sottoslivellamento (orizzontale o discendente conta, ascendente molto meno) e aVR, che nella forma diffusa è l’unica a salire.',
+    dd: [
+      'Angina instabile (stesso ECG, troponina negativa: è l’unica differenza)',
+      'STEMI posteriore (sottoslivellamento in V1–V3 ma con R alta e T positiva, e sopraslivellamento in V7–V9)',
+      'Sovraccarico ventricolare sinistro, effetto digitalico, tachicardia: sottoslivellamenti non ischemici'
+    ],
+    trappole: 'Un ECG normale non esclude un NSTEMI. La circonflessa è elettricamente muta in una buona parte dei casi: dolore tipico con ECG normale merita comunque troponina seriata e derivazioni posteriori.',
+    fonte: 'ESC 2023, Sindromi coronariche acute'
+  }
+});
+
+add({
+  id: 'angina-instabile', cat: 'Ischemia', name: 'Angina instabile', quiz: true,
+  params: [
+    { k: 'fase', label: 'Momento della registrazione', type: 'select', def: '1', opts: [['1', 'Durante il dolore'], ['0', 'A dolore risolto']] },
+    TERR_SUB, F.hr(88, 55, 125)
+  ],
+  build: p => +p.fase
+    ? subendoCfg(p.terr, 1.5, p.hr, false)
+    : Object.assign(subendoCfg(p.terr, 0, Math.max(55, p.hr - 20), true), { T: { a: 44, g: 14, amp: 0.30 } }),
+  look: ['V4', 'V5', 'II', 'aVR'],
+  card: {
+    def: 'Ischemia miocardica acuta senza necrosi: stessa placca instabile del NSTEMI, ma la troponina resta negativa.',
+    criteri: [
+      'Dolore a riposo, prolungato, di nuova insorgenza o in peggioramento rispetto al solito',
+      'ECG uguale a quello del NSTEMI: sottoslivellamento ST, inversione della T, oppure niente',
+      'Troponina ad alta sensibilità negativa su prelievi seriati: è questo a distinguerla',
+      'Alterazioni tipicamente transitorie, che compaiono con il dolore e rientrano quando passa',
+      'Un ECG registrato durante il dolore vale molto più di dieci registrati dopo'
+    ],
+    meccanismo: 'Lo squilibrio fra domanda e offerta di ossigeno supera la soglia dell’ischemia ma non quella della morte cellulare. La cellula smette di contrarsi e altera i suoi flussi di potassio, quindi la ripolarizzazione cambia subito, ma la membrana resta integra e non libera troponina.',
+    vettori: 'Lo stesso vettore rovesciato del NSTEMI, con la differenza che qui è reversibile: al risolversi del dolore rientra e il tracciato torna quello di prima. Muovi il selettore fra i due momenti per vedere la dinamica.',
+    guarda: 'Confronta due tracciati dello stesso paziente, durante e dopo il dolore: la differenza è la diagnosi.',
+    dd: [
+      'NSTEMI (identico all’ECG: decide la troponina)',
+      'Angina stabile (dolore prevedibile da sforzo, ECG a riposo normale)',
+      'Angina di Prinzmetal (sopraslivellamento transitorio da spasmo, non sottoslivellamento)'
+    ],
+    trappole: 'Con la troponina ad alta sensibilità l’angina instabile è diventata una diagnosi rara: molti casi che una volta si chiamavano così oggi risultano NSTEMI. Restano instabili, e vanno trattate come tali, anche quando la troponina è negativa.',
+    fonte: 'ESC 2023, Sindromi coronariche acute'
+  }
+});
+
 /* ================= nuovi quadri clinici ================= */
 S.push({
   id: 'tamponamento', cat: 'Elettroliti e altro', name: 'Versamento pericardico e tamponamento', quiz: true,

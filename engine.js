@@ -816,6 +816,21 @@ function Sampled(rec, seed) {
   this.fs = rec.fs; this.n = rec.n;
   this.dur = rec.n / rec.fs * 1000;
   this.sig = LEADS.map(L => rec.d[L.id] ? decodifica(rec.d[L.id]) : null);
+  /* Delle dodici derivazioni solo otto portano informazione: DIII e le tre
+     aumentate si ricavano da DI e DII con Einthoven e Goldberger. Salvando solo
+     le otto indipendenti un tracciato registrato occupa un terzo in meno, e le
+     altre quattro si ricostruiscono qui, esatte. */
+  const iI = 0, iII = 1;
+  if (this.sig[iI] && this.sig[iII]) {
+    const A = this.sig[iI], B2 = this.sig[iII], n = Math.min(A.length, B2.length);
+    const f = [[2, (a, b) => b - a], [3, (a, b) => -(a + b) / 2], [4, (a, b) => a - b / 2], [5, (a, b) => b - a / 2]];
+    f.forEach(([k, fn]) => {
+      if (this.sig[k]) return;
+      const o = new Float32Array(n);
+      for (let i = 0; i < n; i++) o[i] = fn(A[i], B2[i]);
+      this.sig[k] = o;
+    });
+  }
   this.uni = this.sig.every(x => !x) ? decodifica(rec.d[Object.keys(rec.d)[0]]) : null;
   this.noise = 0; this.amp = 1; this.rot = 0; this.ev = []; this.tShift = 0;
   this.rilevaR();
