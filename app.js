@@ -4,6 +4,9 @@
 const { LEADS, Stream, Sampled, dirAG } = window.ECG;
 const ECG = window.ECG;
 const DIG = window.ISO_ATLANTE_DIG || {};
+/* Tracciati reali da PTB-XL (PhysioNet, CC BY 4.0), prodotti da ptbxl.py.
+   Il file è facoltativo: se non c'è, l'app funziona esattamente come prima. */
+(window.ISO_REALE || []).forEach((r, i) => { DIG['reale-' + i] = r; });
 const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G } = window.ISO_DATA;
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));

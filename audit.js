@@ -196,6 +196,9 @@ function gobbeQuadroAmp(id, over) {
 const notch = [];
 D.SCENARIOS.forEach(sc => {
   if (NOTCH_ATTESE.indexOf(sc.id) >= 0) return;
+  // negli artefatti l'intaccatura non è un difetto del modello: è il quadro da
+  // riconoscere. Il tremore e la rete devono sporcare il tracciato.
+  if (sc.cat === 'Artefatti e trappole') return;
   const base = {}; (sc.params || []).forEach(q => base[q.k] = q.def);
   const prove = [['valori di partenza', {}]];
   (sc.params || []).forEach(q => {

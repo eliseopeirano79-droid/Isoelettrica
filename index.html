@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=33">
+<link rel="manifest" href="manifest.webmanifest?v=34">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -586,13 +586,15 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=33"></script>
-<script src="cuore3d.js?v=33"></script>
-<script src="engine.js?v=33"></script>
-<script src="ipertrofie.js?v=33"></script>
-<script src="data.js?v=33"></script>
-<script src="atlante-digitale.js?v=33"></script>
-<script src="app.js?v=33"></script>
-<script src="coronarie.js?v=33"></script>
+<script src="three.min.js?v=34"></script>
+<script src="cuore3d.js?v=34"></script>
+<script src="engine.js?v=34"></script>
+<script src="ipertrofie.js?v=34"></script>
+<script src="data.js?v=34"></script>
+<script src="atlante-digitale.js?v=34"></script>
+<!-- facoltativo: ECG reali da PTB-XL, prodotti con ptbxl.py. Se il file non c'è, l'app parte lo stesso -->
+<script src="atlante-reale.js?v=34" onerror="this.dataset.ok=0"></script>
+<script src="app.js?v=34"></script>
+<script src="coronarie.js?v=34"></script>
 </body>
 </html>

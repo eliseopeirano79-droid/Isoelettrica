@@ -2361,7 +2361,470 @@ add({
   }
 });
 
-const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', VALV, COMB, 'Elettroliti e altro'];
+/* ================= nuovi quadri clinici ================= */
+S.push({
+  id: 'tamponamento', cat: 'Elettroliti e altro', name: 'Versamento pericardico e tamponamento', quiz: true,
+  params: [F.hr(116, 90, 150), { k: 'alt', label: 'Alternanza elettrica', unit: '%', min: 0, max: 30, step: 2, def: 18 }, { k: 'volt', label: 'Voltaggi', unit: '%', min: 25, max: 80, step: 5, def: 45 }],
+  build: p => ({
+    rate: p.hr, pr: 148, qtc: 400, alternanza: p.alt / 100,
+    qrs: M.qrsNormal({ r: p.volt / 100, q: p.volt / 100, s: p.volt / 100 }),
+    pComps: M.pSinus(p.volt / 100 + 0.15), T: { a: 45, g: 16, amp: 0.36 * (p.volt / 100 + 0.25) }
+  }),
+  look: ['II', 'V3', 'V5'],
+  card: {
+    def: 'Raccolta di liquido nel sacco pericardico che comprime le camere cardiache.',
+    criteri: [
+      'Bassi voltaggi diffusi: QRS < 5 mm nelle derivazioni degli arti e < 10 mm nelle precordiali',
+      'Tachicardia sinusale',
+      'Alternanza elettrica: ampiezza e asse del QRS che cambiano a battiti alterni',
+      'La triade bassi voltaggi + tachicardia + alternanza è molto specifica ma poco sensibile',
+      'Diagnosi di tamponamento: clinica ed ecocardiografica, non elettrocardiografica (ESC)'
+    ],
+    meccanismo: 'Il liquido è un conduttore che disperde il segnale prima che arrivi agli elettrodi: da qui i bassi voltaggi. Quando il versamento è abbondante il cuore galleggia e oscilla avanti e indietro a ogni battito, presentando al torace un orientamento diverso una volta sì e una no: è l’alternanza elettrica.',
+    vettori: 'Il vettore non cambia di forma, cambia di direzione in modo periodico, con periodo doppio rispetto al ciclo cardiaco. È l’unico quadro in cui l’ECG mostra un movimento meccanico del cuore invece che un fenomeno elettrico.',
+    guarda: 'Confronta l’altezza dei QRS consecutivi in V3 e DII.',
+    dd: ['Bassi voltaggi da obesità, enfisema o mixedema (senza alternanza)', 'Amiloidosi cardiaca (bassi voltaggi con pseudonecrosi anteriore)'],
+    trappole: 'L’alternanza elettrica vera riguarda il QRS. L’alternanza della sola T ha tutt’altro significato e riguarda il rischio aritmico.',
+    fonte: 'ESC 2025, Miocarditi e pericarditi'
+  }
+});
+
+S.push({
+  id: 'bpco', cat: 'Ipertrofie', name: 'Cuore polmonare cronico', quiz: true,
+  params: [F.hr(92, 70, 120), { k: 'grado', label: 'Impegno destro', type: 'select', def: '1', opts: [['0', 'Iniziale'], ['1', 'Conclamato']] }],
+  build: p => ({
+    rate: p.hr, pr: 165, qtc: 410,
+    qrs: M.qrsNormal({ aR: +p.grado ? 105 : 88, r: 0.5, q: 0.7, s: +p.grado ? 1.9 : 1.4 }),
+    pComps: M.pPulmonale(+p.grado ? 1.15 : 0.85),
+    T: { a: 60, g: -18, amp: 0.26 }
+  }),
+  look: ['II', 'V1', 'V5', 'V6'],
+  indici: 'destra',
+  card: {
+    def: 'Sovraccarico cronico del cuore destro da malattia polmonare, tipicamente la BPCO.',
+    criteri: [
+      'P polmonare: onda P appuntita ≥ 2,5 mm in DII, DIII, aVF',
+      'Deviazione assiale destra',
+      'Bassi voltaggi diffusi per l’iperinsufflazione polmonare',
+      'Rotazione oraria: onda S persistente fino a V6, zona di transizione spostata a sinistra',
+      'Frequente tachicardia atriale multifocale'
+    ],
+    meccanismo: 'L’ipossia cronica e la distruzione del letto capillare alzano le resistenze polmonari; il ventricolo destro si ipertrofizza e il cuore ruota su sé stesso e verso il basso. Il polmone iperinsufflato, pieno d’aria, isola il cuore dagli elettrodi.',
+    vettori: 'Il vettore medio ruota a destra e in basso, e l’intero cuore ruota in senso orario visto dal basso: per questo la parete destra resta davanti fino alle precordiali sinistre e la S non scompare mai.',
+    guarda: 'P in DII, asse in DI e aVF, S in V6.',
+    dd: ['Embolia polmonare acuta (S1Q3T3, acuta, senza P polmonale stabile)', 'Infarto laterale pregresso'],
+    trappole: 'I bassi voltaggi mascherano un’eventuale ipertrofia sinistra concomitante: i criteri di Sokolow perdono sensibilità.',
+    fonte: 'ESC/ERS 2022, Ipertensione polmonare'
+  }
+});
+
+S.push({
+  id: 'cmi', cat: 'Ipertrofie', name: 'Cardiomiopatia ipertrofica', quiz: true,
+  params: [F.hr(68, 50, 100), { k: 'volt', label: 'Voltaggi', unit: '×', min: 0.8, max: 1.6, step: 0.05, def: 1.2 }],
+  build: p => ({
+    rate: p.hr, pr: 155, qtc: 435, qrs: M.qrsLVH(p.volt), qrsScale: 1.03,
+    extra: [B(dirAG(174, 16), 0.42, 15, 7, 8)],
+    pComps: M.pSinus(1, 1.15, 1, 1.6),
+    T: { a: 172, g: 40, amp: 0.46 }, st: { a: 168, g: 42, amp: 0.09 }
+  }),
+  look: ['V4', 'V5', 'aVL', 'II'],
+  indici: 'sinistra',
+  card: {
+    def: 'Ipertrofia ventricolare sinistra non spiegata dalle condizioni di carico, spesso settale asimmetrica.',
+    criteri: [
+      'Voltaggi elevati con criteri di ipertrofia sinistra soddisfatti',
+      'Onde q settali strette e profonde nelle derivazioni laterali e inferiori, che imitano una necrosi',
+      'Alterazioni della ripolarizzazione con T negative',
+      'ECG anormale nel 90% circa dei pazienti: un ECG del tutto normale rende la diagnosi improbabile',
+      'T negative giganti in V3–V5 nella forma apicale'
+    ],
+    meccanismo: 'L’ipertrofia del setto genera un vettore settale molto più grande del normale, diretto da sinistra a destra: le derivazioni di sinistra lo vedono allontanarsi e scrivono una q. È stretta perché la depolarizzazione settale resta rapida, al contrario della q di necrosi.',
+    vettori: 'Il vettore settale iniziale, che nel cuore normale è appena accennato, qui diventa protagonista dei primi venti millisecondi.',
+    guarda: 'Le q in DI, aVL, V5 e V6: misurane la durata.',
+    dd: ['Infarto pregresso (q larga ≥ 40 ms, con perdita dell’onda R successiva)', 'Cuore d’atleta (voltaggi alti ma ripolarizzazione normale)'],
+    trappole: 'È la causa più frequente di morte improvvisa nel giovane sportivo: q strette e profonde in un ragazzo asintomatico meritano un ecocardiogramma, non una rassicurazione.',
+    fonte: 'ESC 2023, Cardiomiopatie'
+  }
+});
+
+S.push({
+  id: 'ripol-precoce', cat: 'Ischemia', name: 'Ripolarizzazione precoce', quiz: true,
+  params: [F.hr(58, 45, 85), { k: 'j', label: 'Sopraslivellamento del punto J', unit: 'mm', min: 0.5, max: 3, step: 0.5, def: 1.5 }],
+  build: p => ({
+    rate: p.hr, pr: 152, qtc: 395,
+    extra: [B(dirAG(38, 12), 0.10 + p.j * 0.045, 90, 9, 17)],
+    st: { a: 42, g: 14, amp: p.j / 10 / 1.6 },
+    T: { a: 40, g: 12, amp: 0.62 }, peaked: 0.35
+  }),
+  look: ['V4', 'V5', 'II'],
+  card: {
+    def: 'Variante di ripolarizzazione con sopraslivellamento del punto J, frequente nel giovane e nell’atleta.',
+    criteri: [
+      'Intaccatura o impastamento della parte terminale del QRS, cioè onda J',
+      'Sopraslivellamento del punto J ≥ 1 mm in almeno due derivazioni contigue, inferiori o laterali',
+      'ST a concavità superiore, T ampia e concordante',
+      'Quadro stabile nel tempo, senza evoluzione',
+      'Rapporto ST/T in V6 < 0,25'
+    ],
+    meccanismo: 'Disomogeneità fra epicardio ed endocardio nella fase iniziale della ripolarizzazione, dovuta alla corrente transitoria verso l’esterno. È accentuata dalla bradicardia e dal tono vagale, e si riduce sotto sforzo.',
+    vettori: 'Un piccolo vettore che compare alla fine del QRS, diretto come quello della T: per questo il tratto ST sale senza staccarsi dal resto del quadro.',
+    guarda: 'Il punto J in V4–V5 e il rapporto fra ST e altezza della T in V6.',
+    dd: ['STEMI (ST convesso, territoriale, con reciprocità ed evoluzione)', 'Pericardite (ST diffuso con PR sottoslivellato, rapporto ST/T in V6 > 0,25)'],
+    trappole: 'Il pattern con onde J inferiori e ST orizzontale o discendente ha invece un rischio aritmico aumentato: non tutte le ripolarizzazioni precoci sono benigne.',
+    fonte: 'ESC 2022, Aritmie ventricolari e morte cardiaca improvvisa'
+  }
+});
+
+S.push({
+  id: 'takotsubo', cat: 'Ischemia', name: 'Sindrome di takotsubo', quiz: true,
+  params: [F.hr(88, 65, 120), { k: 'fase', label: 'Fase', type: 'select', def: '1', opts: [['0', 'Acuta, ST sopraslivellato'], ['1', 'Subacuta, T negative giganti']] }],
+  build: p => +p.fase
+    ? { rate: p.hr, pr: 162, qtc: 530, T: { a: 218, g: -46, amp: 0.92 }, tShape: 'broad', st: { a: 40, g: 14, amp: 0.02 } }
+    : { rate: p.hr, pr: 162, qtc: 455, st: { a: 62, g: -32, amp: 0.20 }, T: { a: 62, g: -30, amp: 0.45 } },
+  look: ['V3', 'V4', 'V5', 'II'],
+  card: {
+    def: 'Disfunzione ventricolare sinistra acuta, apicale e transitoria, senza coronaropatia ostruttiva.',
+    criteri: [
+      'Fase acuta: sopraslivellamento ST anteriore che imita uno STEMI, senza reciprocità marcata e con aVR spesso risparmiata',
+      'Fase subacuta, in prima o seconda giornata: T negative giganti, diffuse e simmetriche',
+      'Allungamento marcato del QT, anche oltre 500 ms',
+      'Alterazioni che superano il territorio di una singola coronaria',
+      'Normalizzazione in settimane'
+    ],
+    meccanismo: 'Stordimento miocardico su base adrenergica, tipicamente dopo uno stress emotivo o fisico intenso. L’apice, più ricco di recettori beta, è il territorio colpito: da qui il ballonamento apicale e il nome giapponese della trappola per polpi.',
+    vettori: 'Il vettore della ripolarizzazione si rovescia in blocco puntando indietro e in alto: tutte le derivazioni anteriori e laterali lo vedono allontanarsi, cosa che nessuna singola coronaria potrebbe produrre.',
+    guarda: 'L’estensione delle T negative rispetto ai territori coronarici e la durata del QT.',
+    dd: ['STEMI anteriore (territoriale, con reciprocità e occlusione alla coronarografia)', 'Sindrome di Wellens (T bifasiche o negative in V2–V3, con stenosi critica della discendente anteriore)'],
+    trappole: 'In fase acuta è indistinguibile da uno STEMI: la coronarografia non è rimandabile. La diagnosi si fa escludendo l’occlusione, non riconoscendo il tracciato.',
+    fonte: 'ESC 2023, Sindromi coronariche acute'
+  }
+});
+
+S.push({
+  id: 't-cerebrali', cat: 'Elettroliti e altro', name: 'Onde T cerebrali', quiz: true,
+  params: [F.hr(62, 45, 95), { k: 'amp', label: 'Profondità della T', unit: 'mm', min: 5, max: 18, step: 1, def: 12 }],
+  build: p => ({ rate: p.hr, pr: 168, qtc: 580, T: { a: 215, g: -48, amp: p.amp / 10 }, tShape: 'broad', u: 0.14 }),
+  look: ['V3', 'V4', 'II'],
+  card: {
+    def: 'Alterazioni della ripolarizzazione da danno del sistema nervoso centrale, tipicamente emorragia subaracnoidea.',
+    criteri: [
+      'Onde T negative giganti, larghe e diffuse, spesso oltre 10 mm',
+      'QT marcatamente allungato',
+      'Onde U prominenti',
+      'Bradicardia sinusale frequente',
+      'Nessuna distribuzione coronarica'
+    ],
+    meccanismo: 'Squilibrio del tono autonomico con scarica simpatica massiva e danno miocitario da catecolamine. Compare in ore dall’evento neurologico e non riflette un’ischemia coronarica.',
+    vettori: 'La ripolarizzazione si inverte e si allarga insieme: il vettore della T punta indietro e dura molto più a lungo del normale.',
+    guarda: 'Larghezza della T e QT, non solo la profondità.',
+    dd: ['Takotsubo (quadro molto simile: il contesto clinico decide)', 'Ischemia anteriore', 'Ipokaliemia'],
+    trappole: 'Il QT lungo predispone alla torsione di punta: attenzione ai farmaci che lo allungano ulteriormente in questi pazienti.',
+    fonte: 'AHA/ACC/HRS 2009, Standardizzazione e interpretazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'triciclici', cat: 'Elettroliti e altro', name: 'Intossicazione da antidepressivi triciclici', quiz: true,
+  params: [F.hr(122, 95, 160), { k: 'gr', label: 'Gravità', unit: '×', min: 1, max: 1.8, step: 0.05, def: 1.4 }],
+  build: p => ({
+    rate: p.hr, pr: 195, qtc: 470, qrsScale: p.gr,
+    extra: [B(dirAG(-148, -26), 0.30 + (p.gr - 1) * 1.15, 74, 13, 20)],
+    T: { a: 48, g: 16, amp: 0.26 }
+  }),
+  look: ['aVR', 'I', 'V6', 'II'],
+  card: {
+    def: 'Blocco dei canali del sodio da sovradosaggio di antidepressivi triciclici.',
+    criteri: [
+      'Tachicardia sinusale con QRS progressivamente allargato',
+      'Onda R terminale in aVR > 3 mm e rapporto R/S in aVR > 0,7',
+      'Onda S ampia e impastata in DI e V6',
+      'QRS > 100 ms indica rischio di convulsioni, > 160 ms rischio di aritmie ventricolari',
+      'Allungamento del QT'
+    ],
+    meccanismo: 'Il blocco dei canali rapidi del sodio rallenta la fase 0, soprattutto nel ventricolo destro, la cui depolarizzazione tardiva è diretta in alto e a destra. È lo stesso meccanismo degli antiaritmici di classe I, ed è il motivo per cui l’antidoto è il bicarbonato di sodio.',
+    vettori: 'Compare una forza terminale lenta rivolta verso la spalla destra: aVR la vede arrivare in pieno, DI e V6 la vedono allontanarsi.',
+    guarda: 'aVR: altezza dell’onda R terminale. Misura la durata del QRS.',
+    dd: ['Iperkaliemia (QRS largo ma T appuntite e P assenti)', 'Blocco di branca destra (QRS largo con morfologia stabile e senza tachicardia)'],
+    trappole: 'La larghezza del QRS predice la prognosi meglio del dosaggio plasmatico del farmaco.',
+    fonte: 'Criteri elettrocardiografici di tossicità da bloccanti dei canali del sodio'
+  }
+});
+
+S.push({
+  id: 'ipotiroidismo', cat: 'Elettroliti e altro', name: 'Ipotiroidismo', quiz: true,
+  params: [F.hr(48, 35, 65), { k: 'volt', label: 'Voltaggi', unit: '%', min: 30, max: 80, step: 5, def: 45 }],
+  build: p => ({
+    rate: p.hr, pr: 205, qtc: 465,
+    qrs: M.qrsNormal({ r: p.volt / 100, q: p.volt / 100, s: p.volt / 100 }),
+    pComps: M.pSinus(p.volt / 100), T: { a: 44, g: 14, amp: 0.10 }
+  }),
+  look: ['II', 'V4', 'V5'],
+  card: {
+    def: 'Quadro elettrocardiografico del mixedema.',
+    criteri: [
+      'Bradicardia sinusale',
+      'Bassi voltaggi diffusi',
+      'T appiattite o lievemente negative, diffuse',
+      'PR e QT tendenzialmente allungati',
+      'Possibile versamento pericardico associato'
+    ],
+    meccanismo: 'Gli ormoni tiroidei regolano l’espressione dei canali ionici e dei recettori beta. La loro carenza rallenta il nodo del seno e riduce la corrente di ripolarizzazione. Il mixedema interstiziale e l’eventuale versamento attenuano il segnale.',
+    vettori: 'Nessuna alterazione di direzione: tutto il tracciato è lo stesso cuore visto attraverso un mezzo che smorza, e con un ritmo più lento.',
+    guarda: 'Frequenza, altezza dei QRS e ampiezza delle T insieme: è la combinazione a essere significativa.',
+    dd: ['Versamento pericardico isolato', 'Bradicardia dell’atleta (voltaggi alti, non bassi)', 'Ipotermia (onde J di Osborn)'],
+    trappole: 'Bassi voltaggi e bradicardia in un paziente rallentato e infreddolito vanno dosati, non solo osservati.',
+    fonte: 'Manifestazioni cardiovascolari delle disfunzioni tiroidee'
+  }
+});
+
+S.push({
+  id: 'brugada2', cat: 'Elettroliti e altro', name: 'Pattern di Brugada tipo 2', quiz: true,
+  params: [F.hr(70, 48, 100)],
+  build: p => ({ rate: p.hr, pr: 176, qtc: 405, qrs: M.qrsRBBB(), qrsScale: 0.82, st: { a: 174, g: 48, amp: 0.17 }, T: { a: 46, g: 10, amp: 0.30 } }),
+  look: ['V1', 'V2'],
+  card: {
+    def: 'Aspetto "a sella" in V1–V2, che non è di per sé diagnostico di sindrome di Brugada.',
+    criteri: [
+      'r’ prominente in V1–V2 con sopraslivellamento ST ≥ 0,5 mm che scende e poi risale',
+      'T positiva o bifasica in V2, al contrario del tipo 1',
+      'Angolo beta ampio fra le due branche dell’onda r’ e base del triangolo ≥ 4 mm a 5 mm dal vertice',
+      'Solo il tipo 1 è diagnostico: il tipo 2 richiede conferma, con precordiali alte o test farmacologico'
+    ],
+    meccanismo: 'Perdita di funzione dei canali del sodio nell’epicardio del tratto di efflusso destro, con dispersione della ripolarizzazione fra epicardio ed endocardio. Il quadro è dinamico: si accentua con la febbre, il tono vagale e certi farmaci.',
+    vettori: 'Un gradiente locale nella parete anteriore del ventricolo destro, che solo V1 e V2 sono abbastanza vicine a registrare.',
+    guarda: 'V1 e V2: forma del tratto ST e polarità della T.',
+    dd: ['Precordiali posizionate troppo in alto in un soggetto sano', 'Blocco di branca destra incompleto', 'Pectus excavatum, displasia aritmogena del ventricolo destro'],
+    trappole: 'Davanti a un tipo 2 la domanda non è "che pattern è" ma "c’è una storia di sincope o di morte improvvisa in famiglia". La febbre smaschera il quadro: un ECG durante febbre vale molto.',
+    fonte: 'ESC 2022, Aritmie ventricolari e morte cardiaca improvvisa'
+  }
+});
+
+S.push({
+  id: 'qt-corto', cat: 'Elettroliti e altro', name: 'Sindrome del QT corto', quiz: true,
+  params: [F.hr(62, 45, 95), { k: 'qt', label: 'QTc', unit: 'ms', min: 280, max: 360, step: 5, def: 310 }],
+  build: p => ({ rate: p.hr, pr: 150, qtc: p.qt, T: { a: 44, g: 14, amp: 0.68 }, peaked: 0.85 }),
+  look: ['V2', 'V3', 'II'],
+  card: {
+    def: 'Accorciamento marcato e persistente della ripolarizzazione, con rischio di fibrillazione atriale e ventricolare.',
+    criteri: [
+      'QTc ≤ 320 ms: da solo sufficiente per la diagnosi',
+      'QTc fra 320 e 360 ms con sincope inspiegata, storia familiare o mutazione: diagnosi possibile',
+      'T alte, strette e appuntite, con tratto ST praticamente assente',
+      'Segmento fra fine del QRS e apice della T molto breve'
+    ],
+    meccanismo: 'Guadagno di funzione delle correnti di potassio in uscita, che abbreviano il potenziale d’azione. Il periodo refrattario si accorcia e la dispersione aumenta: terreno ideale per un rientro.',
+    vettori: 'La ripolarizzazione avviene quasi subito dopo la depolarizzazione: il vettore della T segue quello del QRS senza pausa.',
+    guarda: 'Misura il QT e correggilo: qui è tutta la diagnosi. Guarda dove finisce il QRS e dove comincia la T.',
+    dd: ['Ipercalcemia (QT corto per ST corto, con T normale)', 'Effetto digitalico', 'Ipertermia, acidosi'],
+    trappole: 'Il QT corto si vede solo se lo si misura. È l’unica anomalia che passa inosservata proprio perché il tracciato sembra pulito e ordinato.',
+    fonte: 'ESC 2022, Aritmie ventricolari e morte cardiaca improvvisa'
+  }
+});
+
+/* ================= artefatti di registrazione =================
+   Nessuna di queste è una malattia: sono errori di esecuzione. Valgono un
+   capitolo intero perché l'inversione dei cavi è l'errore più frequente
+   dell'elettrocardiografia e ogni anno manda qualcuno in sala di emodinamica
+   per niente. Le trasformazioni sono ricavate dalle definizioni delle
+   derivazioni, non disegnate a mano. */
+const ART = 'Artefatti e trappole';
+const artBase = { pr: 158, qtc: 400 };
+
+S.push({
+  id: 'inv-braccia', cat: ART, name: 'Inversione dei cavi delle braccia', quiz: true,
+  params: [F.hr(72, 50, 110)],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { swap: 'ra-la' } }),
+  look: ['I', 'aVR', 'aVL', 'V6'],
+  card: {
+    def: 'Il cavo del braccio destro e quello del braccio sinistro sono scambiati.',
+    criteri: [
+      'P, QRS e T tutti negativi in DI, in un paziente per il resto normale',
+      'P positiva in aVR: nessun ritmo sinusale vero può darla',
+      'DII e DIII risultano scambiate fra loro, così come aVR e aVL',
+      'aVF resta identica',
+      'Precordiali del tutto normali, con regolare progressione dell’onda R'
+    ],
+    meccanismo: 'Poiché DI = L − R, scambiare i due bracci inverte il segno di DI. DII = F − R e DIII = F − L si scambiano semplicemente i ruoli, e con loro aVR e aVL. aVF non cambia perché non contiene la differenza fra le due braccia.',
+    vettori: 'Il cuore non si è mosso di un millimetro: è il sistema di riferimento frontale a essere ribaltato. Il terminale centrale di Wilson è la media dei tre potenziali degli arti, e una media non cambia se si scambia l’ordine degli addendi: per questo le precordiali restano intatte.',
+    guarda: 'DI negativa con precordiali normali. Confronta aVR e aVL.',
+    dd: ['Destrocardia (anche lì DI è negativa, ma le precordiali perdono la progressione dell’onda R)', 'Ritmo giunzionale o atriale basso (P negativa in DII, non in DI)'],
+    trappole: 'È la spiegazione da considerare per prima davanti a una P negativa in DI. Rifare il tracciato costa trenta secondi.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'inv-braccio-gamba', cat: ART, name: 'Inversione braccio destro e gamba sinistra', quiz: true,
+  params: [F.hr(74, 50, 110)],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { swap: 'ra-ll' } }),
+  look: ['II', 'aVR', 'III'],
+  card: {
+    def: 'Il cavo del braccio destro e quello della gamba sinistra sono scambiati.',
+    criteri: [
+      'DII profondamente negativa: P, QRS e T tutti rovesciati',
+      'aVR positiva, con aspetto da derivazione "normale"',
+      'DI e DIII si scambiano invertendosi; aVR e aVF si scambiano',
+      'aVL immutata, precordiali immutate'
+    ],
+    meccanismo: 'DII = F − R: scambiando F e R la derivazione cambia di segno. DI diventa −DIII e DIII diventa −DI. È l’inversione che imita meglio una patologia, perché una DII tutta negativa fa pensare a un ritmo non sinusale.',
+    vettori: 'Anche qui il triangolo di Einthoven viene percorso in un ordine diverso, ma i tre potenziali sono gli stessi: le precordiali non se ne accorgono.',
+    guarda: 'aVR: se è la derivazione dall’aspetto più normale del tracciato, sospetta lo scambio.',
+    dd: ['Ritmo giunzionale', 'Destrocardia'],
+    trappole: 'aVR positiva non esiste in un ritmo sinusale con elettrodi al posto giusto: è quasi sempre un cavo invertito.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'inv-neutro', cat: ART, name: 'Inversione braccio destro e neutro', quiz: true,
+  params: [F.hr(70, 50, 110)],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { swap: 'ra-rl' } }),
+  look: ['II', 'I', 'III'],
+  card: {
+    def: 'Il cavo del braccio destro è finito sulla gamba destra, cioè sull’elettrodo neutro.',
+    criteri: [
+      'DII piatta, una linea quasi perfettamente isoelettrica',
+      'DI e DIII uguali e opposte',
+      'Nessun segno di attività in una derivazione che dovrebbe essere la più ampia del tracciato'
+    ],
+    meccanismo: 'DII diventa la differenza fra gamba sinistra e gamba destra. Le due gambe stanno allo stesso potenziale, quindi la differenza è prossima a zero. Non è un’asistolia: le altre undici derivazioni mostrano un ritmo regolare.',
+    vettori: 'Le due gambe sono lo stesso vertice del triangolo di Einthoven: sottraendole si ottiene il nulla.',
+    guarda: 'DII piatta con il resto del tracciato normale.',
+    dd: ['Elettrodo staccato (una sola derivazione rumorosa, non piatta e pulita)', 'Asistolia (piatta ovunque)'],
+    trappole: 'Una derivazione perfettamente piatta e senza rumore non è mai un dato biologico.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'destrocardia', cat: ART, name: 'Destrocardia', quiz: true,
+  params: [F.hr(72, 50, 110)],
+  build: p => Object.assign({ rate: p.hr }, artBase, { specchio: true }),
+  look: ['I', 'aVR', 'V1', 'V6'],
+  card: {
+    def: 'Il cuore è collocato a destra, immagine speculare della posizione abituale.',
+    criteri: [
+      'P, QRS e T negativi in DI, P positiva in aVR: come nell’inversione delle braccia',
+      'Ma in più: progressione inversa dell’onda R, che decresce da V1 a V6',
+      'Complessi sempre più piccoli verso le precordiali sinistre, perché ci si allontana dal cuore',
+      'Con le precordiali ripetute a destra (V1R–V6R) il tracciato torna normale'
+    ],
+    meccanismo: 'Tutto il generatore cardiaco è ribaltato rispetto al piano sagittale. Cambiano sia il piano frontale sia quello orizzontale, ed è questa la differenza con l’errore di collegamento.',
+    vettori: 'Il vettore medio punta in basso e a destra invece che in basso e a sinistra. Le precordiali, che sono fisse sul torace sinistro, lo vedono allontanarsi via via.',
+    guarda: 'V1–V6: qui si decide fra destrocardia e cavi invertiti.',
+    dd: ['Inversione dei cavi delle braccia (precordiali normali)'],
+    trappole: 'Nella destrocardia isolata con situs inversus completo il cuore è sano; nella destroposizione acquisita, no. Confermare sempre con un’immagine.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'precordiali-scambiate', cat: ART, name: 'V1 e V2 scambiate', quiz: true,
+  params: [F.hr(72, 50, 110)],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { v1v2: true } }),
+  look: ['V1', 'V2', 'V3'],
+  card: {
+    def: 'Le due precordiali destre sono applicate al contrario.',
+    criteri: [
+      'Interruzione della progressione regolare dell’onda R: V1 più "avanti" di V2',
+      'Rapporto R/S che invece di crescere fa un salto indietro',
+      'Nessuna alterazione delle derivazioni degli arti'
+    ],
+    meccanismo: 'La progressione dell’onda R da V1 a V6 è un fatto geometrico: ogni elettrodo è più vicino alla parete libera del ventricolo sinistro del precedente. Se due elettrodi sono scambiati la sequenza si rompe in un punto solo.',
+    vettori: 'Il vettore non cambia: cambia l’ordine dei punti di osservazione.',
+    guarda: 'Segui R e S da V1 a V6 e cerca il gradino fuori posto.',
+    dd: ['Cattiva progressione dell’onda R da infarto anteriore pregresso (che è graduale, non a scalino)'],
+    trappole: 'Nel dubbio, ripetere il tracciato guardando i cavi mentre si registra.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'precordiali-alte', cat: ART, name: 'Precordiali posizionate troppo in alto', quiz: true,
+  params: [F.hr(72, 50, 110)],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { alte: true } }),
+  look: ['V1', 'V2'],
+  card: {
+    def: 'V1 e V2 sono applicate nel secondo spazio intercostale invece che nel quarto.',
+    criteri: [
+      'r iniziale ridotta in V1–V2, con aspetto rSr’ e T negativa',
+      'Immagine che può imitare un pattern di Brugada o un infarto anteriore',
+      'Il quadro sparisce riposizionando gli elettrodi nel quarto spazio'
+    ],
+    meccanismo: 'Salendo di due spazi ci si allontana dal setto e ci si avvicina alla base e al tratto di efflusso destro. Le forze basali, dirette in alto e indietro, diventano preponderanti.',
+    vettori: 'La stessa sorgente vista da un punto più craniale proietta diversamente: non c’è nessuna nuova corrente, solo un altro angolo.',
+    guarda: 'V1–V2 e la loro T.',
+    dd: ['Brugada tipo 2 vero (che invece si accentua spostando gli elettrodi verso l’alto)'],
+    trappole: 'È il motivo per cui il test con precordiali alte per il Brugada va interpretato da chi sa cosa cerca: lo stesso spostamento crea falsi positivi in chi è sano.',
+    fonte: 'ESC 2022, Aritmie ventricolari e morte cardiaca improvvisa'
+  }
+});
+
+S.push({
+  id: 'tremore', cat: ART, name: 'Tremore muscolare', quiz: true,
+  params: [F.hr(78, 50, 120), { k: 'amp', label: 'Ampiezza del tremore', unit: 'mm', min: 0.5, max: 6, step: 0.5, def: 2.5 }],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { tremore: p.amp / 10 } }),
+  look: ['I', 'II', 'V1', 'V6'],
+  card: {
+    def: 'Attività elettrica dei muscoli scheletrici sovrapposta al tracciato.',
+    criteri: [
+      'Oscillazioni irregolari, di frequenza superiore a quella cardiaca, non periodiche',
+      'Più marcate nelle derivazioni degli arti che nelle precordiali',
+      'I complessi QRS restano riconoscibili e regolari sotto il disturbo',
+      'Può simulare fibrillazione atriale, flutter o perfino fibrillazione ventricolare'
+    ],
+    meccanismo: 'Il muscolo scheletrico genera potenziali d’azione propri, con uno spettro molto più veloce di quello cardiaco. Freddo, ansia, malattia di Parkinson e contrazione volontaria sono le cause abituali.',
+    vettori: 'Il disturbo non nasce dal cuore e non ha un vettore coerente: per questo non è uguale nelle derivazioni che guardano la stessa direzione.',
+    guarda: 'Cerca i QRS regolari sotto il rumore e marca gli intervalli RR.',
+    dd: ['Fibrillazione ventricolare (nessun QRS identificabile, paziente incosciente)', 'Fibrillazione atriale (RR irregolare, qui regolare)'],
+    trappole: 'Prima di trattare un’aritmia, guardare il paziente: è la regola che questo artefatto insegna meglio di ogni altra cosa.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'rete', cat: ART, name: 'Interferenza di rete a 50 Hz', quiz: true,
+  params: [F.hr(72, 50, 110), { k: 'amp', label: 'Ampiezza del disturbo', unit: 'mm', min: 0.5, max: 4, step: 0.5, def: 1.5 }],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { rete: p.amp / 10 } }),
+  look: ['II', 'V3'],
+  card: {
+    def: 'Disturbo sinusoidale regolare a 50 Hz proveniente dalla rete elettrica.',
+    criteri: [
+      'Oscillazione perfettamente periodica, 50 cicli al secondo: un ciclo ogni mezzo quadratino piccolo',
+      'Presente su tutta la traccia, anche durante la diastole',
+      'Regolarità assoluta: nessun fenomeno biologico è così preciso'
+    ],
+    meccanismo: 'Accoppiamento capacitivo fra il paziente o i cavi e la rete elettrica dell’ambiente. Favorito da elettrodi asciutti, cavi attorcigliati o mancanza di messa a terra.',
+    vettori: 'Nessun vettore: è rumore sommato al segnale, identico in tutte le derivazioni.',
+    guarda: 'Conta le oscillazioni in un quadratino grande: se sono dieci, è la rete.',
+    dd: ['Flutter atriale (300/min, cioè cinque al secondo, dieci volte più lento)'],
+    trappole: 'Il filtro dell’apparecchio lo nasconde ma smussa anche le onde vere: meglio rifare il contatto che alzare il filtro.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+S.push({
+  id: 'staccato', cat: ART, name: 'Elettrodo staccato', quiz: true,
+  params: [F.hr(72, 50, 110), { k: 'der', label: 'Derivazione interessata', type: 'select', def: '8', opts: [['6', 'V1'], ['7', 'V2'], ['8', 'V3'], ['9', 'V4'], ['10', 'V5'], ['11', 'V6']] }],
+  build: p => Object.assign({ rate: p.hr }, artBase, { artefatti: { staccato: +p.der } }),
+  look: ['V3', 'V2', 'V4'],
+  card: {
+    def: 'Un elettrodo ha perso il contatto con la cute.',
+    criteri: [
+      'Una sola derivazione mostra rumore ad alta frequenza senza segnale cardiaco',
+      'Tutte le altre derivazioni sono normali',
+      'Il disturbo non rispetta la sequenza del ciclo cardiaco'
+    ],
+    meccanismo: 'Senza contatto l’ingresso dell’amplificatore resta flottante e raccoglie solo disturbo ambientale.',
+    vettori: 'Nessuna informazione: quella finestra sul cuore è chiusa.',
+    guarda: 'La derivazione isolata che "non somiglia" alle vicine.',
+    dd: ['Inversione braccio destro-neutro (derivazione piatta e pulita, non rumorosa)'],
+    trappole: 'Non refertare mai su una derivazione inutilizzabile: si rifà il tracciato.',
+    fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
+  }
+});
+
+const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', VALV, COMB, 'Elettroliti e altro', ART];
 
 /* ==================== VERSIONE SENZA I RIFERIMENTI AL CORSO ====================
    Con window.ISO_SOLO_LINEE_GUIDA = true (una riga in index.html) la libreria

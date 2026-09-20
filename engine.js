@@ -471,7 +471,19 @@ Stream.prototype.ensure = function (tMax) {
   let guard = 0;
   while (this.tGen < tMax + 2500 && guard++ < 500) {
     const r = this.gen.next(); if (r.done) break;
-    r.value.forEach(e => { if (e) { e.t += this.tShift; this.ev.push(e); if (e.t > this.tGen) this.tGen = e.t; } });
+    r.value.forEach(e => {
+      if (!e) return;
+      e.t += this.tShift;
+      if (this.cfg.alternanza && e.kind === 'V' && !e._alt) {
+        /* alternanza elettrica: nel versamento abbondante il cuore oscilla dentro
+           il liquido e a ogni battito presenta al torace un orientamento diverso.
+           La parità si conta sullo stream, così resta stabile anche rigenerando. */
+        e._alt = 1;
+        const k = (this.nAlt = (this.nAlt || 0) + 1) % 2 ? 1 + this.cfg.alternanza : 1 - this.cfg.alternanza;
+        for (let i = 0; i < e.comps.length; i++) e.comps[i] = Object.assign({}, e.comps[i], { a: e.comps[i].a * k });
+      }
+      this.ev.push(e); if (e.t > this.tGen) this.tGen = e.t;
+    });
   }
   this.ev.sort((a, b) => a.t - b.t);
 };
@@ -491,6 +503,7 @@ Stream.prototype.vec = function (tau, out) {
     if (rel < e.span[0] || rel > e.span[1]) continue;
     evalComps(e.comps, rel, out);
   }
+  if (this.cfg.specchio) out[0] = -out[0];   // destrocardia: asse destra-sinistra ribaltato
   for (let i = 0; i < this.contSeg.length; i++) {
     const c = this.contSeg[i];
     if (c.fn && tau >= c.t0 && tau < c.t1) c.fn(tau, out);
@@ -502,6 +515,69 @@ Stream.prototype.vec = function (tau, out) {
     out[0] = x * c + y * sn; out[1] = y * c - x * sn;
   }
   return out;
+};
+/* ---------- artefatti di registrazione ----------
+   Gli scambi fra gli elettrodi degli arti non sono un capriccio grafico: si
+   ricavano dalle definizioni. Con I = L-R, II = F-R, III = F-L, scambiare due
+   cavi permuta e inverte le derivazioni frontali in modo preciso. E poiché il
+   terminale centrale di Wilson è la media dei tre potenziali degli arti, uno
+   scambio fra braccio destro, braccio sinistro e gamba sinistra NON lo cambia:
+   le precordiali restano identiche. È esattamente questo che distingue
+   un'inversione dei cavi da una destrocardia. */
+const SCAMBI = {
+  // braccio destro <-> braccio sinistro
+  'ra-la': { I: [-1, 0, 0], II: [0, 0, 1], III: [0, 1, 0], aVR: 'aVL', aVL: 'aVR', aVF: 'aVF' },
+  // braccio destro <-> gamba sinistra
+  'ra-ll': { I: [0, 0, -1], II: [0, -1, 0], III: [-1, 0, 0], aVR: 'aVF', aVL: 'aVL', aVF: 'aVR' },
+  // braccio sinistro <-> gamba sinistra
+  'la-ll': { I: [0, 1, 0], II: [1, 0, 0], III: [0, 0, -1], aVR: 'aVR', aVL: 'aVF', aVF: 'aVL' },
+  // braccio destro <-> gamba destra (il neutro): DII diventa quasi piatta
+  'ra-rl': { I: [0, 0, -1], II: [0, 0, 0], III: [0, 0, 1], aVR: null, aVL: null, aVF: null }
+};
+function applicaScambio(o, tipo) {
+  const m = SCAMBI[tipo]; if (!m) return;
+  const I = o[0], II = o[1], III = o[2];
+  const c = (v) => v[0] * I + v[1] * II + v[2] * III;
+  const nI = c(m.I), nII = c(m.II), nIII = c(m.III);
+  o[0] = nI; o[1] = nII; o[2] = nIII;
+  // le aumentate si ricalcolano sempre dalle nuove bipolari: è quello che fa
+  // davvero l'apparecchio, e con il neutro scambiato è l'unico modo corretto
+  o[3] = -(nI + nII) / 2; o[4] = (nI - nIII) / 2; o[5] = (nII + nIII) / 2;
+}
+Stream.prototype.artefattiLead = function (tau, o) {
+  const a = this.cfg.artefatti; if (!a) return;
+  if (a.swap) applicaScambio(o, a.swap);
+  if (a.v1v2) { const t = o[6]; o[6] = o[7]; o[7] = t; }
+  if (a.alte) { o[6] *= 0.55; o[7] *= 0.6; o[6] -= 0.06; o[7] -= 0.05; }   // V1-V2 troppo in alto
+  /* Il rumore va generato dove nasce davvero, cioè sotto ogni elettrodo, e non
+     sulle derivazioni già calcolate. Se lo si somma alle derivazioni, DI + DIII
+     non fa più DII: il tracciato diventa elettricamente impossibile. Sporcando
+     invece i potenziali dei singoli elettrodi, la legge di Einthoven regge da
+     sola, come regge sul paziente vero che trema. */
+  const s = tau / 1000;
+  if (a.rete || a.tremore || a.deriva) {
+    const n = this._nz || (this._nz = new Float64Array(9));   // R, L, F, V1..V6
+    const gT = [1, 1, 1, 0.3, 0.26, 0.24, 0.22, 0.2, 0.2];    // gli arti tremano, il torace meno
+    for (let e = 0; e < 9; e++) {
+      let v = 0;
+      if (a.rete) v += a.rete * 0.7 * Math.sin(2 * Math.PI * 50 * s + e * 0.83);
+      if (a.tremore) {
+        let m = 0;
+        for (let k = 0; k < 4; k++) m += Math.sin(2 * Math.PI * (5.5 + k * 2.7) * s + this.np[e] + k * 1.3 + e) / (k + 1.4);
+        v += a.tremore * gT[e] * m;
+      }
+      if (a.deriva) v += a.deriva * (Math.sin(2 * Math.PI * 0.25 * s + this.np[e]) + 0.5 * Math.sin(2 * Math.PI * 0.11 * s + e));
+      n[e] = v;
+    }
+    const R = n[0], L = n[1], F = n[2], W = (R + L + F) / 3;
+    o[0] += L - R; o[1] += F - R; o[2] += F - L;
+    o[3] += R - (L + F) / 2; o[4] += L - (R + F) / 2; o[5] += F - (R + L) / 2;
+    for (let i = 0; i < 6; i++) o[6 + i] += n[3 + i] - W;
+  }
+  if (a.staccato != null) {
+    const i = a.staccato;
+    o[i] = 0.012 * Math.sin(2 * Math.PI * 50 * s) + 0.004 * Math.sin(2 * Math.PI * 173 * s);
+  }
 };
 Stream.prototype.leads = function (tau, vec, outArr) {
   for (let i = 0; i < 12; i++) {
@@ -518,6 +594,7 @@ Stream.prototype.leads = function (tau, vec, outArr) {
     }
     outArr[i] = v;
   }
+  if (this.cfg.artefatti) this.artefattiLead(tau, outArr);
   return outArr;
 };
 /* ---------- defibrillazione ----------
