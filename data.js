@@ -22,7 +22,9 @@ const SRC = {
   svt: 'ESC 2019, Tachicardie sopraventricolari',
   af: 'ESC 2024, Fibrillazione atriale',
   va: 'ESC 2022, Aritmie ventricolari e prevenzione della morte improvvisa',
-  peri: 'ESC 2025, Miocarditi e pericarditi'
+  peri: 'ESC 2025, Miocarditi e pericarditi',
+  valv: 'ESC/EACTS 2025, Trattamento delle valvulopatie',
+  als: 'ERC 2021, Linee guida sul supporto vitale avanzato nell\u2019adulto'
 };
 
 const TERR = {
@@ -449,7 +451,7 @@ add({
 add({
   id: 'ivd', cat: 'Ipertrofie', name: 'Ipertrofia ventricolare destra', quiz: true,
   params: [F.hr(80, 50, 110)],
-  build: p => ({ rate: p.hr, pr: 160, qtc: 420, qrs: M.qrsRVH(), pComps: M.pSinus(1, 1, 1.9, 0.8), T: { a: 55, g: -40, amp: 0.34 }, st: { a: 55, g: -40, amp: 0.05 } }), look: ['V1', 'V2', 'I', 'V6'], indici: 'destra',
+  build: p => ({ rate: p.hr, pr: 160, qtc: 420, qrs: M.qrsRVH(), pComps: M.pPulmonale(1), T: { a: 55, g: -40, amp: 0.34 }, st: { a: 55, g: -40, amp: 0.05 } }), look: ['V1', 'V2', 'I', 'V6'], indici: 'destra',
   card: {
     def: 'Predominio delle forze elettriche del ventricolo destro per ipertrofia della sua parete.',
     criteri: ['Deviazione assiale destra (> +90°)', 'R dominante in V1 (R/S > 1, R ≥ 7 mm)', 'S profonde in V5–V6', 'Strain destro: ST sottoslivellato e T negative in V1–V3', 'P polmonare (P ≥ 2,5 mm in DII)'],
@@ -1563,7 +1565,10 @@ add({
 add({
   id: 'dewinter', cat: 'Ischemia', name: 'Pattern di de Winter',
   params: [F.hr(80, 55, 115)],
-  build: p => ({ rate: p.hr, pr: 160, qtc: 400, qrs: M.qrsNormal(), st: { a: 40, g: -70, amp: 0.22 }, T: { a: 40, g: 72, amp: 1.0 }, tShape: 'broad' }),
+  // Il vettore di lesione punta indietro, a destra e in alto: sottoslivellamento
+  // al punto J da V1 a V6 e, per lo stesso motivo, lieve sopraslivellamento in
+  // aVR, che è il segno che completa il quadro di de Winter.
+  build: p => ({ rate: p.hr, pr: 160, qtc: 400, qrs: M.qrsNormal(), st: { a: 218, g: -61, amp: 0.30 }, T: { a: 40, g: 72, amp: 0.86 }, tShape: 'broad' }),
   look: ['V2', 'V3', 'V4', 'aVR'],
   card: {
     def: 'Equivalente di infarto con sopraslivellamento: sottoslivellamento di ST a salita rapida seguito da T alte e simmetriche nelle precordiali, per occlusione della discendente anteriore prossimale.',
@@ -1878,10 +1883,13 @@ const qrsEP = () => ({ w: 116, c: [
   B(dirAG(48, 5), 0.78, 42, 12, 12),
   B(dirAG(175, -20), 0.46, 80, 11, 14)        // vettore terminale a destra: S larga in DI e V6
 ] });
+// Ipertrofia sinistra con emiblocco anteriore: l'asse è a sinistra e in alto,
+// ma i voltaggi devono restare quelli di un'ipertrofia vera (Sokolow >= 35 mm),
+// altrimenti il quadro combinato non soddisfa il criterio che dichiara.
 const qrsIvsEas = (k) => { k = k == null ? 1 : k; return { w: 112, c: [
-  B(dirAG(120, 35), 0.28, 14, 8, 8),
-  B(dirAG(-52, -14), 1.95 * k, 46, 13, 13),
-  B(dirAG(-108, -52), 0.62 * k, 80, 11, 12)
+  B(dirAG(126, 26), 0.24, 16, 10, 10),
+  B(dirAG(-46, -20), 2.70 * k, 46, 14, 13),
+  B(dirAG(-108, -52), 0.86 * k, 78, 12, 13)
 ] }; };
 
 add({
@@ -1907,7 +1915,9 @@ add({
   params: [{ k: 'hr', label: 'Frequenza atriale', unit: '/min', min: 60, max: 110, step: 1, def: 82 },
     { k: 'st', label: 'Sopraslivellamento', unit: 'mm', min: 1, max: 6, step: 0.5, def: 3 }],
   build: p => ({ rate: p.hr, av: 'III', escape: 'giunzionale', escRate: 42, qtc: 430,
-    T: { a: 105, g: -5, amp: 0.5 }, st: { a: 105, g: -5, amp: p.st / 10 * 0.25 } }),
+    // stessa taratura del territorio inferiore: i millimetri del cursore sono
+    // i millimetri che si misurano in DII, DIII e aVF
+    T: { a: 105, g: -5, amp: 0.5 }, st: { a: 105, g: -5, amp: p.st / 10 / TERR.inferiore.k } }),
   look: ['II', 'III', 'aVF'],
   card: {
     def: 'Occlusione della coronaria destra: infarto inferiore e blocco atrio-ventricolare completo nello stesso momento.',
@@ -1974,7 +1984,384 @@ add({
   }
 });
 
-const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', COMB, 'Elettroliti e altro'];
+
+THEORY.push({
+  id: 'valvole', title: '16. Le valvulopatie e il loro ECG',
+  html: `
+<p class="note">Impostazione delle linee guida ESC/EACTS 2025 sul trattamento delle valvulopatie, con la semeiotica classica accanto al tracciato.</p>
+
+<p>Una regola prima di tutte: <b>l'ECG non fa diagnosi di valvulopatia</b>. La diagnosi e la gravità sono ecocardiografiche. Quello che l'ECG racconta è un'altra cosa, altrettanto utile: <b>quale camera sta pagando il prezzo, da quanto tempo, e se ha cominciato a cedere</b>. Un tracciato normale in un paziente con un soffio non esclude niente; un tracciato molto alterato dice che la malattia dura da anni.</p>
+
+<h3>I due modi in cui un ventricolo si sovraccarica</h3>
+<p>Tutta la lettura ruota attorno a questa distinzione.</p>
+<ul>
+<li><b>Sovraccarico di pressione (sistolico)</b>: il ventricolo deve spingere contro un ostacolo. Si ipertrofizza <i>concentricamente</i>, la parete si ispessisce, la cavità no. Sull'ECG: voltaggi alti <b>e</b> alterazione della ripolarizzazione, con ST discendente e T negativa asimmetrica proprio dove la R è più alta. È il quadro della <b>stenosi aortica</b> e dell'ipertensione.</li>
+<li><b>Sovraccarico di volume (diastolico)</b>: il ventricolo riceve troppo sangue. Si dilata e si ipertrofizza <i>eccentricamente</i>. Sull'ECG: voltaggi alti, <b>q settali strette e profonde</b> nelle derivazioni laterali, ma ripolarizzazione a lungo conservata. È il quadro dell'<b>insufficienza aortica</b> e dell'<b>insufficienza mitralica</b>.</li>
+</ul>
+<p>Quando in un sovraccarico di volume compaiono ST sottoslivellato e T negativa, non è un dettaglio: è il ventricolo che sta scompensando.</p>
+
+<h3>Le valvole di sinistra e quelle di destra</h3>
+<p>Le lesioni delle valvole di sinistra si vedono sull'atrio sinistro e sul ventricolo sinistro; quando la pressione risale ai polmoni si aggiunge il cuore destro. Le lesioni delle valvole di destra si vedono sull'atrio destro e sul ventricolo destro. Da qui i due segni atriali che vale la pena saper riconoscere a colpo d'occhio:</p>
+<ul>
+<li><b>P mitralica</b>: P larga ≥ 120 ms, bifida in DII con le due cuspidi distanti ≥ 40 ms, e in V1 una componente negativa terminale profonda e lunga (forza terminale ≥ 0,04 mm·s). Significa atrio sinistro grande.</li>
+<li><b>P polmonare</b>: P appuntita ≥ 2,5 mm in DII, DIII e aVF, con componente iniziale alta in V1. Significa atrio destro grande.</li>
+</ul>
+
+<h3>Quadro per quadro</h3>
+<table class="tab">
+<tr><th>Valvulopatia</th><th>ECG</th><th>Soffio</th></tr>
+<tr><td>Stenosi aortica</td><td>Ipertrofia sinistra con strain, ingrandimento atriale sinistro, blocchi nelle forme calcifiche</td><td>Sistolico eiettivo a diamante, irradiato al collo; secondo tono ridotto; polso parvus et tardus</td></tr>
+<tr><td>Insufficienza aortica</td><td>Voltaggi alti con q settali strette, T a lungo positiva</td><td>Diastolico aspirativo in decrescendo; polso celere, differenziale ampia</td></tr>
+<tr><td>Stenosi mitralica</td><td>P mitralica, ventricolo sinistro normale, poi impegno destro; fibrillazione atriale frequentissima</td><td>Schiocco di apertura e rullio diastolico alla punta, rinforzo presistolico se in ritmo sinusale</td></tr>
+<tr><td>Insufficienza mitralica</td><td>Atrio sinistro grande e voltaggi aumentati; fibrillazione atriale</td><td>Olosistolico alla punta irradiato all'ascella, invariato con il respiro</td></tr>
+<tr><td>Prolasso mitralico</td><td>Spesso normale; T negative inferiori, extrasistoli ventricolari</td><td>Click meso-telesistolico e soffio telesistolico, che si anticipa in piedi</td></tr>
+<tr><td>Insufficienza tricuspidale</td><td>P polmonare, sovraccarico destro, blocco di branca destra incompleto</td><td>Olosistolico che <b>aumenta in inspirazione</b> (Rivero-Carvallo), giugulari turgide con onda v</td></tr>
+</table>
+
+<h3>Il perché del respiro</h3>
+<p>L'inspirazione aumenta il ritorno venoso al cuore destro: i soffi di destra crescono, quelli di sinistra no. È il segno di Rivero-Carvallo, e distingue un soffio olosistolico tricuspidale da uno mitralico meglio di qualunque altra manovra al letto del paziente.</p>
+
+<h3>Che cosa cambia nel trattamento</h3>
+<p>Le linee guida 2025 insistono su tre punti. Il primo: le decisioni complesse spettano a un <b>Heart Team</b> multidisciplinare e ai centri ad alto volume. Il secondo: le <b>tecniche transcatetere</b> hanno indicazioni più ampie e meglio definite, sia per la valvola aortica sia per la riparazione bordo a bordo della mitrale e della tricuspide. Il terzo: nel rigurgito mitralico si distingue il <b>primario</b>, malattia dei lembi che si ripara chirurgicamente, dal <b>secondario</b>, conseguenza della cardiopatia sottostante, in cui si parte dalla terapia ottimale dello scompenso e si distinguono ormai un fenotipo atriale e uno ventricolare.</p>
+<p>Un dettaglio che vale la pena ricordare perché si chiede spesso: la fibrillazione atriale nella <b>stenosi mitralica reumatica</b> e nel portatore di <b>protesi meccanica</b> va anticoagulata con antagonisti della vitamina K, non con gli anticoagulanti orali diretti.</p>
+
+<h3>Quando l'ECG cambia la lettura clinica</h3>
+<ul>
+<li>Fibrillazione atriale in una valvulopatia mitralica: cancella la P e con essa il segno atriale, ma è essa stessa un segno di malattia avanzata.</li>
+<li>Blocco di branca sinistra di nuova insorgenza dopo impianto valvolare aortico transcatetere: complicanza attesa, va sorvegliata perché può evolvere verso il blocco completo.</li>
+<li>Bassi voltaggi in un paziente con valvulopatia e dispnea: pensa al versamento pericardico o all'amiloidosi, che nell'anziano si associa spesso alla stenosi aortica.</li>
+</ul>
+`
+});
+
+/* ==================== VALVULOPATIE ====================
+   L'ECG non fa diagnosi di valvulopatia: la fa l'ecocardiogramma. Però il
+   tracciato racconta il sovraccarico che la valvola malata impone alle camere,
+   e nel ragionamento clinico serve a capire da quanto dura e quanto pesa. */
+const VALV = 'Valvulopatie';
+const FONTE_VALV = SRC.valv;
+
+add({
+  id: 'stenosi-aortica', cat: VALV, name: 'Stenosi aortica', quiz: true,
+  params: [F.hr(72, 50, 100), { k: 'grado', label: 'Sovraccarico', type: 'select', def: '1', opts: [['0', 'Ipertrofia senza strain'], ['1', 'Ipertrofia con strain']] }],
+  build: p => ({
+    rate: p.hr, pr: 185, qtc: 435, qrs: M.qrsLVH(1.05), qrsScale: 1.04,
+    pComps: M.pMitrale(0.8),
+    T: +p.grado ? { a: 160, g: 45, amp: 0.38 } : { a: 40, g: 18, amp: 0.4 },
+    st: +p.grado ? { a: 160, g: 45, amp: 0.085 } : null
+  }),
+  look: ['V5', 'V6', 'aVL', 'V1'], indici: 'sinistra',
+  card: {
+    def: 'Ostacolo all\u2019efflusso del ventricolo sinistro: il ventricolo risponde con ipertrofia concentrica, e l\u2019ECG mostra voltaggi alti con sovraccarico sistolico.',
+    criteri: [
+      'Ipertrofia ventricolare sinistra con criteri di voltaggio (Sokolow-Lyon \u2265 35 mm, Cornell positivo)',
+      'Sovraccarico sistolico: ST sottoslivellato discendente e T negativa asimmetrica in DI, aVL, V5 e V6',
+      'Ingrandimento atriale sinistro: P larga \u2265 120 ms e bifida in DII, forza terminale negativa in V1',
+      'PR spesso ai limiti alti e, nelle forme calcifiche, blocchi di conduzione per estensione della calcificazione al setto',
+      'Il blocco di branca sinistra completo compare nelle forme avanzate e dopo impianto valvolare transcatetere',
+      'ECG normale non esclude la stenosi: la diagnosi e la gravit\u00e0 sono ecocardiografiche'
+    ],
+    guarda: 'V5 e V6 per i voltaggi e lo strain, V1 per la S profonda e per la P bifasica, aVL per la R alta.',
+    soffio: 'Soffio sistolico eiettivo, rude, a diamante, sul focolaio aortico, irradiato ai vasi del collo; secondo tono ridotto o assente quando la valvola \u00e8 rigida; polso parvus et tardus. La triade sintomatica classica \u00e8 angina, sincope da sforzo e dispnea.',
+    terapia: 'Gravit\u00e0: velocit\u00e0 massima \u2265 4 m/s, gradiente medio \u2265 40 mmHg, area valvolare < 1 cm\u00b2. Intervento indicato nella forma severa sintomatica e nell\u2019asintomatica con disfunzione ventricolare sinistra; la scelta fra protesi chirurgica e impianto transcatetere spetta all\u2019Heart Team e tiene conto di et\u00e0, rischio operatorio, anatomia e aspettativa di vita. Nessuna terapia medica modifica la storia naturale.',
+    meccanismo: 'Il ventricolo deve generare pressioni molto alte per vincere l\u2019ostruzione e si ispessisce senza dilatarsi. Pi\u00fa massa significa vettore di depolarizzazione pi\u00fa grande, quindi voltaggi alti. Il subendocardio ipertrofico \u00e8 il territorio peggio perfuso del cuore: la sua ripolarizzazione si altera per prima e nasce lo strain, che \u00e8 discendente e asimmetrico, diverso dal sottoslivellamento ischemico.',
+    vettori: 'Il vettore del QRS \u00e8 lungo e punta a sinistra e indietro; quello della T gli si oppone, verso destra e in alto: per questo T negativa proprio nelle derivazioni dove la R \u00e8 pi\u00fa alta.',
+    dd: [
+      'Cardiomiopatia ipertrofica (onde q settali profonde e strette, storia familiare)',
+      'Ipertensione arteriosa di lunga data (stessa ipertrofia, nessun soffio eiettivo)',
+      'Ischemia subendocardica (sottoslivellamento orizzontale, non discendente, senza voltaggi alti)'
+    ],
+    trappole: 'Lo strain fa sottoslivellare l\u2019ST in V5-V6: non chiamarlo ischemia se i voltaggi sono alti e il quadro \u00e8 stabile. E ricorda che nell\u2019anziano il torace enfisematoso pu\u00f2 abbassare i voltaggi e nascondere l\u2019ipertrofia.',
+    fonte: FONTE_VALV
+  }
+});
+
+add({
+  id: 'insufficienza-aortica', cat: VALV, name: 'Insufficienza aortica', quiz: true,
+  params: [F.hr(78, 55, 105)],
+  build: p => ({
+    rate: p.hr, pr: 165, qtc: 425, qrs: M.qrsLVH(0.88), qrsScale: 1.02,
+    pComps: M.pMitrale(0.65),
+    T: { a: 34, g: 16, amp: 0.52 },
+    extra: [B(dirAG(172, 26), 0.22, 16, 9, 9)]
+  }),
+  look: ['V5', 'V6', 'aVL', 'V2'], indici: 'sinistra',
+  card: {
+    def: 'Rigurgito diastolico dall\u2019aorta al ventricolo sinistro: sovraccarico di volume, con ipertrofia eccentrica e ventricolo dilatato.',
+    criteri: [
+      'Voltaggi alti nelle precordiali sinistre per l\u2019aumento del volume telediastolico',
+      'Onde q strette e profonde in DI, aVL, V5 e V6: il setto ipertrofico viene attraversato da un vettore settale pi\u00fa grande',
+      'T inizialmente positiva e alta: il sovraccarico \u00e8 diastolico, non sistolico, quindi lo strain compare tardi',
+      'Quando compaiono ST sottoslivellato e T negativa nelle precordiali sinistre il ventricolo sta scompensando',
+      'Ingrandimento atriale sinistro nelle forme croniche avanzate',
+      'Nella forma acuta (endocardite, dissezione) l\u2019ECG pu\u00f2 essere quasi normale: la gravit\u00e0 non si legge sul tracciato'
+    ],
+    guarda: 'V5 e V6 per i voltaggi e per la q stretta, V2 per la S profonda, DI e aVL per la q laterale.',
+    soffio: 'Soffio diastolico dolce, aspirativo, in decrescendo, lungo il margine sternale sinistro, meglio udibile seduti e piegati in avanti in espirazione. Polso celere e scoccante, pressione differenziale ampia; nelle forme severe soffio di Austin Flint alla punta.',
+    terapia: 'Intervento nella forma severa sintomatica e nell\u2019asintomatica con disfunzione o dilatazione ventricolare; la riparazione valvolare \u00e8 possibile in centri esperti in anatomie favorevoli. Nella forma acuta severa l\u2019indicazione \u00e8 chirurgica urgente. Nella malattia della radice aortica il criterio di intervento tiene conto del diametro aortico.',
+    meccanismo: 'Il ventricolo riceve a ogni diastole il volume che rientra dall\u2019aorta e si dilata per accoglierlo. La dilatazione allontana la parete dagli elettrodi ma aumenta la massa complessiva: i voltaggi salgono, e il setto pi\u00fa spesso genera una q settale pi\u00fa evidente. Finch\u00e9 la funzione regge la ripolarizzazione resta normale.',
+    vettori: 'Vettore principale grande e diretto a sinistra, ma la T resta concorde: nella vista 3D si vede la freccia del QRS allungarsi senza che quella della T si rovesci.',
+    dd: [
+      'Stenosi aortica (stesse voltaggi, ma T negativa precoce e q settale assente o piccola)',
+      'Cuore d\u2019atleta (voltaggi alti, ripolarizzazione precoce, bradicardia, nessun soffio diastolico)',
+      'Insufficienza mitralica (sovraccarico di volume simile, ma con atrio sinistro molto pi\u00fa grande)'
+    ],
+    trappole: 'La q stretta e profonda in V5-V6 non \u00e8 una necrosi: guarda la larghezza. Una q patologica dura almeno 40 ms, la q settale del sovraccarico di volume \u00e8 stretta e accompagnata da R alta.',
+    fonte: FONTE_VALV
+  }
+});
+
+add({
+  id: 'stenosi-mitralica', cat: VALV, name: 'Stenosi mitralica', quiz: true,
+  params: [F.hr(84, 55, 120), { k: 'dx', label: 'Impegno destro', type: 'select', def: '1', opts: [['0', 'Iniziale', ], ['1', 'Ipertensione polmonare']] }],
+  build: p => (+p.dx ? {
+    rate: p.hr, pr: 175, qtc: 420, qrs: M.qrsRVH(), qrsScale: 0.92,
+    pComps: M.pMitrale(1), T: { a: 55, g: -40, amp: 0.3 }, st: { a: 55, g: -40, amp: 0.04 }
+  } : {
+    rate: p.hr, pr: 175, qtc: 415, qrs: M.qrsNormal(), pComps: M.pMitrale(1)
+  }),
+  look: ['II', 'V1', 'V2', 'aVF'], indici: 'destra',
+  card: {
+    def: 'Ostacolo al riempimento del ventricolo sinistro: l\u2019atrio sinistro si dilata e la pressione si trasmette al circolo polmonare e al cuore destro. Il ventricolo sinistro resta piccolo e normale.',
+    criteri: [
+      'P mitralica: onda P larga \u2265 120 ms, bifida con distanza fra le due cuspidi \u2265 40 ms in DII',
+      'Forza terminale negativa in V1 \u2265 0,04 mm\u00b7s: componente negativa profonda e lunga',
+      'Nessun segno di ipertrofia ventricolare sinistra: il ventricolo sinistro \u00e8 scarico',
+      'Con l\u2019ipertensione polmonare compaiono deviazione assiale destra, R dominante in V1 e sovraccarico destro',
+      'La fibrillazione atriale \u00e8 frequentissima e spesso \u00e8 la prima manifestazione: quando arriva, la P sparisce e resta solo l\u2019impegno destro',
+      'La stenosi mitralica reumatica resta la principale eziologia nel mondo'
+    ],
+    guarda: 'DII per la P bifida, V1 per la componente negativa profonda, V1 e V2 per l\u2019eventuale R dominante.',
+    soffio: 'Primo tono accentuato, schiocco di apertura dopo il secondo tono, rullio diastolico a bassa frequenza alla punta con rinforzo presistolico se il ritmo \u00e8 sinusale. Si ascolta meglio con la campana, in decubito laterale sinistro. Facies mitralica nelle forme avanzate.',
+    terapia: 'Gravit\u00e0: area valvolare \u2264 1,5 cm\u00b2. La commissurotomia mitralica percutanea con pallone \u00e8 il trattamento di scelta nelle anatomie favorevoli senza trombo atriale e senza rigurgito significativo; altrimenti chirurgia. La fibrillazione atriale nella stenosi mitralica reumatica richiede anticoagulazione con antagonisti della vitamina K, non con anticoagulanti diretti.',
+    meccanismo: 'L\u2019atrio sinistro deve spingere il sangue attraverso un orifizio ristretto: si ipertrofizza e si dilata, e la sua depolarizzazione dura di pi\u00fa. La P si allarga e diventa bifida perch\u00e9 la componente sinistra, ritardata, si stacca da quella destra. A monte la pressione sale nei polmoni e il ventricolo destro si ipertrofizza.',
+    vettori: 'Nella vista 3D il vettore atriale ha una coda lunga diretta indietro e a sinistra: \u00e8 quella che scrive la seconda gobba in DII e la negativit\u00e0 profonda in V1.',
+    dd: [
+      'Blocco interatriale avanzato (P bifasica \u00b1 nelle inferiori, senza valvulopatia)',
+      'Qualunque altra causa di ingrandimento atriale sinistro: ipertensione, insufficienza mitralica, cardiomiopatie',
+      'Ipertensione polmonare primitiva (impegno destro senza P mitralica)'
+    ],
+    trappole: 'Se il paziente \u00e8 in fibrillazione atriale la P non c\u2019\u00e8 e il segno pi\u00fa evidente scompare: resta l\u2019impegno destro, che da solo non dice quale valvola sia malata.',
+    fonte: FONTE_VALV
+  }
+});
+
+add({
+  id: 'insufficienza-mitralica', cat: VALV, name: 'Insufficienza mitralica', quiz: true,
+  params: [F.hr(80, 55, 110)],
+  build: p => ({
+    rate: p.hr, pr: 172, qtc: 425, qrs: M.qrsLVH(0.78),
+    pComps: M.pMitrale(0.85), T: { a: 38, g: 14, amp: 0.42 }
+  }),
+  look: ['II', 'V1', 'V5', 'V6'], indici: 'sinistra',
+  card: {
+    def: 'Rigurgito sistolico dal ventricolo sinistro all\u2019atrio sinistro: sovraccarico di volume di entrambe le camere sinistre.',
+    criteri: [
+      'Ingrandimento atriale sinistro: P larga e bifida in DII, forza terminale negativa in V1',
+      'Voltaggi aumentati nelle precordiali sinistre da sovraccarico di volume del ventricolo',
+      'T di solito ancora positiva: lo strain compare solo quando la funzione cede',
+      'Fibrillazione atriale frequente nelle forme croniche severe',
+      'Nel rigurgito secondario si aggiungono i segni della cardiopatia di base: onde Q di pregresso infarto, blocco di branca sinistra, QRS largo'
+    ],
+    guarda: 'DII e V1 per l\u2019atrio sinistro, V5 e V6 per i voltaggi.',
+    soffio: 'Soffio olosistolico alla punta, irradiato all\u2019ascella, che non varia con il ciclo respiratorio; primo tono ridotto, terzo tono nelle forme severe per il riempimento rapido. Nel prolasso il soffio \u00e8 telesistolico e preceduto da un click.',
+    terapia: 'Nel rigurgito primario severo la riparazione chirurgica resta il trattamento di riferimento, con indicazione anche nell\u2019asintomatico secondo i criteri di dimensione e funzione ventricolare; la riparazione transcatetere bordo a bordo \u00e8 l\u2019alternativa nel paziente sintomatico ad alto rischio chirurgico. Nel rigurgito secondario le linee guida 2025 distinguono il fenotipo atriale da quello ventricolare e la terapia parte dal trattamento ottimale dello scompenso.',
+    meccanismo: 'A ogni sistole una parte della gittata torna nell\u2019atrio: l\u2019atrio si dilata e il ventricolo, che deve pompare il volume normale pi\u00fa quello rigurgitato, si dilata anch\u2019esso. Due camere pi\u00fa grandi, due segni sull\u2019ECG: P larga e voltaggi alti.',
+    vettori: 'Vettore atriale allungato e vettore ventricolare ingrandito, entrambi verso sinistra: nella vista 3D il ciclo appare tutto spostato a sinistra e indietro.',
+    dd: [
+      'Stenosi mitralica (stessa P, ma niente voltaggi alti e spesso impegno destro)',
+      'Stenosi aortica (voltaggi alti con strain precoce)',
+      'Difetto interventricolare (soffio olosistolico ma sul mesocardio, non irradiato all\u2019ascella)'
+    ],
+    trappole: 'L\u2019ECG non distingue il rigurgito primario da quello secondario: la distinzione \u00e8 ecocardiografica e cambia completamente la terapia.',
+    fonte: FONTE_VALV
+  }
+});
+
+add({
+  id: 'prolasso-mitralico', cat: VALV, name: 'Prolasso della valvola mitrale', quiz: true,
+  params: [F.hr(74, 55, 100), { k: 'ect', label: 'Extrasistoli', type: 'select', def: '1', opts: [['0', 'Assenti'], ['1', 'Frequenti']] }],
+  build: p => {
+    const cfg = { rate: p.hr, pr: 155, qtc: 445, qrs: M.qrsNormal(), T: { a: -40, g: 30, amp: 0.3 } };
+    if (+p.ect) cfg.ectopy = { type: 'pvc', pattern: 'isolate', prob: 0.2, coupling: 0.5, qrs: M.qrsPVC_RVOT() };
+    return cfg;
+  },
+  look: ['II', 'III', 'aVF', 'V6'],
+  card: {
+    def: 'Spostamento sistolico di uno o entrambi i lembi mitralici oltre il piano dell\u2019anello. L\u2019ECG \u00e8 spesso normale; quando \u00e8 alterato, lo \u00e8 in modo aspecifico.',
+    criteri: [
+      'Tracciato normale nella maggior parte dei casi',
+      'T negative o appiattite nelle derivazioni inferiori, tipicamente DII, DIII e aVF',
+      'Extrasistoli ventricolari frequenti, spesso a morfologia di origine dai muscoli papillari o dal tratto di efflusso',
+      'QT talvolta ai limiti alti',
+      'Nel fenotipo aritmico si associano T negative infero-laterali, extrasistolia complessa e disgiunzione anulare mitralica all\u2019imaging'
+    ],
+    guarda: 'DII, DIII e aVF per le T negative; la striscia lunga per le extrasistoli.',
+    soffio: 'Click meso-telesistolico seguito da soffio telesistolico alla punta. Le manovre che riducono il precarico, come lo stare in piedi o il Valsalva, anticipano il click e allungano il soffio; lo squatting fa il contrario.',
+    terapia: 'Nella maggioranza dei casi solo controlli periodici. Diventa chirurgico quando genera un rigurgito mitralico severo, con le stesse indicazioni del rigurgito primario. Nel fenotipo aritmico va valutato il rischio di aritmie ventricolari maligne, con imaging avanzato e monitoraggio prolungato.',
+    meccanismo: 'La trazione dei lembi ridondanti sui muscoli papillari e sulla parete infero-basale genera stiramento cronico: da l\u00ec nascono sia le alterazioni della ripolarizzazione inferiore sia i focolai di extrasistolia.',
+    vettori: 'Il vettore della T si inclina verso l\u2019alto e a sinistra, lasciando le derivazioni inferiori dalla parte sbagliata.',
+    dd: [
+      'Ischemia inferiore (T negative inferiori, ma con contesto clinico e movimento dei marcatori)',
+      'Variante normale giovanile (T negative in V1-V3, non inferiori)',
+      'Cardiomiopatia aritmogena (T negative destre ed extrasistoli a morfologia di branca sinistra)'
+    ],
+    trappole: 'Le T negative inferiori in un giovane con click sistolico non sono un infarto. Ma il contrario \u00e8 altrettanto vero: non attribuire al prolasso una ripolarizzazione alterata comparsa di recente in un paziente con dolore toracico.',
+    fonte: FONTE_VALV
+  }
+});
+
+add({
+  id: 'insufficienza-tricuspidale', cat: VALV, name: 'Insufficienza tricuspidale', quiz: true,
+  params: [F.hr(86, 60, 120)],
+  build: p => ({
+    rate: p.hr, pr: 180, qtc: 425, qrs: M.qrsRBBB(), qrsScale: 0.8,
+    pComps: M.pPulmonale(1.05), T: { a: 50, g: -35, amp: 0.28 }
+  }),
+  look: ['II', 'V1', 'III', 'aVF'], indici: 'destra',
+  card: {
+    def: 'Rigurgito sistolico dal ventricolo destro all\u2019atrio destro. Nella grande maggioranza dei casi \u00e8 secondaria alla dilatazione dell\u2019anello, non a una malattia dei lembi.',
+    criteri: [
+      'P polmonare: onda P appuntita \u2265 2,5 mm in DII, DIII e aVF, componente iniziale positiva alta in V1',
+      'Segni di sovraccarico destro: deviazione assiale destra, R dominante o rSR\u2032 in V1, blocco di branca destra spesso incompleto',
+      'Fibrillazione atriale molto frequente, sia come causa sia come conseguenza della dilatazione atriale destra',
+      'Nelle forme secondarie coesistono i segni della cardiopatia sinistra o dell\u2019ipertensione polmonare che le hanno prodotte',
+      'Bassi voltaggi se c\u2019\u00e8 versamento pericardico o anasarca'
+    ],
+    guarda: 'DII per la P alta e appuntita, V1 per il sovraccarico destro.',
+    soffio: 'Soffio olosistolico sul focolaio tricuspidale che aumenta in inspirazione (segno di Rivero-Carvallo): \u00e8 il dettaglio che lo distingue dal soffio mitralico. Turgore giugulare con onda v prominente, reflusso epatogiugulare, fegato pulsante, edemi declivi.',
+    terapia: 'Nel rigurgito severo si interviene di regola contestualmente alla chirurgia della valvola sinistra; l\u2019intervento isolato va considerato nel paziente sintomatico prima che compaia disfunzione ventricolare destra irreversibile. Le tecniche transcatetere, riparazione bordo a bordo e sostituzione, hanno un ruolo crescente nel paziente ad alto rischio chirurgico. Diuretici per la congestione.',
+    meccanismo: 'La dilatazione del ventricolo destro allarga l\u2019anello tricuspidale e i lembi non combaciano pi\u00fa. L\u2019atrio destro si dilata e produce una P alta e appuntita; il ventricolo destro sovraccarico si ipertrofizza e sposta a destra l\u2019asse.',
+    vettori: 'Vettore atriale grande e diretto in basso, vettore ventricolare terminale ruotato a destra e in avanti: nella vista 3D la coda del QRS punta verso V1.',
+    dd: [
+      'Insufficienza mitralica (soffio olosistolico che non aumenta in inspirazione, atrio sinistro grande)',
+      'Cuore polmonare cronico (stesso sovraccarico destro, con la broncopneumopatia come contesto)',
+      'Difetto interatriale (sovraccarico destro con blocco di branca destra incompleto, ma P normale)'
+    ],
+    trappole: 'La P polmonare sparisce se il paziente fibrilla, e la fibrillazione qui \u00e8 la regola pi\u00fa che l\u2019eccezione: in quel caso l\u2019unico segno che resta \u00e8 l\u2019impegno destro.',
+    fonte: FONTE_VALV
+  }
+});
+
+add({
+  id: 'lgl', cat: 'Conduzione intraventricolare', name: 'Sindrome di Lown-Ganong-Levine', quiz: true,
+  params: [{ k: 'pr', label: 'PR', unit: 'ms', min: 80, max: 125, step: 5, def: 100 }, F.hr(76, 55, 105)],
+  build: p => ({ rate: p.hr, pr: p.pr, qtc: 415, qrs: M.qrsNormal() }),
+  look: ['II', 'V1', 'V5'],
+  card: {
+    def: 'PR corto con QRS stretto e senza onda delta, in un paziente con tachicardie parossistiche. \u00c8 una descrizione elettrocardiografica storica pi\u00fa che una malattia definita.',
+    criteri: [
+      'PR < 120 ms nell\u2019adulto',
+      'QRS di durata normale, senza onda delta e senza impastamento iniziale',
+      'Onda P normale, di origine sinusale: il PR corto non dipende da un ritmo atriale basso',
+      'Storia di tachicardie parossistiche sopraventricolari: senza questo la triade non si completa e si parla solo di PR corto',
+      'La distinzione dal Wolff-Parkinson-White \u00e8 tutta nell\u2019inizio del QRS: nel WPW \u00e8 impastato, qui \u00e8 netto'
+    ],
+    guarda: 'DII per misurare il PR, V1 e V5 per verificare che l\u2019inizio del QRS sia netto.',
+    meccanismo: 'L\u2019idea originale era una via che scavalca il nodo atrioventricolare e si inserisce nel fascio di His: l\u2019impulso arriva prima ai ventricoli ma poi percorre le vie normali, quindi il PR si accorcia e il QRS resta stretto. Le conferme elettrofisiologiche di una vera via di questo tipo sono rare: molti casi si spiegano con una conduzione nodale semplicemente rapida.',
+    vettori: 'Il QRS \u00e8 quello normale: nella vista 3D la sequenza dei vettori non cambia, cambia solo quanto presto comincia dopo la P.',
+    dd: [
+      'Wolff-Parkinson-White (PR corto ma con onda delta e QRS largo)',
+      'Ritmo atriale basso o giunzionale (P negativa nelle inferiori)',
+      'Conduzione nodale rapida nel giovane o nell\u2019ipertiroideo (PR corto senza tachicardie)',
+      'Malattia da accumulo con conduzione accelerata'
+    ],
+    trappole: 'Un PR corto isolato, senza tachicardie, non \u00e8 una sindrome: \u00e8 una misura. Etichettarlo come Lown-Ganong-Levine porta a trattamenti e restrizioni che non servono.',
+    fonte: SRC.svt
+  }
+});
+
+/* ==================== DEFIBRILLAZIONE ====================
+   Due tracciati che si comandano: il defibrillatore manuale, dove la scarica la
+   dai tu, e il defibrillatore impiantabile, che decide da solo. Il ritmo si
+   sceglie fra quelli dell'arresto, defibrillabili e non. La scarica si vede sul
+   tracciato come nella realtà: un artefatto enorme, qualche decimo di secondo di
+   silenzio e poi quello che c'è dopo. Sui ritmi non defibrillabili premere non
+   serve a niente, ed è esattamente la cosa da imparare. */
+const ARRESTO = {
+  fv: { nome: 'Fibrillazione ventricolare grossolana', shock: true, cfg: () => ({ mode: 'continuous', cont: 'vf', vfAmp: 0.55 }) },
+  fvfine: { nome: 'Fibrillazione ventricolare a onde fini', shock: true, cfg: () => ({ mode: 'continuous', cont: 'vf', vfAmp: 0.17 }) },
+  tvsp: { nome: 'Tachicardia ventricolare senza polso', shock: true, cfg: () => ({ mode: 'vt', vRate: 205, aRate: 0.5, vtQrs: M.qrsVTscar(), vtT: { a: 40, g: -30, amp: 0.45 }, qtc: 380 }) },
+  flutterv: { nome: 'Flutter ventricolare', shock: true, cfg: () => ({ mode: 'vt', vRate: 280, aRate: 0.5, vtQrs: { w: 190, c: [B(dirAG(-55, -30), 1.15, 95, 55, 55)] }, vtT: { a: 125, g: 30, amp: 0.2 }, qtc: 420 }) },
+  tdp: { nome: 'Torsione di punta', shock: true, cfg: () => ({ mode: 'continuous', cont: 'torsade', tdpRate: 250, tdpAmp: 1.1 }) },
+  asistolia: { nome: 'Asistolia', shock: false, cfg: () => ({ mode: 'continuous', noise: 0.012 }) },
+  pea: { nome: 'Attivit\u00e0 elettrica senza polso', shock: false, cfg: () => ({ rate: 34, pr: 190, qtc: 480, qrs: M.qrsNormal(), qrsScale: 1.55, T: { a: -140, g: 20, amp: 0.2 } }) },
+  agonico: { nome: 'Ritmo agonico', shock: false, cfg: () => ({ mode: 'vt', vRate: 16, aRate: 0.5, vtQrs: M.qrsEscapeV(), vtT: { a: 150, g: 30, amp: 0.4 }, qtc: 540 }) }
+};
+const DOPO = {
+  sinusale: () => ({ rate: 74, pr: 170, qtc: 425, qrs: M.qrsNormal(), noise: 0.01 }),
+  bradi: () => ({ rate: 44, pr: 200, qtc: 450, qrs: M.qrsNormal(), noise: 0.01 }),
+  asistolia: () => ({ mode: 'continuous', noise: 0.012 }),
+  paced: () => ({ mode: 'vt', vRate: 60, aRate: 0.5, vtQrs: M.qrsPaced(), vtT: { a: 150, g: 30, amp: 0.4 }, qtc: 440, noise: 0.01 })
+};
+const OPZ_RITMO = Object.keys(ARRESTO).map(k => [k, ARRESTO[k].nome + (ARRESTO[k].shock ? '' : ' \u00b7 non defibrillabile')]);
+
+add({
+  id: 'dae', cat: 'Arresto cardiaco', name: 'Defibrillatore manuale: eroga la scarica',
+  params: [
+    { k: 'ritmo', label: 'Ritmo dell\u2019arresto', type: 'select', def: 'fv', opts: OPZ_RITMO },
+    { k: 'esito', label: 'Esito della scarica', type: 'select', def: 'sinusale', opts: [['sinusale', 'Ripresa del ritmo sinusale'], ['bradi', 'Ripresa con bradicardia'], ['asistolia', 'Asistolia dopo la scarica'], ['nulla', 'Aritmia che persiste']] },
+    { k: 'j', label: 'Energia', unit: 'J', min: 120, max: 360, step: 20, def: 200 }
+  ],
+  build: p => Object.assign(ARRESTO[p.ritmo].cfg(), { noise: 0.014 }),
+  defib: { tipo: 'manuale' },
+  look: ['II', 'V1'],
+  card: {
+    def: 'Tracciato comandato: scegli il ritmo dell\u2019arresto, premi Scarica e guarda che cosa succede. Sui ritmi defibrillabili la scarica pu\u00f2 interrompere l\u2019aritmia; sugli altri produce solo l\u2019artefatto.',
+    criteri: [
+      'Ritmi defibrillabili: fibrillazione ventricolare, tachicardia ventricolare senza polso, flutter ventricolare, torsione di punta',
+      'Ritmi non defibrillabili: asistolia, attivit\u00e0 elettrica senza polso, ritmo agonico',
+      'La scarica sul tracciato: deflessione fuori scala, poi qualche decimo di secondo di tracciato muto per saturazione dell\u2019amplificatore, poi deriva lenta della linea di base',
+      'Defibrillazione in onda bifasica: energia secondo le indicazioni del costruttore, di regola 150-200 J alla prima scarica e pari o superiore alle successive',
+      'Dopo la scarica si riprendono subito le compressioni per due minuti senza fermarsi a controllare il ritmo',
+      'Adrenalina 1 mg subito nei ritmi non defibrillabili, dopo la terza scarica nei defibrillabili; amiodarone 300 mg dopo la terza scarica'
+    ],
+    guarda: 'DII per il ritmo, la striscia lunga per l\u2019artefatto e per quello che compare dopo.',
+    meccanismo: 'La scarica attraversa il miocardio e depolarizza contemporaneamente tutte le cellule eccitabili: i fronti d\u2019onda che si rincorrevano nella fibrillazione si estinguono tutti insieme, e se resta tessuto vitale il nodo del seno pu\u00f2 riprendere il comando. Nell\u2019asistolia non c\u2019\u00e8 nessun fronte d\u2019onda da interrompere: non c\u2019\u00e8 niente da defibrillare.',
+    vettori: 'Durante l\u2019artefatto la vista 3D non ha significato: il segnale non viene dal cuore, viene dal defibrillatore.',
+    dd: [
+      'Artefatto da movimento o da compressioni toraciche (irregolare, senza il salto fuori scala iniziale)',
+      'Distacco di elettrodo (linea piatta improvvisa in una sola derivazione)',
+      'Fibrillazione ventricolare a onde fini scambiata per asistolia: alza il guadagno e cambia derivazione prima di decidere'
+    ],
+    trappole: 'La trappola sta tutta qui: premere il pulsante sull\u2019asistolia. Non succede nulla, si perde tempo di compressioni e si interrompe il massaggio. L\u2019asistolia si tratta con compressioni e adrenalina.',
+    fonte: SRC.als
+  }
+});
+
+add({
+  id: 'icd', cat: 'Stimolazione', name: 'Defibrillatore impiantabile: intervento automatico',
+  params: [
+    { k: 'ritmo', label: 'Ritmo rilevato', type: 'select', def: 'fv', opts: OPZ_RITMO },
+    { k: 'terapia', label: 'Terapia del dispositivo', type: 'select', def: 'auto', opts: [['auto', 'Automatica secondo il ritmo'], ['atp', 'Solo stimolazione antitachicardica'], ['shock', 'Solo scarica']] }
+  ],
+  build: p => Object.assign(ARRESTO[p.ritmo].cfg(), { noise: 0.012 }),
+  defib: { tipo: 'automatico' },
+  look: ['II', 'V1'],
+  card: {
+    def: 'Lo stesso arresto visto da dentro: il dispositivo impiantato riconosce l\u2019aritmia, la conferma, carica e interviene da solo. Qui non c\u2019\u00e8 nessun pulsante da premere, si guarda e basta.',
+    criteri: [
+      'Riconoscimento per frequenza, con zone programmate: zona di tachicardia ventricolare e zona di fibrillazione',
+      'Conferma su un numero di intervalli consecutivi prima di erogare, per non trattare aritmie che si esauriscono da sole',
+      'Stimolazione antitachicardica: una salva di impulsi leggermente pi\u00fa rapida della tachicardia, che entra nel circuito di rientro e lo interrompe senza dolore',
+      'Se la stimolazione antitachicardica fallisce o il ritmo \u00e8 la fibrillazione, il condensatore si carica in alcuni secondi e viene erogata la scarica',
+      'Dopo la scarica il dispositivo stimola di supporto se il ritmo sottostante \u00e8 lento',
+      'Sui ritmi non defibrillabili il dispositivo non eroga scariche: al massimo stimola'
+    ],
+    guarda: 'La striscia lunga: prima l\u2019aritmia, poi la salva di stimoli oppure l\u2019artefatto della scarica, poi il ritmo che ne esce.',
+    meccanismo: 'La stimolazione antitachicardica funziona perch\u00e9 il rientro ha una finestra eccitabile: stimolando appena pi\u00fa veloce, il fronte artificiale entra nel circuito, lo trova refrattario davanti e lo spegne. Se invece l\u2019attivazione \u00e8 caotica, come nella fibrillazione, non c\u2019\u00e8 nessun circuito da catturare e serve la scarica.',
+    vettori: 'Durante la stimolazione antitachicardica il vettore \u00e8 quello di un battito stimolato: parte dalla punta del ventricolo destro e va in alto a sinistra.',
+    dd: [
+      'Scarica appropriata (aritmia ventricolare vera) contro inappropriata (fibrillazione atriale a risposta rapida, tachicardia sinusale, disturbi di segnale dall\u2019elettrocatetere)',
+      'Tempesta aritmica: tre o pi\u00fa interventi appropriati in ventiquattro ore',
+      'Rumore da frattura dell\u2019elettrocatetere: intervalli brevissimi e non fisiologici, spesso non riproducibili'
+    ],
+    trappole: 'Una scarica non dimostra che ci fosse un\u2019aritmia maligna: le scariche inappropriate sono frequenti e vanno cercate interrogando il dispositivo, non dedotte dal racconto del paziente.',
+    fonte: SRC.va
+  }
+});
+
+const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', VALV, COMB, 'Elettroliti e altro'];
 const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ISO_DATA = API;
 })(typeof window !== 'undefined' ? window : this);

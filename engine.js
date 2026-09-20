@@ -11,7 +11,9 @@ function rng(seed) { let s = seed >>> 0; return function () { s = s + 0x6D2B79F5
 
 const LEADS = [
   { id: 'I', p: 'F', ang: 0, g: 1 }, { id: 'II', p: 'F', ang: 60, g: 1 }, { id: 'III', p: 'F', ang: 120, g: 1 },
-  { id: 'aVR', p: 'F', ang: -150, g: 0.866 }, { id: 'aVL', p: 'F', ang: -30, g: 0.866 }, { id: 'aVF', p: 'F', ang: 90, g: 0.866 },
+  // le derivazioni aumentate valgono esattamente radice di 3 mezzi: con 0,866
+  // arrotondato la relazione aVR = -(DI+DII)/2 non tornava all'ultima cifra
+  { id: 'aVR', p: 'F', ang: -150, g: Math.sqrt(3) / 2 }, { id: 'aVL', p: 'F', ang: -30, g: Math.sqrt(3) / 2 }, { id: 'aVF', p: 'F', ang: 90, g: Math.sqrt(3) / 2 },
   { id: 'V1', p: 'H', ang: 120, g: 1.0 }, { id: 'V2', p: 'H', ang: 90, g: 1.5 }, { id: 'V3', p: 'H', ang: 75, g: 1.65 },
   { id: 'V4', p: 'H', ang: 60, g: 1.6 }, { id: 'V5', p: 'H', ang: 30, g: 1.35 }, { id: 'V6', p: 'H', ang: 0, g: 1.1 }
 ];
@@ -52,9 +54,25 @@ function evalComps(comps, tau, out) {
 /* ---------- morfologie ---------- */
 const M = {};
 // P sinusale: atrio destro (in avanti) poi sinistro (indietro)
+// Onda P: atrio destro (in avanti, in basso, a sinistra) poi atrio sinistro
+// (indietro, a sinistra). Gli atri sono più lontani dalla parete toracica dei
+// ventricoli, quindi i vettori anteroposteriori sono più contenuti: con
+// componenti più ripide la P usciva troppo alta e troppo bifasica in V2-V4.
 M.pSinus = (amp = 1, wide = 1, ra = 1, la = 1) => [
-  B(dirAG(62, 42), 0.115 * amp * ra, 34 * wide, 16 * wide, 15 * wide),
-  B(dirAG(18, -48), 0.095 * amp * la, 72 * wide, 17 * wide, 17 * wide)
+  B(dirAG(62, 38), 0.105 * amp * ra, 34 * wide, 16 * wide, 15 * wide),
+  B(dirAG(18, -18), 0.055 * amp * la, 72 * wide, 17 * wide, 17 * wide)
+];
+// P polmonare: l'atrio destro ipertrofico sposta il vettore in basso e lo
+// ingrandisce, con P appuntita >= 2,5 mm in DII, DIII e aVF.
+M.pPulmonale = (amp = 1) => [
+  B(dirAG(72, 26), 0.30 * amp, 34, 15, 14),
+  B(dirAG(18, -18), 0.048 * amp, 70, 16, 16)
+];
+// P mitralica: l'atrio sinistro dilatato depolarizza tardi e all'indietro, e
+// la P diventa larga e bifida in DII con una coda negativa profonda in V1.
+M.pMitrale = (amp = 1) => [
+  B(dirAG(60, 30), 0.100 * amp, 30, 16, 15),
+  B(dirAG(15, -22), 0.122 * amp, 94, 20, 21)
 ];
 M.pWidth = (wide = 1) => 110 * wide;
 M.pRetro = (amp = 1) => [B(dirAG(-95, 10), 0.11 * amp, 36, 16, 16)];
@@ -95,9 +113,9 @@ M.qrsLBBB = () => ({
 });
 M.qrsLAFB = () => ({
   w: 104, c: [
-    B(dirAG(120, 35), 0.3, 14, 8, 8),
-    B(dirAG(-58, -8), 1.15, 46, 12, 13),
-    B(dirAG(-100, -50), 0.3, 76, 10, 11)
+    B(dirAG(126, 26), 0.28, 16, 10, 10),
+    B(dirAG(-58, -8), 1.15, 46, 13, 13),
+    B(dirAG(-100, -50), 0.3, 75, 11, 12)
   ]
 });
 M.qrsLPFB = () => ({
@@ -116,11 +134,14 @@ M.qrsWPW = () => ({
 });
 // Ipertrofia sinistra: voltaggi tarati perché Sokolow-Lyon e Cornell risultino
 // davvero positivi sul tracciato generato. k scala tutti i voltaggi.
+// Ipertrofia sinistra: componenti sovrapposte come nel QRS normale, altrimenti
+// in V4 (dove il vettore principale è quasi perpendicolare alla derivazione)
+// compariva un'intaccatura che non ha corrispondente fisiologico.
 M.qrsLVH = (k) => { k = k == null ? 1 : k; return {
   w: 104, c: [
-    B(dirAG(158, 45), 0.20 * k, 13, 7, 7),
-    B(dirAG(4, -28), 2.30 * k, 44, 13, 12),
-    B(dirAG(-120, -60), 0.95 * k, 74, 10, 12)
+    B(dirAG(168, 30), 0.19 * k, 15, 9, 9),
+    B(dirAG(4, -24), 2.30 * k, 45, 14, 13),
+    B(dirAG(-120, -58), 0.95 * k, 73, 11, 13)
   ]
 }; };
 M.qrsRVH = () => ({
@@ -435,7 +456,8 @@ function Stream(cfg, seed) {
   this.R = rng(this.seed);
   this.gen = rhythm(cfg, this.R);
   this.ev = []; this.tGen = 0;
-  this.cont = makeContinuous(cfg, this.seed);
+  this.contSeg = [{ t0: -1e12, t1: 1e12, fn: makeContinuous(cfg, this.seed) }];
+  this.scariche = [];        // defibrillazioni erogate, con l'artefatto sul tracciato
   this.noise = cfg.noise || 0;
   this.nR = rng(this.seed + 99);
   this.np = LEADS.map(() => this.nR() * 6.28);
@@ -469,7 +491,11 @@ Stream.prototype.vec = function (tau, out) {
     if (rel < e.span[0] || rel > e.span[1]) continue;
     evalComps(e.comps, rel, out);
   }
-  if (this.cont) this.cont(tau, out);
+  for (let i = 0; i < this.contSeg.length; i++) {
+    const c = this.contSeg[i];
+    if (c.fn && tau >= c.t0 && tau < c.t1) c.fn(tau, out);
+  }
+  this.artefatto(tau, out);
   if (this.rot) {
     // ruota il vettore nel piano frontale: +rot = asse che scende verso destra (convenzione ECG)
     const c = Math.cos(this.rot), sn = Math.sin(this.rot), x = out[0], y = out[1];
@@ -481,6 +507,11 @@ Stream.prototype.leads = function (tau, vec, outArr) {
   for (let i = 0; i < 12; i++) {
     const w = LEADS[i].w;
     let v = (vec[0] * w[0] + vec[1] * w[1] + vec[2] * w[2]) * this.amp;
+    if (this.scariche.length) {
+      const a = this.artefattoLead(tau, i);
+      if (a !== null) { outArr[i] = a; continue; }
+      v += this.derivaLead(tau, i);
+    }
     if (this.noise) {
       const s = tau / 1000;
       v += this.noise * (0.06 * Math.sin(2 * Math.PI * 0.21 * s + this.np[i]) + 0.012 * Math.sin(2 * Math.PI * 47 * s + i) + 0.01 * Math.sin(2 * Math.PI * 31.7 * s + 2 * i));
@@ -488,6 +519,70 @@ Stream.prototype.leads = function (tau, vec, outArr) {
     outArr[i] = v;
   }
   return outArr;
+};
+/* ---------- defibrillazione ----------
+   La scarica si vede come nella realtà: una deflessione enorme che manda fuori
+   scala l'amplificatore, poi qualche decimo di secondo di tracciato muto mentre
+   il filtro si riprende, poi una deriva lenta della linea di base. Quello che
+   succede dopo dipende dal ritmo: se era defibrillabile il ritmo cambia, se non
+   lo era resta tale e quale e l'unica cosa che si vede è l'artefatto. */
+// Durante la scarica il vettore cardiaco non ha più significato: il segnale è
+// tutto dell'amplificatore. Qui il vettore viene azzerato, l'artefatto vero si
+// disegna derivazione per derivazione in leads().
+Stream.prototype.artefatto = function (tau, out) {
+  for (let i = 0; i < this.scariche.length; i++) {
+    const r = tau - this.scariche[i].t;
+    if (r >= 0 && r < this.scariche[i].muto) { out[0] = 0; out[1] = 0; out[2] = 0; return; }
+  }
+};
+// Il colpo satura ogni canale in modo diverso: deflessione enorme di segno e
+// ampiezza variabili da derivazione a derivazione, poi il muto, poi la deriva.
+Stream.prototype.artefattoLead = function (tau, i) {
+  for (let k = 0; k < this.scariche.length; k++) {
+    const s = this.scariche[k], r = tau - s.t;
+    if (r < 0 || r > 2400) continue;
+    if (r < 26) return Math.sin(Math.PI * r / 26) * (r < 13 ? 1 : -0.6) * s.g[i];
+    if (r < s.muto) return 0;
+    return null;                        // la deriva la aggiunge leads()
+  }
+  return null;
+};
+Stream.prototype.derivaLead = function (tau, i) {
+  let d = 0;
+  for (let k = 0; k < this.scariche.length; k++) {
+    const s = this.scariche[k], r = tau - s.t;
+    if (r < s.muto || r > 2400) continue;
+    d += 0.11 * (s.g[i] > 0 ? 1 : -1) * Math.exp(-(r - s.muto) / 540) * Math.cos((r - s.muto) / 360);
+  }
+  return d;
+};
+Stream.prototype.cambiaRitmo = function (cfg2, tDa) {
+  this.ev = this.ev.filter(e => e.t < tDa - 2);
+  const c = this.contSeg[this.contSeg.length - 1];
+  if (c.t1 > tDa) c.t1 = tDa;
+  // sostituzione piena, non fusione: passando da fibrillazione a ritmo sinusale
+  // le chiavi del ritmo precedente (cont, mode, vfAmp) devono sparire
+  const cfg = Object.assign({}, cfg2);
+  if (cfg.noise == null) cfg.noise = this.cfg.noise;
+  this.cfg = cfg;
+  this.contSeg.push({ t0: tDa, t1: 1e12, fn: makeContinuous(cfg, this.seed + this.contSeg.length * 17) });
+  this.gen = rhythm(cfg, this.R);
+  this.tShift = tDa;
+  this.tGen = tDa;
+  this.baseQrs = cfg.qrs || this.baseQrs;
+  this.basePR = cfg.pr || this.basePR;
+  this.ensure(tDa + 4000);
+};
+/* Eroga una scarica al tempo t. dopo: configurazione del ritmo che segue
+   (null se il ritmo non cambia). attesa: quanto tarda a ripartire. */
+Stream.prototype.scarica = function (t, dopo, attesa, muto) {
+  // ogni derivazione vede il colpo con ampiezza e segno suoi: da 1,8 a 5,5 mV,
+  // cioè da 18 a 55 mm, ben oltre il bordo della carta
+  const g = [4.6, 5.2, 2.4, -4.9, 2.0, 3.6, -3.1, -4.2, -2.6, 3.4, 4.4, 3.0];
+  this.scariche.push({ t: t, g: g, muto: muto == null ? 240 : muto });
+  if (this.scariche.length > 8) this.scariche.splice(0, this.scariche.length - 8);
+  if (dopo) this.cambiaRitmo(dopo, t + (attesa == null ? 1400 : attesa));
+  return t;
 };
 Stream.prototype.eventsAround = function (tau) {
   let lastA = null, lastV = null;

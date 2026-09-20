@@ -2,6 +2,7 @@
 (function () {
 'use strict';
 const { LEADS, Stream, Sampled, dirAG } = window.ECG;
+const ECG = window.ECG;
 const DIG = window.ISO_ATLANTE_DIG || {};
 const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G } = window.ISO_DATA;
 const $ = s => document.querySelector(s);
@@ -529,6 +530,99 @@ function buildStream(sc, p, keepTime) {
   mon.setStream(stream, keepTime);
   scene.setScenario(curCfg);
 }
+
+/* ==================== DEFIBRILLATORE ====================
+   Due modi. Manuale: il pulsante c'è solo in quel quadro, lo premi tu e la
+   scarica parte da dove sta scorrendo il tracciato. Automatico (dispositivo
+   impiantabile): nessun pulsante, il dispositivo riconosce, conferma, carica e
+   interviene da solo, con i tempi veri. Sui ritmi non defibrillabili premere non
+   cambia niente: si vede solo l'artefatto, ed è la cosa da imparare. */
+const DEF = { sc: null, coda: [], t0: 0, fatto: false };
+const DEF_DOPO = {
+  sinusale: () => ({ rate: 74, pr: 170, qtc: 425, qrs: ECG.M.qrsNormal() }),
+  bradi: () => ({ rate: 44, pr: 200, qtc: 450, qrs: ECG.M.qrsNormal() }),
+  asistolia: () => ({ mode: 'continuous' }),
+  paced: () => ({ mode: 'vt', vRate: 60, aRate: 0.5, vtQrs: ECG.M.qrsPaced(), vtT: { a: 150, g: 30, amp: 0.4 }, qtc: 440 })
+};
+const DEF_SHOCK = { fv: 1, fvfine: 1, tvsp: 1, flutterv: 1, tdp: 1 };
+function defStato(testo, vivo) {
+  const el = $('#defStato'); if (!el) return;
+  el.hidden = !testo; el.textContent = testo || ''; el.classList.toggle('vivo', !!vivo);
+}
+function defUI(sc) {
+  const d = sc && sc.defib;
+  $('#defSeg').hidden = !d;
+  DEF.sc = d ? sc : null; DEF.coda = []; DEF.fatto = false; DEF.t0 = mon.t;
+  defStato('');
+  if (!d) return;
+  const p = paramsFor(sc), sh = !!DEF_SHOCK[p.ritmo];
+  if (d.tipo === 'manuale') {
+    $('#defLab').textContent = p.j + ' J';
+    $('#defBtn').hidden = false;
+    $('#defBtn').disabled = false;
+    $('#defBtn').textContent = 'Carica e scarica';
+    defStato(sh ? 'Ritmo defibrillabile: premi quando vuoi.' : 'Ritmo non defibrillabile: la scarica non serve.', sh);
+  } else {
+    $('#defLab').textContent = 'Dispositivo impiantabile';
+    $('#defBtn').hidden = true;
+    defPrograma(sc, p, sh);
+  }
+}
+/* Sequenza del dispositivo impiantabile, con i tempi che ha davvero */
+function defPrograma(sc, p, sh) {
+  const atp = p.terapia === 'atp' || (p.terapia === 'auto' && (p.ritmo === 'tvsp' || p.ritmo === 'flutterv'));
+  const q = [];
+  if (!sh) {
+    q.push([1200, () => defStato(p.ritmo === 'asistolia'
+      ? 'Nessuna attività da trattare: il dispositivo passa alla stimolazione di supporto.'
+      : 'Ritmo non in zona di terapia: il dispositivo osserva e non interviene.')]);
+    if (p.ritmo === 'asistolia') q.push([5200, () => { defStato('Stimolazione di supporto', true); defCambia(DEF_DOPO.paced(), 300); }]);
+  } else if (atp && p.terapia !== 'shock') {
+    q.push([2600, () => defStato('Aritmia in zona di tachicardia: conteggio degli intervalli…')]);
+    q.push([5200, () => defStato('Stimolazione antitachicardica in corso', true)]);
+    q.push([5600, () => defCambia({ mode: 'vt', vRate: 250, aRate: 0.5, vtQrs: ECG.M.qrsPaced(), vtT: { a: 150, g: 30, amp: 0.3 }, qtc: 330 }, 250)]);
+    q.push([7900, () => { defStato('Aritmia interrotta, ritmo proprio ripreso', true); defCambia(DEF_DOPO.sinusale(), 250); }]);
+  } else {
+    q.push([2400, () => defStato('Aritmia rilevata: conferma sugli intervalli…')]);
+    q.push([4600, () => defStato('Carica del condensatore in corso', true)]);
+    q.push([10400, () => { defStato('Scarica erogata', true); defColpo(DEF_DOPO.sinusale(), 1500); }]);
+    q.push([12600, () => defStato('Ritmo sinusale ripristinato')]);
+  }
+  DEF.coda = q.map(([dt, fn]) => ({ t: DEF.t0 + dt, fn: fn, fatta: false }));
+}
+function defCambia(cfg, ritardo) {
+  if (!stream) return;
+  cfg.noise = S.noise;
+  stream.cambiaRitmo(cfg, mon.t + (ritardo || 250));
+  scene.setScenario(cfg);
+}
+function defColpo(dopo, attesa) {
+  if (!stream) return;
+  if (dopo) dopo.noise = S.noise;
+  stream.scarica(mon.t + 220, dopo, attesa);
+  if (dopo) scene.setScenario(dopo);
+}
+function defTick() {
+  if (!DEF.sc || !DEF.coda.length) return;
+  DEF.coda.forEach(a => { if (!a.fatta && mon.t >= a.t) { a.fatta = true; a.fn(); } });
+}
+$('#defBtn').addEventListener('click', () => {
+  const sc = DEF.sc; if (!sc || !stream) return;
+  const p = paramsFor(sc), sh = !!DEF_SHOCK[p.ritmo];
+  if (!S.playing) setPlaying(true);
+  const b = $('#defBtn');
+  b.disabled = true; b.textContent = 'Carica…';
+  defStato('Condensatore in carica…');
+  setTimeout(() => {
+    const esito = sh && p.esito !== 'nulla' ? DEF_DOPO[p.esito]() : null;
+    defColpo(esito, 1400);
+    b.disabled = false; b.textContent = 'Carica e scarica';
+    defStato(!sh
+      ? 'Scarica erogata su un ritmo non defibrillabile: solo artefatto, il ritmo è identico. Riprendi le compressioni.'
+      : esito ? 'Scarica erogata: guarda che cosa esce dopo l\u2019artefatto.' : 'Scarica erogata: l\u2019aritmia persiste, serve un nuovo ciclo.', true);
+  }, 2600);
+});
+
 function loadScenario(id, keepTime) {
   const sc = byId[id]; if (!sc) return;
   digCur = null;
@@ -537,6 +631,7 @@ function loadScenario(id, keepTime) {
   $$('#libList .item').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   buildStream(sc, paramsFor(sc), keepTime);
   aggiornaEctUI();
+  defUI(sc);
   mon.setHighlight(sc.look || []);
   renderCard(sc); renderParams(sc); renderVolt();
   closeLib();
@@ -573,7 +668,9 @@ function renderCard(sc) {
     '<div class="sec"><p class="lead">' + esc(c.def) + '</p></div>' +
     '<div class="sec"><h3>Criteri</h3><ul class="crit">' + c.criteri.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' +
     '<div class="sec"><h3>Dove guardare</h3><p>' + esc(c.guarda) + '</p><div class="chips">' + chips + '</div></div>' +
+    (c.soffio ? '<div class="sec"><h3>All\u2019auscultazione</h3><p>' + esc(c.soffio) + '</p></div>' : '') +
     '<div class="sec"><h3>Meccanismo</h3><p>' + esc(c.meccanismo) + '</p></div>' +
+    (c.terapia ? '<div class="sec"><h3>Gravit\u00e0 e trattamento</h3><p>' + esc(c.terapia) + '</p></div>' : '') +
     '<div class="sec"><h3>Nella vista 3D</h3><p>' + esc(c.vettori) + '</p></div>' +
     '<div class="sec"><h3>Diagnosi differenziale</h3><ul class="dd">' + c.dd.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' +
     '<div class="sec"><h3>Trappole</h3><p>' + esc(c.trappole) + '</p></div>' +
@@ -634,7 +731,7 @@ function renderParams(sc) {
     sec.appendChild(d);
   });
   const reset = document.createElement('button'); reset.className = 'btn'; reset.textContent = 'Ripristina i valori tipici';
-  reset.addEventListener('click', () => { delete store.params[sc.id]; save(); renderParams(sc); buildStream(sc, paramsFor(sc), true); });
+  reset.addEventListener('click', () => { delete store.params[sc.id]; save(); renderParams(sc); buildStream(sc, paramsFor(sc), true); defUI(sc); });
   sec.appendChild(reset); box.appendChild(sec);
   const g = document.createElement('div'); g.className = 'sec';
   g.innerHTML = '<h3>Registrazione</h3><div class="ctrl"><div class="lab"><span>Rumore e deriva della linea di base</span><output class="num">' + Math.round(S.noise * 100) + '%</output></div><input type="range" min="0" max="1" step="0.05" value="' + S.noise + '"></div><p class="note">Un po\u2019 di rumore rende il tracciato più simile a un ECG reale.</p>';
@@ -688,7 +785,7 @@ function renderVolt() {
 
 function setParam(sc, k, v) {
   store.params[sc.id] = Object.assign({}, store.params[sc.id] || {}, { [k]: v }); save();
-  clearTimeout(rebuildT); rebuildT = setTimeout(() => buildStream(sc, paramsFor(sc), true), 90);
+  clearTimeout(rebuildT); rebuildT = setTimeout(() => { buildStream(sc, paramsFor(sc), true); defUI(sc); }, 90);
 }
 function openLib() { $('#lib').classList.add('open'); $('#scrim').classList.add('open'); }
 function closeLib() { $('#lib').classList.remove('open'); $('#scrim').classList.remove('open'); }
@@ -696,8 +793,24 @@ $('#libBtn').addEventListener('click', openLib); $('#scrim').addEventListener('c
 $('#q').addEventListener('input', e => renderLib(e.target.value));
 
 const ICON_PLAY = '<svg viewBox="0 0 14 14"><path d="M3 1.5v11l9.5-5.5z"/></svg>', ICON_PAUSE = '<svg viewBox="0 0 14 14"><rect x="2.5" y="1.5" width="3.2" height="11" rx="1"/><rect x="8.3" y="1.5" width="3.2" height="11" rx="1"/></svg>';
-function setPlaying(p) { S.playing = p; $('#playBtn').innerHTML = p ? ICON_PAUSE : ICON_PLAY; $('#playBtn').setAttribute('aria-label', p ? 'Pausa' : 'Avvia'); }
+function setPlaying(p) {
+  S.playing = p;
+  $('#playBtn').innerHTML = p ? ICON_PAUSE : ICON_PLAY;
+  $('#playBtn').setAttribute('aria-label', p ? 'Pausa' : 'Avvia');
+  // stesso stato anche nel laboratorio a schermo intero, dove la barra degli
+  // strumenti non c'è: lì il tracciato si ferma da qui o con la barra spaziatrice
+  const z = $('#zenPlay');
+  if (z) { z.textContent = p ? 'Pausa' : 'Riprendi'; z.classList.toggle('on', !p); }
+}
 $('#playBtn').addEventListener('click', () => setPlaying(!S.playing));
+$('#zenPlay').addEventListener('click', () => setPlaying(!S.playing));
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Space' || e.repeat) return;
+  const t = e.target, tag = t && t.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON' || (t && t.isContentEditable)) return;
+  if (!$('#v-ecg').classList.contains('on') && !zenOn) return;
+  e.preventDefault(); setPlaying(!S.playing);
+});
 function segInit(sel, attr, cur, fn) { $$(sel + ' button').forEach(b => { b.classList.toggle('on', String(b.dataset[attr]) === String(cur)); b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset[attr]); }); }); }
 segInit('#modeSeg', 'm', S.mode, v => { S.mode = mon.mode = v; store.mode = v; save(); mon.cal = []; mon.pageStart = Math.floor(mon.t / mon.pageMs()) * mon.pageMs(); mon.layout(); });
 segInit('#speedSeg', 's', S.speed, v => { S.speed = mon.speed = +v; store.speed = +v; save(); mon.cal = []; mon.pageStart = Math.floor(mon.t / mon.pageMs()) * mon.pageMs(); mon.layout(); });
@@ -1168,7 +1281,9 @@ function cmpCardHTML(sc) {
   let s = '<p>' + esc(c.def || '') + '</p>';
   if (c.criteri) s += '<h4>Criteri</h4>' + ul(c.criteri);
   if (c.guarda) s += '<h4>Dove guardare</h4><p>' + esc(c.guarda) + '</p>';
+  if (c.soffio) s += '<h4>All\u2019auscultazione</h4><p>' + esc(c.soffio) + '</p>';
   if (c.meccanismo) s += '<h4>Meccanismo</h4><p>' + esc(c.meccanismo) + '</p>';
+  if (c.terapia) s += '<h4>Gravit\u00e0 e trattamento</h4><p>' + esc(c.terapia) + '</p>';
   if (c.dd) s += '<h4>Diagnosi differenziale</h4>' + ul(c.dd);
   if (c.trappole) s += '<h4>Trappole</h4><p>' + esc(c.trappole) + '</p>';
   if (c.corso) s += '<h4>Criteri del corso</h4>' + ul(c.corso);
@@ -1277,6 +1392,7 @@ function loop(now) {
   const dt = Math.min(80, now - last); last = now;
   if (S.view === 'trace' && stream) {
     if (S.playing) mon.t += dt * S.slow;
+    defTick();
     mon.draw();
     scene.update(mon.t, stream);
     if (mon.marks) mon.drawOverlay();

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=28">
+<link rel="manifest" href="manifest.webmanifest?v=30">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -95,12 +95,17 @@ button{cursor:pointer}
 .stage{position:relative;background:var(--stage);min-height:300px;overflow:hidden}
 .stage canvas{display:block;width:100%;height:100%;touch-action:none}
 .hud{position:absolute;z-index:2}
-.hud.tl{left:10px;top:10px;display:flex;flex-direction:column;gap:4px;max-width:36%}
+/* La targhetta della fase cambia lunghezza a ogni momento del ciclo: la colonna
+   ha larghezza e altezza fisse e il pulsante sotto si dimensiona da sé, così non
+   si allarga e non si sposta mentre il cuore batte. */
+.hud.tl{left:10px;top:10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:min(36%,270px)}
 .hud.tr{right:10px;top:10px;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:62%}
 .hud.bl{left:10px;bottom:10px;right:10px;color:rgba(228,233,242,.6);font-size:12px;pointer-events:none}
 .hudbtn{background:rgba(8,12,20,.62);color:var(--stage-fg);border:1px solid rgba(255,255,255,.13);border-radius:7px;padding:3px 8px;font-size:11.5px;text-align:left;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .hudbtn.on{border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.14)}
-.phase{background:rgba(8,12,20,.62);color:var(--stage-fg);border-radius:9px;padding:5px 9px;font-size:12px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.phase{background:rgba(8,12,20,.62);color:var(--stage-fg);border-radius:9px;padding:5px 9px;font-size:12px;line-height:1.25;width:100%;height:40px;display:flex;align-items:center;overflow:hidden;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.phase span{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hud.tl .hudbtn{flex:none;white-space:nowrap}
 .card{border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
 .tabs{display:flex;gap:2px;padding:6px 10px 0;border-bottom:1px solid var(--line)}
 .tabs button{border:none;background:none;padding:8px 10px 9px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -241,6 +246,10 @@ ul.dd{margin:4px 0;padding-left:18px;color:var(--muted)}
 .credit{font-size:11.5px;color:var(--muted);white-space:nowrap;letter-spacing:.01em}
 .foot{margin:26px 0 0;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);text-align:center}
 @media (max-width:860px){.credit{display:none}}
+.defbtn{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:5px 12px;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.01em}
+.defbtn:disabled{opacity:.45}
+.defstato{font-size:12px;color:var(--muted);align-self:center;min-width:210px}
+.defstato.vivo{color:var(--accent);font-weight:600}
 .hudrange{width:104px;accent-color:var(--accent);vertical-align:middle}
 @media (max-width:760px){.hudrange{width:74px}}
 .item .hit{display:block;font-size:11.5px;color:var(--muted);line-height:1.35;margin-top:2px;white-space:normal}
@@ -258,10 +267,15 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 .cmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:100%}
 .cmpcol{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
 .cmpcol:last-child{border-right:none}
-.cmphead{display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+/* Le due colonne devono partire alla stessa altezza: a sinistra c'è anche il
+   pulsante di scambio e a destra la misura può avere una parola in più, quindi
+   testata e riga delle misure hanno altezza fissa invece che a contenuto. */
+.cmphead{display:flex;gap:8px;align-items:center;height:54px;box-sizing:border-box;padding:0 12px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
 .cmpsel{flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px}
-.cmpswap{padding:6px 10px;font-size:15px;line-height:1}
-.cmpmeas{padding:6px 12px;font-size:11.5px;flex-wrap:wrap}
+.cmpswap{padding:0;font-size:15px;line-height:1}
+.cmpmeas{height:30px;box-sizing:border-box;padding:0 12px;font-size:11.5px;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;overflow-y:hidden;align-items:center;scrollbar-width:none}
+.cmpmeas::-webkit-scrollbar{display:none}
+.cmpswap{flex:none;height:32px;width:36px;display:flex;align-items:center;justify-content:center}
 .cmpwrap{height:290px;flex:none}
 .cmpbody{overflow:auto;padding:0 0 30px}
 .cmppar .sec,.cmpcard .sec{margin:10px 12px}
@@ -404,6 +418,8 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
         <div class="seg" id="slowSeg" aria-label="Tempo"><button data-t="1" class="on">1×</button><button data-t="0.25">¼×</button></div>
         <div class="seg" id="ectSeg" aria-label="Inserisci un battito prematuro"><span class="seglab">Extrasistole</span><button data-e="pvc" class="on" title="Inserisce subito un battito prematuro ventricolare, con pausa compensatoria (tasto E)">Ventricolare</button><button data-e="pac" title="Inserisce subito un battito prematuro atriale, con P diversa e pausa non compensatoria (tasto A)">Atriale</button></div>
         <select id="ectPat" class="toolsel" aria-label="Schema di ripetizione delle extrasistoli" title="Fa comparire le extrasistoli in modo continuo secondo uno schema"><option value="off">Nessuna ripetizione</option><option value="isolate">Sparse</option><option value="bigeminismo">Bigeminismo</option><option value="trigeminismo">Trigeminismo</option><option value="quadrigeminismo">Quadrigeminismo</option><option value="coppie">Coppie</option><option value="triplette">Triplette</option><option value="salve">Salve (TV non sostenuta)</option></select>
+        <div class="seg" id="defSeg" hidden aria-label="Defibrillatore"><span class="seglab" id="defLab">Defibrillatore</span><button id="defBtn" class="defbtn">Carica e scarica</button></div>
+        <span class="defstato" id="defStato" hidden></span>
         <button class="iconbtn tool" id="calBtn" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M5 2v12M11 2v12M5 8h6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Compasso</button>
         <button class="iconbtn tool" id="markBtn" aria-pressed="false" title="Mostra PR e P bloccate sulla striscia lunga"><svg viewBox="0 0 16 16"><path d="M3 11V5M13 11V5M3 7h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Intervalli</button>
         </div>
@@ -412,7 +428,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
       <div class="ecgwrap" id="ecgWrap"><canvas id="ecg"></canvas><canvas id="ecgOv" class="ov"></canvas></div>
       <div class="lower">
         <div class="stage" id="stage">
-          <div class="hud tl"><div class="phase" id="phase3d">—</div>
+          <div class="hud tl"><div class="phase"><span id="phase3d">—</span></div>
             <button class="hudbtn" id="zenBtn" title="Apri il laboratorio vettoriale a schermo intero">⤢ Schermo intero</button></div>
           <div class="hud tr" id="hud3d">
             <button class="hudbtn on" data-cam="iso">3D</button>
@@ -501,6 +517,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
     <div class="zbar">
       <b id="zenTitolo">—</b>
       <span class="zmis num" id="zenMisure"></span>
+      <button class="btn" id="zenPlay" title="Ferma o riprende il tracciato (barra spaziatrice)">Pausa</button>
       <button class="btn" id="zenEsci">Esci</button>
     </div>
     <div class="zbody">
@@ -547,13 +564,13 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 
 <!-- Alla prossima pubblicazione cambia il numero dopo ?v= qui sotto e VERSION in sw.js:
      è quello che costringe iPad a scaricare davvero i file nuovi. -->
-<script src="three.min.js?v=28"></script>
-<script src="cuore3d.js?v=28"></script>
-<script src="engine.js?v=28"></script>
-<script src="ipertrofie.js?v=28"></script>
-<script src="data.js?v=28"></script>
-<script src="atlante-digitale.js?v=28"></script>
-<script src="app.js?v=28"></script>
-<script src="coronarie.js?v=28"></script>
+<script src="three.min.js?v=30"></script>
+<script src="cuore3d.js?v=30"></script>
+<script src="engine.js?v=30"></script>
+<script src="ipertrofie.js?v=30"></script>
+<script src="data.js?v=30"></script>
+<script src="atlante-digitale.js?v=30"></script>
+<script src="app.js?v=30"></script>
+<script src="coronarie.js?v=30"></script>
 </body>
 </html>
