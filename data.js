@@ -52,14 +52,52 @@ function stemiCfg(terr, p) {
 const FASE = { k: 'fase', label: 'Fase', type: 'select', def: '1', opts: [['0', 'Iperacuta'], ['1', 'Acuta'], ['2', 'Evoluzione'], ['3', 'Esiti']] };
 
 
+
+/* ---------- margini fisiologici degli assi ----------
+   I cursori non si bloccano: si può uscire apposta dai valori normali, ed è
+   il modo migliore per vedere che aspetto ha la deviazione. La nota sotto il
+   cursore dice dove ci si trova. Riferimenti: AHA/ACC/HRS 2009 per la
+   standardizzazione e l'interpretazione dell'ECG. */
+const gradi = x => Math.round(x) + '°';
+function ASSE_QRS(p) {
+  const a = +p.axis;
+  if (a >= -30 && a <= 90) return { testo: 'Asse normale (da \u221230° a +90°). A +90° il vettore è perpendicolare a DI, che diventa isodifasica.' };
+  if (a > 90 && a <= 120) return { testo: 'Deviazione assiale destra moderata. Cerca ipertrofia destra, emiblocco posteriore, cuore polmonare.', fuori: true };
+  if (a > 120) return { testo: 'Deviazione assiale destra marcata, oltre +120°: sospetta anche un\u2019inversione dei cavi delle braccia.', fuori: true };
+  if (a < -30 && a >= -45) return { testo: 'Deviazione assiale sinistra. La causa più frequente è l\u2019emiblocco anteriore sinistro.', fuori: true };
+  return { testo: 'Asse indeterminato o del quadrante nord-ovest: quasi sempre patologico.', fuori: true };
+}
+function ASSE_P(p) {
+  const a = +p.axP;
+  if (a >= 0 && a <= 75) return { testo: 'Asse P fisiologico (da 0° a +75°): l\u2019impulso nasce dal nodo del seno e scende verso il basso e a sinistra. P positiva in DII e negativa in aVR.' };
+  if (a > 75 && a <= 100) return { testo: 'Asse P verticale. Compatibile con sovraccarico destro o con un cuore verticale in un soggetto magro.', fuori: true };
+  if (a > 100 || a < -90) return { testo: 'Asse P patologico: con P negativa in DII pensa a un ritmo atriale basso o giunzionale, non sinusale.', fuori: true };
+  return { testo: 'Asse P deviato a sinistra, fuori dal margine fisiologico: valuta un ritmo atriale ectopico sinistro.', fuori: true };
+}
+function ASSE_T(p) {
+  const d = Math.abs(((+p.axT - +p.axis) + 540) % 360 - 180);
+  const base = 'Angolo QRS-T ' + gradi(d) + '. ';
+  if (d <= 45) return { testo: base + 'Normale: la T segue il QRS entro 45°, perché la ripolarizzazione procede in senso inverso alla depolarizzazione e il vettore resta concorde.' };
+  if (d <= 100) return { testo: base + 'Angolo allargato: alterazione aspecifica della ripolarizzazione, sovraccarico, farmaci, squilibri elettrolitici.', fuori: true };
+  return { testo: base + 'Angolo QRS-T ampio, oltre 100°: T discordante dal QRS. Ischemia, sovraccarico ventricolare o memoria elettrica.', fuori: true };
+}
+
 const S = [];
 const add = o => S.push(o);
 
 /* ================= RITMO SINUSALE ================= */
 add({
   id: 'normale', cat: 'Ritmo sinusale', name: 'ECG normale', quiz: true,
-  params: [F.hr(72, 50, 100), F.pr(160, 120, 200), F.qtc(410, 360, 450), { k: 'axis', label: 'Asse del QRS (vettore R)', unit: '°', min: -30, max: 100, step: 1, def: 50 }],
-  build: p => ({ rate: p.hr, pr: p.pr, qtc: p.qtc, sa: 0.02, qrs: M.qrsNormal({ aR: p.axis }) }),
+  params: [F.hr(72, 50, 100), F.pr(160, 120, 200), F.qtc(410, 360, 450),
+    { k: 'axis', label: 'Asse del QRS (vettore R)', unit: '°', min: -90, max: 180, step: 1, def: 50, nota: ASSE_QRS },
+    { k: 'axP', label: 'Asse dell\u2019onda P', unit: '°', min: -60, max: 150, step: 1, def: 55, nota: ASSE_P },
+    { k: 'axT', label: 'Asse dell\u2019onda T', unit: '°', min: -90, max: 180, step: 1, def: 42, nota: ASSE_T }],
+  build: p => ({
+    rate: p.hr, pr: p.pr, qtc: p.qtc, sa: 0.02,
+    qrs: M.qrsNormal({ aR: p.axis }),
+    pComps: M.pSinus(1, 1, 1, 1, p.axP),
+    T: { a: p.axT, g: 22, amp: 0.34 }
+  }),
   look: ['II'],
   card: {
     def: 'Ritmo sinusale con conduzione, depolarizzazione e ripolarizzazione nei limiti di norma. È il riferimento con cui confrontare tutti gli altri quadri.',
@@ -2789,8 +2827,17 @@ S.push({
 
 S.push({
   id: 'destrocardia', cat: ART, name: 'Destrocardia', quiz: true,
-  params: [F.hr(72, 50, 110)],
-  build: p => Object.assign({ rate: p.hr }, artBase, { specchio: true }),
+  params: [F.hr(72, 50, 110),
+    { k: 'situs', label: 'Quadro', type: 'select', def: 'tot', opts: [['tot', 'Situs inversus totalis'], ['iso', 'Destrocardia isolata (destroversione)'], ['dx', 'Con precordiali destre V1R-V6R']] }],
+  build: p => Object.assign({ rate: p.hr }, artBase, {
+    specchio: true,
+    precDestre: p.situs === 'dx'
+    /* Situs inversus totalis e destroversione danno lo stesso tracciato, e non
+       è una svista: l'ECG vede la posizione del cuore, non quella del fegato.
+       A distinguerli è l'ecografia dell'addome. L'eventuale cardiopatia
+       congenita della destroversione altera il tracciato secondo la
+       malformazione che c'è, e non esiste un quadro unico da disegnare. */
+  }),
   look: ['I', 'aVR', 'V1', 'V6'],
   card: {
     def: 'Il cuore è collocato a destra, immagine speculare della posizione abituale.',
@@ -2804,7 +2851,7 @@ S.push({
     vettori: 'Il vettore medio punta in basso e a destra invece che in basso e a sinistra. Le precordiali, che sono fisse sul torace sinistro, lo vedono allontanarsi via via.',
     guarda: 'V1–V6: qui si decide fra destrocardia e cavi invertiti.',
     dd: ['Inversione dei cavi delle braccia (precordiali normali)'],
-    trappole: 'Nella destrocardia isolata con situs inversus completo il cuore è sano; nella destroposizione acquisita, no. Confermare sempre con un’immagine.',
+    trappole: 'I primi due quadri danno lo stesso identico tracciato, ed è il punto: l\u2019ECG vede dove sta il cuore, non dove sta il fegato. Nel situs inversus totalis anche fegato, stomaco e milza sono ribaltati e il cuore è di solito sano. Nella destroversione, cioè cuore a destra e visceri al loro posto, la cardiopatia congenita è quasi la regola, ma il tracciato che ne deriva dipende dalla malformazione: a distinguere i due quadri è l\u2019ecografia dell\u2019addome, non l\u2019elettrocardiogramma. Con le precordiali ripetute a destra il tracciato precordiale si normalizza mentre DI resta invertita, perché gli elettrodi degli arti non si sono mossi: è la prova del nove.',
     fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
   }
 });

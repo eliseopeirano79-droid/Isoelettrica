@@ -726,7 +726,9 @@ function apriDigitalizzato(id, recDato) {
 }
 
 let rebuildT = null;
+const notePar = {};
 function renderParams(sc) {
+  notePar[sc.id] = [];
   const p = paramsFor(sc); const box = $('#p-params'); box.innerHTML = '';
   const sec = document.createElement('div'); sec.className = 'sec'; sec.innerHTML = '<h3>' + esc(sc.name) + '</h3>';
   sc.params.forEach(q => {
@@ -738,6 +740,15 @@ function renderParams(sc) {
       d.innerHTML = '<div class="lab"><span>' + esc(q.label) + '</span><output class="num">' + fmt(+p[q.k], q.step < 1 ? 1 : 0) + ' ' + (q.unit || '') + '</output></div><input type="range" min="' + q.min + '" max="' + q.max + '" step="' + q.step + '" value="' + p[q.k] + '">';
       const inp = d.querySelector('input'), out = d.querySelector('output');
       inp.addEventListener('input', () => { out.textContent = fmt(+inp.value, q.step < 1 ? 1 : 0) + ' ' + (q.unit || ''); setParam(sc, q.k, +inp.value); });
+    }
+    /* Alcuni cursori hanno un margine fisiologico: la nota si riscrive a ogni
+       spostamento e dice se si è ancora dentro o già fuori. Il cursore non si
+       blocca mai: si può uscire apposta, per vedere che aspetto ha il quadro
+       patologico. */
+    if (q.nota) {
+      const n = document.createElement('p'); n.className = 'note pnota';
+      const agg = () => { const r = q.nota(paramsFor(sc)); n.innerHTML = r.testo; n.classList.toggle('fuori', !!r.fuori); };
+      agg(); d.appendChild(n); (notePar[sc.id] = notePar[sc.id] || []).push(agg);
     }
     sec.appendChild(d);
   });
@@ -812,6 +823,7 @@ function renderVolt() {
 }
 
 function setParam(sc, k, v) {
+  setTimeout(() => (notePar[sc.id] || []).forEach(f => f()), 0);
   store.params[sc.id] = Object.assign({}, store.params[sc.id] || {}, { [k]: v }); save();
   clearTimeout(rebuildT); rebuildT = setTimeout(() => { buildStream(sc, paramsFor(sc), true); defUI(sc); }, 90);
 }

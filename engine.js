@@ -52,15 +52,20 @@ function evalComps(comps, tau, out) {
 }
 
 /* ---------- morfologie ---------- */
+const AX0 = 55.6;   // asse del QRS senza rotazione
+const AP0 = 44.2;   // asse dell'onda P senza rotazione   // ricalibrato dal banco di prova, vedi audit.js
 const M = {};
 // P sinusale: atrio destro (in avanti) poi sinistro (indietro)
 // Onda P: atrio destro (in avanti, in basso, a sinistra) poi atrio sinistro
 // (indietro, a sinistra). Gli atri sono più lontani dalla parete toracica dei
 // ventricoli, quindi i vettori anteroposteriori sono più contenuti: con
 // componenti più ripide la P usciva troppo alta e troppo bifasica in V2-V4.
-M.pSinus = (amp = 1, wide = 1, ra = 1, la = 1) => [
-  B(dirAG(62, 38), 0.105 * amp * ra, 34 * wide, 16 * wide, 15 * wide),
-  B(dirAG(18, -18), 0.055 * amp * la, 72 * wide, 17 * wide, 17 * wide)
+M.pSinus = (amp = 1, wide = 1, ra = 1, la = 1, aP = null) => [
+  /* L'onda P nasce da due vettori, destro e sinistro: il suo asse è la
+     risultante, non l'angolo di uno dei due. AP0 è l'asse che risulta senza
+     rotazione, così il cursore indica i gradi che si misurano davvero. */
+  B(dirAG(62 + (aP == null ? 0 : aP - AP0), 38), 0.105 * amp * ra, 34 * wide, 16 * wide, 15 * wide),
+  B(dirAG(18 + (aP == null ? 0 : aP - AP0), -18), 0.055 * amp * la, 72 * wide, 17 * wide, 17 * wide)
 ];
 // P polmonare: l'atrio destro ipertrofico sposta il vettore in basso e lo
 // ingrandisce, con P appuntita >= 2,5 mm in DII, DIII e aVF.
@@ -82,17 +87,24 @@ M.pLeftAtrial = (amp = 1) => [B(dirAG(40, -60), 0.13 * amp, 45, 20, 20)];
 // QRS normale (onset = 0). Restituisce {c, w}
 M.qrsNormal = (o = {}) => {
   const r = o.r == null ? 1 : o.r, q = o.q == null ? 1 : o.q, s = o.s == null ? 1 : o.s;
-  const ax = o.aR == null ? 0 : o.aR - 50;
+  /* L'asse elettrico è la direzione dell'area netta del QRS, cioè la somma
+     dei quattro vettori pesata sulla loro durata: non coincide con l'angolo
+     di nessuno di essi. AX0 è l'asse che il complesso ha quando la rotazione
+     è nulla, misurato sul segnale con il metodo delle aree in DI e aVF; si
+     sottrae perché il cursore indichi davvero i gradi che si leggono sulla
+     carta. E la rotazione si applica a tutti e quattro i vettori: un cuore
+     con asse verticale è ruotato per intero, setto compreso. */
+  const ax = o.aR == null ? 0 : o.aR - AX0;
   // I quattro vettori si sovrappongono nel tempo: un QRS reale è un movimento
   // continuo, non quattro colpi separati. Con componenti troppo strette e
   // distanziate le derivazioni dove le proiezioni sono piccole e dello stesso
   // segno (DIII, V2) mostravano due gobbe invece di un complesso unico.
   return {
     w: 94, c: [
-      B(dirAG(178, 28), 0.24 * q, 15, 9, 9),          // setto: a destra, avanti, appena in alto
+      B(dirAG(178 + ax, 28), 0.24 * q, 15, 9, 9),     // setto: a destra, avanti, appena in alto
       B(dirAG(42 + ax, 22), 0.60 * r, 33, 12, 12),    // parete libera, prima metà
       B(dirAG(56 + ax, -28), 0.94 * r, 49, 12, 12),   // parete libera, vettore principale
-      B(dirAG(-122, -52), 0.34 * s, 68, 10, 12)       // basi: in alto, a destra, indietro
+      B(dirAG(-122 + ax, -52), 0.34 * s, 68, 10, 12)  // basi: in alto, a destra, indietro
     ]
   };
 };
@@ -582,7 +594,13 @@ Stream.prototype.artefattiLead = function (tau, o) {
 Stream.prototype.leads = function (tau, vec, outArr) {
   for (let i = 0; i < 12; i++) {
     const w = LEADS[i].w;
-    let v = (vec[0] * w[0] + vec[1] * w[1] + vec[2] * w[2]) * this.amp;
+    /* Precordiali destre (V1R-V6R): gli elettrodi del torace si spostano
+       specularmente a destra. Su un cuore a destra questo annulla la
+       specularità e il tracciato precordiale torna quello di sempre; le
+       derivazioni degli arti restano invertite, perché quelle non le abbiamo
+       spostate. È la manovra che conferma una destrocardia. */
+    const mx = (this.cfg.precDestre && i >= 6) ? -1 : 1;
+    let v = (mx * vec[0] * w[0] + vec[1] * w[1] + vec[2] * w[2]) * this.amp;
     if (this.scariche.length) {
       const a = this.artefattoLead(tau, i);
       if (a !== null) { outArr[i] = a; continue; }

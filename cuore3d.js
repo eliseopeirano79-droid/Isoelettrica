@@ -108,11 +108,109 @@
   const FIGLI = { lad1: ['s1', 'd1', 'lad2'], lad2: ['s2', 'd2', 'lad3'], lad3: ['s3'], cx1: ['om1', 'cx2'], lm: ['lad1', 'cx1', 'ri'], cx2: ['om2', 'pla'], rca1: ['cono', 'nsa', 'rvb', 'rca2'], rca2: ['am', 'am2', 'rca3'], rca3: ['nav', 'pda', 'plv'], pda: ['sp1', 'sp2'] };
   function aValle(id) { const o = [id]; (FIGLI[id] || []).forEach(f => o.push(...aValle(f))); return o; }
 
+
+  /* =====================================================================
+     ANATOMIA: spessore di parete, setto, valvole, apparato sottovalvolare
+     Tutto costruito con formule, non con mesh scaricate: il modello non ha
+     licenza perché non c'è geometria di nessun altro. Pesa qualche kilobyte,
+     ogni struttura ha un nome e può essere accesa, spenta, colorata o
+     deformata, cosa che una mesh scolpita non permette.
+     Misure di riferimento: parete del ventricolo sinistro 9-11 mm alla base
+     e 6-7 mm all'apice, parete destra 3-4 mm, anello mitralico 30-35 mm di
+     diametro, tricuspidale 35-40 mm, aortico 22-24 mm, polmonare 22-24 mm
+     (Gray's Anatomy; valori ecocardiografici normali ASE/EACVI 2015).
+     ===================================================================== */
+  function spessVS(s) {
+    const u = clamp(s, 0, 1);
+    // 10 mm alla base, 6,5 mm verso l'apice, con un tetto che impedisce alla
+    // parete di superare il raggio della cavità là dove il ventricolo si chiude
+    const t = 0.1445 * (1 - 0.35 * Math.pow(u, 1.5));
+    return Math.min(t, 0.68 * rLV(u, 0));
+  }
+  const SPESS_VD = 0.030;
+  // superficie del solo ventricolo sinistro, senza il rigonfiamento destro:
+  // serve perché l'endocardio sinistro non deve seguire la parete destra
+  function PLV(s, th, off) {
+    const r = rLV(s, th) + (off || 0), a = rad(th);
+    return new THREE.Vector3().addScaledVector(K, s * L).addScaledVector(A, r * Math.cos(a)).addScaledVector(B, r * Math.sin(a));
+  }
+  // la parete non può mai mangiarsi la cavità: il tetto va calcolato sul raggio
+  // locale, non su quello medio, perché nei solchi il ventricolo è più stretto
+  const spessLoc = (s, th) => Math.min(spessVS(s), 0.68 * rLV(s, th));
+  const Pendo = (s, th) => PLV(s, th, -spessLoc(s, th));
+
+  // base ortonormale di un piano dato il suo asse
+  function basePiano(n) {
+    const u = Math.abs(n.dot(K)) > 0.9 ? A.clone() : K.clone();
+    const e1 = u.clone().projectOnPlane(n).normalize();
+    const e2 = new THREE.Vector3().crossVectors(n, e1).normalize();
+    return [e1, e2];
+  }
+  const suPiano = (c, e1, e2, r, a) => c.clone().addScaledVector(e1, r * Math.cos(a)).addScaledVector(e2, r * Math.sin(a));
+
+  /* --- anello valvolare: toro costruito a mano per restare nel piano giusto --- */
+  function anello(c, r, n, spess, color) {
+    const [e1, e2] = basePiano(n);
+    return new THREE.Mesh(grid((a, b) => {
+      const p = suPiano(c, e1, e2, r, a), t = suPiano(new THREE.Vector3(), e1, e2, 1, a);
+      return p.addScaledVector(t, spess * Math.cos(b)).addScaledVector(n, spess * Math.sin(b));
+    }, 64, 12, 0, Math.PI * 2, 0, Math.PI * 2), mat(color, { roughness: 0.6 }));
+  }
+
+  /* --- lembo di valvola atrioventricolare ---
+     Attaccato all'anello, scende verso l'apice ed è più profondo al centro:
+     ai due estremi tocca le commissure, dove i lembi vicini si affrontano. */
+  function lembo(c, r, n, giu, a0, a1, prof) {
+    const [e1, e2] = basePiano(n);
+    return grid((u, a) => {
+      const t = (a - a0) / (a1 - a0);
+      const d = prof * Math.pow(Math.sin(Math.PI * t), 0.6) * u;
+      return suPiano(c, e1, e2, r * (1 - 0.34 * u), a).addScaledVector(giu, d);
+    }, 8, 22, 0, 1, a0, a1);
+  }
+
+  /* --- cuspide semilunare ---
+     Inserzione a U sulla parete del seno, margine libero teso fra due
+     commissure: è la forma che fa chiudere la valvola quando il sangue
+     torna indietro. */
+  function cuspide(c, r, n, giu, a0, a1, prof) {
+    const [e1, e2] = basePiano(n);
+    const c0 = suPiano(c, e1, e2, r, a0), c1 = suPiano(c, e1, e2, r, a1);
+    return grid((u, a) => {
+      const t = (a - a0) / (a1 - a0);
+      const att = suPiano(c, e1, e2, r, a).addScaledVector(giu, prof * Math.sin(Math.PI * t));
+      const lib = new THREE.Vector3().lerpVectors(c0, c1, t).addScaledVector(c.clone().sub(new THREE.Vector3().lerpVectors(c0, c1, t)).normalize(), r * 0.16 * Math.sin(Math.PI * t));
+      return new THREE.Vector3().lerpVectors(lib, att, u);
+    }, 10, 18, 0, 1, a0, a1);
+  }
+
+  function valvolaAV(c, r, n, giu, nLembi, prof, color, out, nome) {
+    const g = new THREE.Group(); g.name = nome;
+    g.add(anello(c, r, n, 0.016, 0xd9c9a6));
+    const sett = nLembi === 2 ? [[10, 190], [190, 370]] : [[0, 118], [122, 240], [244, 356]];
+    sett.forEach(([d0, d1], i) => {
+      const m = new THREE.Mesh(lembo(c, r, n, giu, rad(d0), rad(d1), prof), mat(color, { roughness: 0.42, side: THREE.DoubleSide }));
+      m.userData.lembo = nome + '-' + (i + 1); g.add(m);
+    });
+    out.valv[nome] = { group: g, centro: c, raggio: r, normale: n };
+    return g;
+  }
+  function valvolaSL(c, r, n, giu, prof, color, out, nome) {
+    const g = new THREE.Group(); g.name = nome;
+    g.add(anello(c, r, n, 0.013, 0xd9c9a6));
+    [[0, 118], [122, 240], [244, 356]].forEach(([d0, d1], i) => {
+      const m = new THREE.Mesh(cuspide(c, r, n, giu, rad(d0), rad(d1), prof), mat(color, { roughness: 0.4, side: THREE.DoubleSide }));
+      m.userData.cuspide = nome + '-' + (i + 1); g.add(m);
+    });
+    out.valv[nome] = { group: g, centro: c, raggio: r, normale: n };
+    return g;
+  }
+
   /* ---------- costruzione ---------- */
   function build(opt) {
     opt = opt || {};
     const G = new THREE.Group(); G.name = 'cuore';
-    const out = { group: G, seg: {}, coro: {}, SEG, aValle, P, R };
+    const out = { group: G, seg: {}, coro: {}, valv: {}, SEG, aValle, P, R, PLV, Pendo, spessVS, spessLoc };
     const cMio = 0xd6858a, cAtr = 0xe0a3a6, cArt = 0xc9303e, cVen = 0x4d5fc4, cCoro = 0xc11f2f, cVena = 0x3d4db3;
 
     // ventricolo sinistro in 17 segmenti
@@ -128,9 +226,72 @@
     const rvot = new THREE.Mesh(grid((s, th) => P(s, th, 0.004 + 0.04 * (-s)), 8, 12, -0.24, 0.0, -66, -12), mat(0xcf8388));
     G.add(rvot);
 
+    /* ---------- parete: il ventricolo sinistro è un solido, non un guscio ----------
+       Serve per davvero: il subendocardio è lo strato che soffre per primo
+       nell'ischemia, ed è la differenza fra un NSTEMI e uno STEMI. Senza
+       spessore quella distinzione non si può mostrare. */
+    const cEndo = 0xf0c3c4, cSetto = 0xcb7b81, cVal = 0xf2e8d4, cCorde = 0xe4d8bd;
+    const endo = new THREE.Mesh(grid((s2, th) => Pendo(s2, th), 24, 72, 0.0, 0.94, 0, 360), mat(cEndo, { side: THREE.DoubleSide }));
+    endo.userData.endo = 'vs'; out.endo = endo; G.add(endo);
+    // strato subendocardico: sottile, separato, così si può accendere da solo
+    const subendo = new THREE.Mesh(grid((s2, th) => PLV(s2, th, -spessLoc(s2, th) * 0.72), 20, 72, 0.0, 0.95, 0, 360), mat(0xe8a8ab, { side: THREE.DoubleSide, transparent: true, opacity: 0 }));
+    subendo.userData.subendo = true; out.subendo = subendo; G.add(subendo);
+    // anello basale che chiude la parete fra endocardio ed epicardio
+    G.add(new THREE.Mesh(grid((u, th) => new THREE.Vector3().lerpVectors(Pendo(0, th), PLV(0, th, 0), u), 3, 72, 0, 1, 0, 360), mat(cMio)));
+
+    /* ---------- setto interventricolare ----------
+       Faccia destra alla superficie del ventricolo sinistro nel settore
+       settale, faccia sinistra a uno spessore di parete più dentro. */
+    const T0 = -172, T1 = -8;
+    const setto = new THREE.Group(); setto.name = 'setto';
+    setto.add(new THREE.Mesh(grid((s2, th) => PLV(s2, th, 0.002), 20, 34, 0.0, 0.95, T0, T1), mat(cSetto, { side: THREE.DoubleSide })));
+    setto.add(new THREE.Mesh(grid((u, s2) => new THREE.Vector3().lerpVectors(Pendo(s2, T0), PLV(s2, T0, 0), u), 3, 20, 0, 1, 0.0, 0.95), mat(cSetto)));
+    setto.add(new THREE.Mesh(grid((u, s2) => new THREE.Vector3().lerpVectors(Pendo(s2, T1), PLV(s2, T1, 0), u), 3, 20, 0, 1, 0.0, 0.95), mat(cSetto)));
+    setto.traverse(o => { if (o.isMesh) o.userData.setto = true; });
+    out.setto = setto; G.add(setto);
+
     // base dei ventricoli: piano degli anelli valvolari
     const cap = new THREE.Mesh(grid((u, th) => P(0.0, th, 0).multiplyScalar(u), 3, 72, 0.0, 1.0, 0, 360), mat(0xc77d82));
     G.add(cap);
+
+    /* ---------- le quattro valvole ----------
+       Anelli nel piano atrio-ventricolare per mitrale e tricuspide, alla
+       radice dei grandi vasi per aortica e polmonare. */
+    const giuK = K.clone();
+    const cMitr = new THREE.Vector3().addScaledVector(A, -0.075).addScaledVector(B, 0.085);
+    G.add(valvolaAV(cMitr, 0.228, K, giuK, 2, 0.30, cVal, out, 'mitrale'));
+    // la tricuspide si inserisce in buona parte sul setto e sta un poco più
+    // verso l'apice della mitrale: è lo scalino che all'ecocardiogramma
+    // permette di dire quale ventricolo si sta guardando
+    const cTric = new THREE.Vector3().lerpVectors(PLV(0, -92, 0), P(0, -92, 0), 0.34).addScaledVector(giuK, 0.055);
+    G.add(valvolaAV(cTric, 0.248, K, giuK, 3, 0.26, cVal, out, 'tricuspide'));
+    const nAo = V3(-0.04, 0.26, 0.10).normalize();
+    G.add(valvolaSL(V3(-0.02, 0.22, 0.06), 0.115, nAo, nAo.clone().multiplyScalar(-1), 0.085, cVal, out, 'aortica'));
+    const cPol = V3(-0.24, 0.36, 0.465), nPol = V3(0.08, 0.30, 0.02).normalize();
+    G.add(valvolaSL(cPol, 0.105, nPol, nPol.clone().multiplyScalar(-1), 0.080, cVal, out, 'polmonare'));
+
+    /* ---------- muscoli papillari, corde tendinee, banda moderatrice ---------- */
+    const pap = new THREE.Group(); pap.name = 'papillari'; out.pap = {};
+    [['anterolaterale', 0.60, 98], ['posteromediale', 0.64, 168]].forEach(([nm, sp, th]) => {
+      const base = Pendo(sp, th), punta = new THREE.Vector3().lerpVectors(base, cMitr.clone().addScaledVector(giuK, 0.30), 0.52);
+      const m = tube([base, new THREE.Vector3().lerpVectors(base, punta, 0.5), punta], 0.048, cMio, { roughness: 0.8 });
+      m.userData.papillare = nm; out.pap[nm] = m; pap.add(m);
+      // corde tendinee verso il margine libero dei lembi
+      for (let i = 0; i < 4; i++) {
+        const a = rad(th - 46 + i * 31);
+        const [e1, e2] = basePiano(K);
+        const att = suPiano(cMitr, e1, e2, 0.228 * 0.66, a).addScaledVector(giuK, 0.30 * 0.92);
+        pap.add(tube([punta, new THREE.Vector3().lerpVectors(punta, att, 0.5), att], 0.006, cCorde, { roughness: 0.7 }));
+      }
+    });
+    // ventricolo destro: papillare anteriore e banda moderatrice, che porta
+    // dentro di sé la branca destra: è il motivo per cui la branca destra
+    // arriva all'apice destro prima che alla base
+    const basePapD = P(0.58, -96, -0.02), puntaPapD = new THREE.Vector3().lerpVectors(basePapD, cTric.clone().addScaledVector(giuK, 0.26), 0.5);
+    pap.add(tube([basePapD, puntaPapD], 0.042, cMio, { roughness: 0.8 }));
+    const bm = tube([PLV(0.66, -150, 0.01), V3(0.02, -0.52, 0.34), P(0.62, -96, -0.01)], 0.030, 0xd08c91, { roughness: 0.8 });
+    bm.userData.bandaModeratrice = true; out.bandaModeratrice = bm; pap.add(bm);
+    out.papillari = pap; G.add(pap);
     // piano atrio-ventricolare e atri
     const qRA = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, -0.5, 0.15));
     const ra = ellips(V3(-0.40, 0.36, 0.12), 0.31, 0.27, 0.27, cAtr, null, qRA);      // atrio destro
@@ -147,7 +308,7 @@
     // aorta: radice centrale, ascendente verso l'alto e in avanti, arco verso sinistra e indietro
     const aoRoot = V3(-0.02, 0.22, 0.06);
     G.add(tube([aoRoot, V3(-0.06, 0.48, 0.16), V3(-0.12, 0.78, 0.22), V3(-0.10, 1.06, 0.20), V3(0.06, 1.24, 0.08), V3(0.26, 1.20, -0.14), V3(0.32, 0.98, -0.34), V3(0.30, 0.60, -0.46), V3(0.28, 0.20, -0.52)], 0.095, cArt));
-    G.add(ellips(aoRoot, 0.13, 0.11, 0.13, cArt));                                                                     // seni di Valsalva
+    G.add(ellips(aoRoot, 0.145, 0.115, 0.145, cArt));                                                                     // seni di Valsalva
     [[-0.02, 1.22, 0.04, -0.04, 1.55, 0.02], [0.08, 1.24, -0.02, 0.10, 1.58, -0.06], [0.18, 1.22, -0.10, 0.22, 1.54, -0.16]].forEach(v => G.add(tube([V3(v[0], v[1], v[2]), V3(v[3], v[4], v[5])], 0.032, cArt)));   // tronchi sovraortici
     // tronco polmonare: nasce dal tratto di efflusso, passa davanti all'aorta e si biforca
     G.add(tube([V3(-0.26, 0.32, 0.46), V3(-0.18, 0.62, 0.48), V3(-0.02, 0.86, 0.36), V3(0.12, 0.98, 0.12)], 0.085, cVen));
@@ -169,5 +330,5 @@
   function setOpacity(h, v) {
     h.group.traverse(o => { if (o.isMesh) { o.material.transparent = v < 0.999; o.material.opacity = v; o.material.depthWrite = v > 0.6; o.material.needsUpdate = true; } });
   }
-  root.ISO_CUORE = { build, setOpacity, SEG, CORO, FIGLI, aValle, P, R };
+  root.ISO_CUORE = { build, setOpacity, SEG, CORO, FIGLI, aValle, P, R, PLV, Pendo, spessVS, spessLoc };
 })(typeof window !== 'undefined' ? window : this);
