@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=30">
+<link rel="manifest" href="manifest.webmanifest?v=33">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -324,6 +324,11 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 
 /* --- laboratorio vettoriale a schermo intero --- */
 .zen{position:fixed;inset:0;z-index:75;background:var(--bg);display:flex;flex-direction:column}
+.stbody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 0 env(safe-area-inset-bottom)}
+.stbody canvas{display:block;width:100%}
+.stchips{display:flex;gap:3px;flex-wrap:wrap}
+.stchips button{border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:6px;padding:3px 7px;font:inherit;font-size:11.5px;font-weight:600;min-width:30px}
+.stchips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .zen[hidden]{display:none!important}
 .zbar{display:flex;align-items:center;gap:12px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .zbar b{font-size:15px}
@@ -421,6 +426,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
         <div class="seg" id="defSeg" hidden aria-label="Defibrillatore"><span class="seglab" id="defLab">Defibrillatore</span><button id="defBtn" class="defbtn">Carica e scarica</button></div>
         <span class="defstato" id="defStato" hidden></span>
         <button class="iconbtn tool" id="calBtn" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M5 2v12M11 2v12M5 8h6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Compasso</button>
+        <button class="iconbtn tool" id="stripBtn" title="Apre una derivazione sola a schermo intero, su più righe, con il righello dei 6 secondi"><svg viewBox="0 0 16 16"><path d="M1 5h14M1 11h14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Striscia lunga</button>
         <button class="iconbtn tool" id="markBtn" aria-pressed="false" title="Mostra PR e P bloccate sulla striscia lunga"><svg viewBox="0 0 16 16"><path d="M3 11V5M13 11V5M3 7h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Intervalli</button>
         </div>
       </div>
@@ -513,6 +519,18 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
   </section>
 
   <!-- LABORATORIO VETTORIALE a schermo intero -->
+  <!-- STRISCIA LUNGA a schermo intero: una sola derivazione, molte righe -->
+  <div class="zen" id="strip" hidden>
+    <div class="zbar">
+      <b id="stTitolo">—</b>
+      <span class="stchips" id="stLeads"></span>
+      <span class="zmis num" id="stMis"></span>
+      <button class="btn" id="stSei" aria-pressed="true">Righello 6 s</button>
+      <button class="btn" id="stPlay">Pausa</button>
+      <button class="btn" id="stEsci">Esci</button>
+    </div>
+    <div class="stbody"><canvas id="stCv"></canvas></div>
+  </div>
   <div class="zen" id="zen" hidden>
     <div class="zbar">
       <b id="zenTitolo">—</b>
@@ -564,13 +582,17 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 
 <!-- Alla prossima pubblicazione cambia il numero dopo ?v= qui sotto e VERSION in sw.js:
      è quello che costringe iPad a scaricare davvero i file nuovi. -->
-<script src="three.min.js?v=30"></script>
-<script src="cuore3d.js?v=30"></script>
-<script src="engine.js?v=30"></script>
-<script src="ipertrofie.js?v=30"></script>
-<script src="data.js?v=30"></script>
-<script src="atlante-digitale.js?v=30"></script>
-<script src="app.js?v=30"></script>
-<script src="coronarie.js?v=30"></script>
+<!-- Un interruttore solo. false: versione di studio, con i criteri del corso e
+     i rimandi al manuale. true: versione appoggiata alle sole linee guida
+     internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
+<script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
+<script src="three.min.js?v=33"></script>
+<script src="cuore3d.js?v=33"></script>
+<script src="engine.js?v=33"></script>
+<script src="ipertrofie.js?v=33"></script>
+<script src="data.js?v=33"></script>
+<script src="atlante-digitale.js?v=33"></script>
+<script src="app.js?v=33"></script>
+<script src="coronarie.js?v=33"></script>
 </body>
 </html>

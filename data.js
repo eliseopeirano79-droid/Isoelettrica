@@ -1245,7 +1245,7 @@ add({
     vettori: 'Vettore terminale diretto a destra e in avanti, come nel blocco completo, ma di durata minore.',
     guarda: 'V1 e V2 per la r′, DI e V6 per la S.',
     dd: ['Variante normale del giovane, in cui una piccola r′ in V1 non ha significato patologico', 'Pattern di Brugada', 'Ipertrofia ventricolare destra', 'Pectus excavatum e altre alterazioni della parete'],
-    trappole: 'Il manuale di Gaita definisce incompleto un blocco con QRS fra 100 e 120 ms, l\u2019AHA usa 110–119 ms: la sostanza non cambia, ma se all\u2019esame citi una soglia di\' anche quale fonte segui.',
+    trappole: 'Le soglie non coincidono fra le fonti: diversi manuali chiamano incompleto un blocco con QRS fra 100 e 120 ms, l\u2019AHA usa 110–119 ms. La sostanza non cambia, ma se all\u2019esame citi una soglia, di\u2019 anche a quale fonte ti stai appoggiando.',
     fonte: SRC.aha3,
     libro: 'Gaita F, Leclercq JF. L\u2019interpretazione dell\u2019ECG. Minerva Medica, 2012'
   }
@@ -2362,6 +2362,32 @@ add({
 });
 
 const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', VALV, COMB, 'Elettroliti e altro'];
+
+/* ==================== VERSIONE SENZA I RIFERIMENTI AL CORSO ====================
+   Con window.ISO_SOLO_LINEE_GUIDA = true (una riga in index.html) la libreria
+   perde tutto ciò che è legato al corso di Torino e al manuale adottato, e
+   resta appoggiata soltanto alle linee guida internazionali, che sono citabili
+   da chiunque. Non si cancella niente dal sorgente: si filtra alla lettura,
+   così la versione di studio e quella pubblicabile vengono dallo stesso file. */
+function soloLineeGuida() {
+  const VIA = ['corso', 'slide', 'corsoFonte', 'manuale', 'libro', 'diff'];
+  S.forEach(sc => { if (sc.card) VIA.forEach(k => { delete sc.card[k]; }); });
+  const CAPITOLI_FUORI = ['corso', 'altrelezioni'];
+  for (let i = THEORY.length - 1; i >= 0; i--) if (CAPITOLI_FUORI.indexOf(THEORY[i].id) >= 0) THEORY.splice(i, 1);
+  const NOMI = /Gaita|Leclercq|Mulatero/;
+  THEORY.forEach((t, i) => {
+    t.title = t.title.replace(/^\d+\.\s*/, (i + 1) + '. ');
+    t.html = t.html
+      .replace(/<p class="note">(?:(?!<\/p>)[\s\S])*?(?:Gaita|Leclercq|Mulatero)(?:(?!<\/p>)[\s\S])*?<\/p>/g, '')
+      .replace(/<li>(?:(?!<\/li>)[\s\S])*?(?:Gaita|Leclercq|Mulatero)(?:(?!<\/li>)[\s\S])*?<\/li>/g, '');
+    if (NOMI.test(t.html)) t.html = t.html.split('\n').filter(r => !NOMI.test(r)).join('\n');
+  });
+  // l'atlante è fatto di fotografie delle slide del corso: fuori anche quello,
+  // insieme ai tracciati che ne sono stati ricavati
+  ATLAS.length = 0; ATLAS_G.length = 0;
+}
+if (root.ISO_SOLO_LINEE_GUIDA === true) soloLineeGuida();
+
 const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ISO_DATA = API;
 })(typeof window !== 'undefined' ? window : this);

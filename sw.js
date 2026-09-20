@@ -2,7 +2,7 @@
    Strategia: codice e pagine sempre dalla rete saltando la cache HTTP (è quella
    che teneva bloccata l'app installata sul Dock), immagini dalla cache perché
    non cambiano mai. Offline si ricade sull'ultima copia salvata. */
-const VERSION = '30';
+const VERSION = '33';
 const CACHE = 'isoelettrica-v' + VERSION;
 const Q = '?v=' + VERSION;
 const CORE = ['./', './index.html', './anatomia.html',

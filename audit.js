@@ -173,13 +173,40 @@ const DOPO_TEST = {
    rallentata (QRS >= 108 ms), i ritmi ventricolari e stimolati, l'onda J
    dell'ipotermia, le onde f e F che continuano dentro il QRS. Altrove no. */
 const NOTCH_ATTESE = 'esv fa flutter tam ipotermia ep-s1q3t3 brugada arvc'.split(' ');
+/* Una derivazione quasi isoelettrica fa eccezione: quando il vettore medio le
+   è perpendicolare resta solo la somma dei residui, e un complesso piccolo e
+   multifasico è esattamente quello che si vede sulla carta vera. Sotto i 3 mm
+   di ampiezza l'intaccatura non è un difetto. */
+function gobbeQuadroAmp(id, over) {
+  const sc = D.SCENARIOS.find(x => x.id === id); const { st } = costruisci(sc, over);
+  const V = st.ev.filter(e => e.kind === 'V' && e.t >= 8000 && e.t <= 20000);
+  const cond = V.filter(e => e.meta.type === 'conducted');
+  const b = cond.length ? cond[Math.floor(cond.length / 2)] : V[Math.floor(V.length / 2)];
+  if (!b) return null;
+  const w = b.meta.w || 100, s = traccia(st, b.t - 20, b.t + w + 6, 0.5), out = {};
+  ID.forEach((L, k) => {
+    const c = s.map(x => x.v[k]), g = gobbeDi(c, c[0]);
+    if (!g.length) return;
+    let amp = 0; c.forEach(x => { amp = Math.max(amp, Math.abs(x - c[0])); });
+    if (amp * 10 < 3) return;                        // derivazione isoelettrica
+    out[L] = g;
+  });
+  return { g: out, w: w };
+}
 const notch = [];
 D.SCENARIOS.forEach(sc => {
-  let g, o; try { g = gobbeQuadro(sc.id); o = dettaglio(sc.id); } catch (e) { return; }
-  if (!g || !Object.keys(g).length) return;
   if (NOTCH_ATTESE.indexOf(sc.id) >= 0) return;
-  if (o && o.w >= 108) return;                       // conduzione rallentata: l'impastamento ci sta
-  notch.push([sc.id, Object.entries(g).map(([k, v]) => k + ' [' + v.join(', ') + ' mm]').join('  ')]);
+  const base = {}; (sc.params || []).forEach(q => base[q.k] = q.def);
+  const prove = [['valori di partenza', {}]];
+  (sc.params || []).forEach(q => {
+    if (q.type === 'select') (q.opts || []).forEach(o => prove.push([q.label + ' = ' + o[1], { [q.k]: o[0] }]));
+    else [q.min, Math.round((q.min + q.max) / 2), q.max].forEach(v => prove.push([q.label + ' = ' + v, { [q.k]: v }]));
+  });
+  prove.forEach(([nome, over]) => {
+    let r; try { r = gobbeQuadroAmp(sc.id, Object.assign({}, base, over)); } catch (e) { return; }
+    if (!r || !Object.keys(r.g).length || r.w >= 108) return;
+    notch.push([sc.id + ' · ' + nome, Object.entries(r.g).map(([k, v]) => k + ' [' + v.join(', ') + ' mm]').join('  ')]);
+  });
 });
 
 /* ============ 2. criteri diagnostici ============ */
@@ -497,7 +524,7 @@ D.SCENARIOS.forEach(sc => {
 
 
 /* ============ referto ============ */
-console.log('\n── 1. Intaccature del QRS senza corrispondente fisiologico ──');
+console.log('\n── 1. Intaccature del QRS senza corrispondente fisiologico (tutti i cursori) ──');
 if (!notch.length) console.log('   nessuna');
 notch.forEach(([id, t]) => console.log('   ✗ ' + id.padEnd(18) + t));
 

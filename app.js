@@ -59,9 +59,9 @@ class Monitor {
       this.groups = [{ x0: m * pxmm, w: 250 * pxmm }];
       this.rows = [0, 1, 2, 3].map(i => i < 3 ? (top + i * row + 14) * pxmm : (top + 3 * row + 15) * pxmm);
     } else {
-      const m = 7, row = 17, top = 2; pxmm = W / (2 * (m + 125));
+      const m = 7, row = 19, top = 2; pxmm = W / (2 * (m + 125));
       H = Math.round(pxmm * (top + 6 * row + 2));
-      LEADS.forEach((L, i) => { const c = i < 6 ? 0 : 1, r = i < 6 ? i : i - 6; panels.push({ id: L.id, li: i, g: c, tw0: 0, tw1: 1, base: (top + r * row + 10.5) * pxmm, top: (top + r * row) * pxmm, h: row * pxmm, lx: (m + c * (m + 125)) * pxmm, clip: true }); });
+      LEADS.forEach((L, i) => { const c = i < 6 ? 0 : 1, r = i < 6 ? i : i - 6; panels.push({ id: L.id, li: i, g: c, tw0: 0, tw1: 1, base: (top + r * row + 11.5) * pxmm, top: (top + r * row) * pxmm, h: row * pxmm, lx: (m + c * (m + 125)) * pxmm }); });
       this.groups = [{ x0: m * pxmm, w: 125 * pxmm }, { x0: (2 * m + 125) * pxmm, w: 125 * pxmm }];
       this.rows = [];
     }
@@ -127,7 +127,6 @@ class Monitor {
         if (frac < p.tw0 || frac >= p.tw1) { this.last[i] = null; continue; }
         const x = this.xOf(p, frac) * d;
         let y = p.base - this.lv[p.li] * g * mm;
-        if (p.clip) y = clamp(y, p.top + 1, p.top + p.h - 1);
         y = clamp(y, 1, this.H - 1) * d;
         const l = this.last[i];
         if (l) { ctx.moveTo(l[0], l[1]); ctx.lineTo(x, y); }
@@ -744,18 +743,40 @@ function renderParams(sc) {
    derivazione. Le soglie sono in mV: valgono a qualunque guadagno, anche a 5 o
    20 mm/mV, perché in millimetri cambierebbero. */
 const ORD_LEADS = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'];
+/* I voltaggi si riaggiornano due volte al secondo mentre il tracciato scorre.
+   Se a ogni giro si riscrive tutto il pannello, il menù del sesso viene
+   distrutto e ricreato mentre è aperto, e su iPad si richiude da solo appena lo
+   tocchi. Perciò l'impalcatura e il menù si costruiscono una volta sola e a
+   ogni aggiornamento si riscrivono soltanto i numeri. */
+function voltShell(box) {
+  if (box.dataset.shell === '1') return;
+  box.innerHTML =
+    '<div id="voltTop"></div>' +
+    '<div class="sec"><div class="lab" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>Sesso del paziente <span class="note">(cambia le soglie di Cornell e Peguero)</span></span>' +
+    '<select id="voltSex" style="width:auto;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px"><option value="M">Uomo</option><option value="F">Donna</option></select></div></div>' +
+    '<div id="voltList"></div>' +
+    '<div class="sec"><p class="src"><b>Criteri:</b> Sokolow-Lyon 1949; Casale 1987 (Cornell); Molloy 1992 (Cornell product); Peguero 2017; Romhilt-Estes 1968; AHA/ACCF/HRS 2009 parte V.</p></div>' + FIRMA;
+  box.dataset.shell = '1';
+  const sx = $('#voltSex');
+  sx.value = S.sesso;
+  sx.addEventListener('change', e => { S.sesso = e.target.value; store.sesso = S.sesso; save(); renderVolt(); });
+}
 function renderVolt() {
   const box = $('#p-volt'); if (!box) return;
   const IP = window.ISO_IPERTROFIE;
   const amp = stream && stream.qrsAmplitudes ? stream.qrsAmplitudes(mon.t) : null;
   if (!IP || !amp) {
     const attesa = mon.t < 2500 && stream && stream.cfg.mode !== 'continuous';
+    box.dataset.shell = '';
     box.innerHTML = '<div class="sec"><h3>Voltaggi</h3><p class="note">' +
       (attesa ? 'Le ampiezze compaiono dopo i primi battiti: lascia scorrere il tracciato.'
               : 'Su questo quadro non c\u2019è un QRS di base misurabile: i voltaggi si calcolano sui battiti condotti o di scappamento.') +
       '</p></div>' + FIRMA;
     return;
   }
+  voltShell(box);
+  const sx = $('#voltSex');
+  if (sx && sx.value !== S.sesso && document.activeElement !== sx) sx.value = S.sesso;
   const r = IP.calcola(amp, { sesso: S.sesso });
   const sc = byId[S.sc] || {};
   const riga = i => '<li style="display:flex;gap:8px;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line)">' +
@@ -771,16 +792,11 @@ function renderVolt() {
     : '<p class="note">Valori a 10 mm/mV, il guadagno standard a cui sono definite tutte le soglie.</p>';
   const ord = sc.indici === 'destra' ? [['Ventricolo destro', r.destra], ['Ventricolo sinistro', r.sinistra]]
                                      : [['Ventricolo sinistro', r.sinistra], ['Ventricolo destro', r.destra]];
-  box.innerHTML =
+  $('#voltTop').innerHTML =
     '<div class="sec"><h3>Ampiezze misurate sul tracciato</h3>' + avviso +
     '<div style="overflow-x:auto">' + tab + '</div>' +
-    '<p class="note">QRS ' + fmt(amp.qrsMs) + ' ms. Le ampiezze sono lette sul battito di base, dalla linea isoelettrica al picco.</p></div>' +
-    '<div class="sec"><div class="lab" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>Sesso del paziente <span class="note">(cambia le soglie di Cornell e Peguero)</span></span>' +
-    '<select id="voltSex" style="width:auto;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px"><option value="M"' + (S.sesso === 'M' ? ' selected' : '') + '>Uomo</option><option value="F"' + (S.sesso === 'F' ? ' selected' : '') + '>Donna</option></select></div></div>' +
-    ord.map(x => '<div class="sec"><h3>' + x[0] + '</h3>' + lista(x[1]) + '</div>').join('') +
-    '<div class="sec"><p class="src"><b>Criteri:</b> Sokolow-Lyon 1949; Casale 1987 (Cornell); Molloy 1992 (Cornell product); Peguero 2017; Romhilt-Estes 1968; AHA/ACCF/HRS 2009 parte V.</p></div>' + FIRMA;
-  const sx = $('#voltSex');
-  if (sx) sx.addEventListener('change', e => { S.sesso = e.target.value; store.sesso = S.sesso; save(); renderVolt(); });
+    '<p class="note">QRS ' + fmt(amp.qrsMs) + ' ms. Le ampiezze sono lette sul battito di base, dalla linea isoelettrica al picco.</p></div>';
+  $('#voltList').innerHTML = ord.map(x => '<div class="sec"><h3>' + x[0] + '</h3>' + lista(x[1]) + '</div>').join('');
 }
 
 function setParam(sc, k, v) {
@@ -801,6 +817,8 @@ function setPlaying(p) {
   // strumenti non c'è: lì il tracciato si ferma da qui o con la barra spaziatrice
   const z = $('#zenPlay');
   if (z) { z.textContent = p ? 'Pausa' : 'Riprendi'; z.classList.toggle('on', !p); }
+  const sp = $('#stPlay');
+  if (sp) { sp.textContent = p ? 'Pausa' : 'Riprendi'; sp.classList.toggle('on', !p); }
 }
 $('#playBtn').addEventListener('click', () => setPlaying(!S.playing));
 $('#zenPlay').addEventListener('click', () => setPlaying(!S.playing));
@@ -808,7 +826,8 @@ document.addEventListener('keydown', e => {
   if (e.code !== 'Space' || e.repeat) return;
   const t = e.target, tag = t && t.tagName;
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON' || (t && t.isContentEditable)) return;
-  if (!$('#v-ecg').classList.contains('on') && !zenOn) return;
+  const vista = $('#v-trace');
+  if (!(vista && vista.classList.contains('on')) && !zenOn && !ST.on) return;
   e.preventDefault(); setPlaying(!S.playing);
 });
 function segInit(sel, attr, cur, fn) { $$(sel + ' button').forEach(b => { b.classList.toggle('on', String(b.dataset[attr]) === String(cur)); b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset[attr]); }); }); }
@@ -840,6 +859,131 @@ $('#cardFull').addEventListener('click', () => zenCard(!document.body.classList.
    Sposta davvero la scena 3D e il tracciato dentro il contenitore a tutto
    schermo, così restano un unico oggetto sincronizzato, e affianca i numeri:
    vettore istantaneo, assi, proiezione su ognuna delle dodici derivazioni. */
+
+/* ==================== STRISCIA LUNGA ====================
+   Una derivazione sola, a schermo intero, su più righe che si leggono come una
+   pagina di carta continua: in fondo alla riga si va a capo. Serve per i ritmi,
+   dove dieci secondi non bastano. Sopra c'è il righello dei sei secondi, quello
+   che si usa al letto del paziente: conti i QRS dentro la finestra e moltiplichi
+   per dieci. Il conteggio lo fa anche l'app, così verifichi se l'hai preso bene. */
+const ST = { on: false, lead: 'II', sei: true, cv: null, ctx: null, dpr: 1, pxmm: 0, righe: [], secRiga: 10, t0: 0 };
+function stLayout() {
+  const box = $('#strip').querySelector('.stbody');
+  const W = box.clientWidth; if (!W) return;
+  const d = Math.min(window.devicePixelRatio || 1, 2);
+  const mL = 10;                                   // margine a sinistra in mm
+  ST.pxmm = W / (mL + ST.secRiga * mon.speed);     // la riga contiene secRiga secondi
+  const H = box.clientHeight || 600;
+  const rowMm = 26;
+  ST.nRighe = Math.max(3, Math.floor((H / ST.pxmm - 4) / rowMm));
+  ST.mL = mL; ST.rowMm = rowMm; ST.dpr = d;
+  const hTot = Math.round(ST.pxmm * (2 + ST.nRighe * rowMm));
+  ST.cv.width = Math.round(W * d); ST.cv.height = Math.round(hTot * d);
+  ST.cv.style.height = hTot + 'px';
+  ST.W = W; ST.H = hTot;
+}
+function stDraw() {
+  if (!ST.on || !stream || !ST.cv || !ST.pxmm) return;
+  const c = ST.ctx, d = ST.dpr, mm = ST.pxmm * d, g = mon.gain;
+  const durata = ST.secRiga * 1000, tot = ST.nRighe * durata;
+  const fine = mon.t, inizio = Math.max(0, fine - tot);
+  stream.ensure(fine);
+  c.fillStyle = css.paper; c.fillRect(0, 0, ST.cv.width, ST.cv.height);
+  // griglia
+  c.lineWidth = Math.max(1, d * 0.5);
+  const x0 = ST.mL * mm;
+  for (let i = 0; x0 + i * mm <= ST.cv.width; i++) {
+    const x = Math.round(x0 + i * mm) + 0.5, major = i % 5 === 0;
+    if (!major && mm < 2.6) continue;
+    c.strokeStyle = major ? css.grid2 : css.grid; c.beginPath(); c.moveTo(x, 0); c.lineTo(x, ST.cv.height); c.stroke();
+  }
+  for (let j = 0; j * mm <= ST.cv.height; j++) {
+    const y = Math.round(j * mm) + 0.5, major = j % 5 === 0;
+    if (!major && mm < 2.6) continue;
+    c.strokeStyle = major ? css.grid2 : css.grid; c.beginPath(); c.moveTo(0, y); c.lineTo(ST.cv.width, y); c.stroke();
+  }
+  const li = LIDX[ST.lead], v = [0, 0, 0], lv = new Array(12);
+  const font = Math.max(10, Math.round(3.4 * ST.pxmm)) * d;
+  for (let r = 0; r < ST.nRighe; r++) {
+    const base = (1 + r * ST.rowMm + ST.rowMm * 0.5) * mm;
+    const tA = inizio + r * durata, tB = tA + durata;
+    // secondi: tacca a ogni secondo sul bordo inferiore della riga
+    c.strokeStyle = css.grid2; c.lineWidth = 1.2 * d;
+    for (let sIdx = 0; sIdx <= ST.secRiga; sIdx++) {
+      const x = x0 + sIdx * mon.speed * mm;
+      const y1 = (1 + r * ST.rowMm + ST.rowMm - 2) * mm;
+      c.beginPath(); c.moveTo(x, y1); c.lineTo(x, y1 + 2.4 * mm); c.stroke();
+    }
+    // righello dei sei secondi sulla prima riga
+    if (ST.sei && r === 0) {
+      const xa = x0, xb = x0 + 6 * mon.speed * mm;
+      c.save();
+      c.fillStyle = css.accent; c.globalAlpha = 0.09;
+      c.fillRect(xa, (1 + r * ST.rowMm) * mm, xb - xa, ST.rowMm * mm);
+      c.globalAlpha = 1; c.strokeStyle = css.accent; c.lineWidth = 1.6 * d;
+      const yb = (1 + r * ST.rowMm + 1.6) * mm;
+      c.beginPath(); c.moveTo(xa, yb + 2 * mm); c.lineTo(xa, yb); c.lineTo(xb, yb); c.lineTo(xb, yb + 2 * mm); c.stroke();
+      c.restore();
+    }
+    // tracciato
+    c.strokeStyle = css.trace; c.lineWidth = 1.5 * d; c.lineJoin = 'round'; c.lineCap = 'round';
+    c.beginPath();
+    let primo = true;
+    for (let t = tA; t <= tB; t += 3) {
+      if (t > fine) break;
+      stream.vec(t, v); stream.leads(t, v, lv);
+      const x = x0 + (t - tA) / 1000 * mon.speed * mm;
+      const y = Math.max(2, Math.min(ST.cv.height - 2, base - lv[li] * g * mm));
+      if (primo) { c.moveTo(x, y); primo = false; } else c.lineTo(x, y);
+    }
+    c.stroke();
+    // etichetta della riga: derivazione e secondo di partenza
+    c.fillStyle = css.muted; c.font = '600 ' + font + 'px -apple-system, system-ui, sans-serif'; c.textBaseline = 'middle';
+    c.fillText(ST.lead, 1.2 * mm, base - ST.rowMm * 0.32 * mm);
+    c.fillText(Math.round(tA / 1000) + ' s', 1.2 * mm, base + ST.rowMm * 0.3 * mm);
+  }
+  // conteggio nella finestra dei sei secondi
+  if (ST.sei) {
+    const n = stream.ev.filter(e => e.kind === 'V' && e.t >= inizio && e.t < inizio + 6000).length;
+    $('#stMis').innerHTML = '<b>' + n + '</b> QRS in 6 s → <b>' + n * 10 + '/min</b>' +
+      ' · ' + ST.secRiga + ' s per riga · ' + mon.speed + ' mm/s · ' + mon.gain + ' mm/mV';
+  } else {
+    $('#stMis').textContent = ST.secRiga + ' s per riga · ' + mon.speed + ' mm/s · ' + mon.gain + ' mm/mV';
+  }
+}
+function stChips() {
+  $('#stLeads').innerHTML = LEADS.map(L => '<button data-l="' + L.id + '"' + (L.id === ST.lead ? ' class="on"' : '') + '>' + L.id + '</button>').join('');
+  $$('#stLeads button').forEach(b => b.addEventListener('click', () => {
+    ST.lead = b.dataset.l; store.stLead = ST.lead; save();
+    $$('#stLeads button').forEach(x => x.classList.toggle('on', x.dataset.l === ST.lead));
+    stDraw();
+  }));
+}
+function stripOn(on) {
+  if (on === ST.on) return;
+  ST.on = on;
+  $('#strip').hidden = !on;
+  document.body.style.overflow = on ? 'hidden' : '';
+  if (!on) return;
+  if (!ST.cv) { ST.cv = $('#stCv'); ST.ctx = ST.cv.getContext('2d'); }
+  ST.lead = store.stLead || (byId[S.sc] && byId[S.sc].look && byId[S.sc].look[0]) || 'II';
+  if (LIDX[ST.lead] === undefined) ST.lead = 'II';
+  $('#stTitolo').textContent = byId[S.sc] ? byId[S.sc].name : '—';
+  stChips();
+  requestAnimationFrame(() => { stLayout(); stDraw(); });
+}
+$('#stSei').classList.add('on');
+$('#stripBtn').addEventListener('click', () => stripOn(true));
+$('#stEsci').addEventListener('click', () => stripOn(false));
+$('#stPlay').addEventListener('click', () => setPlaying(!S.playing));
+$('#stSei').addEventListener('click', () => {
+  ST.sei = !ST.sei;
+  $('#stSei').setAttribute('aria-pressed', ST.sei ? 'true' : 'false');
+  $('#stSei').classList.toggle('on', ST.sei);
+  stDraw();
+});
+window.addEventListener('resize', () => { if (ST.on) { stLayout(); stDraw(); } });
+
 let zenOn = false;
 const zVec = [0, 0, 0], zLv = new Array(12).fill(0);
 function zenStage(on) {
@@ -865,7 +1009,7 @@ function zenStage(on) {
 }
 $('#zenBtn').addEventListener('click', () => zenStage(!zenOn));
 $('#zenEsci').addEventListener('click', () => zenStage(false));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (zenOn) zenStage(false); else if (document.body.classList.contains('zen-card')) zenCard(false); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (ST.on) stripOn(false); else if (zenOn) zenStage(false); else if (document.body.classList.contains('zen-card')) zenCard(false); } });
 
 function zDati() {
   // tre riquadri di soli numeri (larghezza e altezza fisse) e la fase, che è
@@ -1061,7 +1205,14 @@ function widgetAxis(el) {
    QUIZ
    ===================================================================== */
 const qmon = new Monitor($('#qEcg'), $('#qEcgOv'), {});
-const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null, mode: store.qmode === 'atlas' ? 'atlas' : 'gen' };
+/* Senza atlante (versione senza i riferimenti al corso) la linguetta e il quiz
+   sulle immagini non hanno più niente da mostrare: spariscono. */
+if (!ATLAS.length) {
+  const t = document.querySelector('[data-v="atlas"]'); if (t) t.hidden = true;
+  const q = document.querySelector('[data-qm="atlas"]'); if (q) q.hidden = true;
+  const seg = $('#qModeSeg'); if (seg) seg.hidden = true;
+}
+const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null, mode: (store.qmode === 'atlas' && ATLAS.length) ? 'atlas' : 'gen' };
 /* immagini dell'atlante utilizzabili come domanda: quelle con un quadro collegato */
 const QATL = ATLAS.filter(a => a.q && byId[a.q]);
 $('#qPause').addEventListener('click', () => {
@@ -1190,7 +1341,7 @@ function answer(btn) {
 /* =====================================================================
    ATLANTE: tracciati reali dalle lezioni
    ===================================================================== */
-let atlasG = store.atlasG || ATLAS_G[0].id;
+let atlasG = store.atlasG || (ATLAS_G[0] ? ATLAS_G[0].id : '');
 let atlasQ = '';
 function atlasFiltered() {
   const q = atlasQ.trim().toLowerCase();
@@ -1393,6 +1544,7 @@ function loop(now) {
   if (S.view === 'trace' && stream) {
     if (S.playing) mon.t += dt * S.slow;
     defTick();
+    if (ST.on) stDraw();
     mon.draw();
     scene.update(mon.t, stream);
     if (mon.marks) mon.drawOverlay();
