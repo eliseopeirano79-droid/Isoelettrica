@@ -3,6 +3,7 @@
 'use strict';
 const E = root.ECG || (typeof require !== 'undefined' ? require('./engine.js') : null);
 const { M, B, PL, dirAG } = E;
+const LOC = E.LOC;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const F = {
@@ -28,8 +29,8 @@ const SRC = {
 };
 
 const TERR = {
-  inferiore: { inj: [105, -5], k: 1.0, label: 'inferiore (coronaria destra o circonflessa)' },
-  anteriore: { inj: [40, 62], k: 1.45, label: 'anteriore (discendente anteriore)' },
+  inferiore: { inj: [100, -8], k: 1.0, label: 'inferiore (coronaria destra o circonflessa)' },
+  anteriore: { inj: [-5, 60], k: 1.45, label: 'anteriore (discendente anteriore)' },
   laterale: { inj: [-25, -15], k: 0.95, label: 'laterale (circonflessa o diagonale)' },
   posteriore: { inj: [60, -82], k: 1.45, label: 'posteriore (circonflessa o coronaria destra)' }
 };
@@ -43,6 +44,7 @@ function stemiCfg(terr, p) {
   else if (ph === 2) { cfg.T = { a: away[0], g: away[1], amp: 0.2 }; cfg.st = { a, g, amp: mm / 10 / t.k * 0.45 }; cfg.qrs = M.qrsNormal({ r: 0.7 }); cfg.extra = [B(dirAG(away[0], away[1]), 0.34, 20, 11, 11)]; }
   else { cfg.T = { a: away[0], g: away[1], amp: 0.34 }; cfg.st = null; cfg.qrs = M.qrsNormal({ r: 0.62 }); cfg.extra = [B(dirAG(away[0], away[1]), 0.42, 20, 12, 12)]; }
   if (terr === 'posteriore') {
+    if (cfg.st) cfg.st.e = 40;   // ST sotto e T positiva: raccordo graduale, non a scalino
     cfg.extra = (cfg.extra || []).concat(ph >= 1 ? [B(dirAG(40, 75), 0.55, 30, 11, 11)] : []);
     if (ph <= 1) cfg.T = { a: 45, g: 50, amp: ph === 0 ? 0.36 : 0.26 };
     else cfg.T = { a: 45, g: 70, amp: 0.5 };
@@ -524,7 +526,7 @@ add({
 add({
   id: 'ipok', cat: 'Elettroliti e altro', name: 'Ipokaliemia', quiz: true,
   params: [{ k: 'k', label: 'Potassio', unit: 'mmol/L', min: 1.8, max: 3.4, step: 0.1, def: 2.5 }, F.hr(76, 50, 110)],
-  build: p => { const d = 3.5 - p.k; return { rate: p.hr, pr: 170, qtc: 420, T: { a: 45, g: 20, amp: Math.max(0.07, 0.34 - d * 0.16) }, u: 0.04 + d * 0.11, st: { a: 45, g: 20, amp: -0.035 * d } }; }, look: ['V2', 'V3', 'II'],
+  build: p => { const d = 3.5 - p.k; return { rate: p.hr, pr: 170, qtc: 420, T: { a: 45, g: 20, amp: Math.max(0.06, 0.34 - d * 0.19) }, u: 0.04 + d * 0.14, st: { a: 45, g: 20, amp: -0.06 * d } }; },   // a 2,5 mmol/L: ST sotto di circa mezzo millimetro, U più alta della T look: ['V2', 'V3', 'II'],
   card: {
     def: 'Riduzione del potassio con prolungamento della ripolarizzazione e comparsa di onde U.',
     criteri: ['T appiattite o negative', 'Onde U prominenti, soprattutto in V2–V3', 'ST sottoslivellato', 'QT apparentemente lungo per fusione T-U', 'Aumentato rischio di aritmie e torsione di punta'],
@@ -1236,12 +1238,13 @@ add({
 /* ---------- BLOCCHI AV ---------- */
 add({
   id: 'bavavanzato', cat: 'Blocchi AV', name: 'BAV di II grado avanzato', quiz: true,
-  params: [F.hr(80, 60, 120), { k: 'ratio', label: 'Rapporto di conduzione', type: 'select', def: '3', opts: [['3', '3:1'], ['4', '4:1'], ['5', '5:1']] }],
-  build: p => ({ rate: p.hr, pr: 180, av: 'adv', ratio: +p.ratio, qtc: 420 }),
+  params: [F.hr(80, 60, 120), { k: 'ratio', label: 'Rapporto di conduzione', type: 'select', def: '3', opts: [['3', '3:1'], ['4', '4:1'], ['5', '5:1']] },
+    { k: 'esc', label: 'Scappamento', type: 'select', def: 'j', opts: [['j', 'Giunzionale nelle pause lunghe'], ['no', 'Assente']] }],
+  build: p => ({ rate: p.hr, pr: 180, av: 'adv', ratio: +p.ratio, qtc: 420, advEsc: p.esc === 'no' ? 0 : 1600 }),
   look: ['II', 'V1'],
   card: {
     def: 'Blocco di secondo grado in cui due o più P consecutive restano bloccate, ma la conduzione atrio-ventricolare non è del tutto assente.',
-    criteri: ['Due o più P consecutive bloccate, con rapporto 3:1, 4:1 o superiore', 'Almeno alcune P conducono: questo lo distingue dal blocco completo', 'Il PR dei battiti condotti è costante', 'Frequenza ventricolare bassa, spesso sintomatica'],
+    criteri: ['Due o più P consecutive bloccate, con rapporto 3:1, 4:1 o superiore', 'Almeno alcune P conducono: questo lo distingue dal blocco completo', 'Il PR dei battiti condotti è costante', 'Frequenza ventricolare bassa, spesso sintomatica', 'Nelle pause lunghe compaiono in genere battiti di scappamento giunzionali o ventricolari, non preceduti da P condotte: senza scappamento il paziente andrebbe incontro a pause di secondi, fino alla sincope'],
     meccanismo: 'La sede è quasi sempre infranodale, hisiana o infrahisiana. La conduzione è "tutto o nulla" come nel Mobitz 2, ma il rapporto di blocco è più sfavorevole.',
     vettori: 'I battiti condotti hanno vettori normali, a meno che non coesista un blocco di branca, cosa frequente quando la sede è distale.',
     guarda: 'DII lungo: conta le P fra un QRS e il successivo e verifica che il PR dei condotti sia sempre uguale.',
@@ -1404,7 +1407,7 @@ add({
 add({
   id: 'pmddd', cat: 'Stimolazione', name: 'Stimolazione bicamerale (DDD)',
   params: [F.hr(70, 50, 100), F.pr(170, 120, 250)],
-  build: p => ({ rate: p.hr, pr: p.pr, qtc: 440, qrs: M.qrsPaced() }),
+  build: p => ({ rate: p.hr, pr: p.pr, qtc: 440, qrs: M.qrsPaced(), T: { a: 150, g: 30, amp: 0.38 } }),   // T secondaria, discordante come nel VVI
   look: ['II', 'V1', 'V6'],
   card: {
     def: 'Il dispositivo segue l\u2019attività atriale propria e stimola il ventricolo dopo un ritardo programmato: ogni P è seguita da uno spike e da un QRS stimolato.',
@@ -1585,7 +1588,16 @@ add({
 add({
   id: 'wellens', cat: 'Ischemia', name: 'Sindrome di Wellens', quiz: true,
   params: [F.hr(72, 50, 100), { k: 'tipo', label: 'Tipo', type: 'select', def: 'b', opts: [['a', 'Tipo A: T bifasiche'], ['b', 'Tipo B: T profondamente invertite']] }],
-  build: p => ({ rate: p.hr, pr: 160, qtc: 440, qrs: M.qrsNormal(), T: p.tipo === 'b' ? { a: 45, g: -75, amp: 0.85 } : { a: 45, g: -55, amp: 0.45 }, tShape: p.tipo === 'a' ? 'notched' : 'broad' }),
+  build: p => p.tipo === 'b'
+    /* tipo B: ST isoelettrico, poi T profonda e simmetrica. La forma «late»
+       rende i due rami della T simili e ne ritarda l'inizio, così il tratto ST
+       resta sulla linea di base come chiedono i criteri. */
+    ? { rate: p.hr, pr: 160, qtc: 440, qrs: M.qrsNormal(), T: { a: 45, g: -75, amp: 0.75 }, tShape: 'late' }
+    /* tipo A: T bifasica, prima positiva e poi negativa. La parte positiva è
+       una componente precoce orientata come la T normale, la parte negativa è
+       la T vera e propria, rivolta indietro. */
+    : { rate: p.hr, pr: 160, qtc: 440, qrs: M.qrsNormal(), T: { a: 45, g: -62, amp: 0.36 }, tShape: 'late',
+        extra: [B(dirAG(45, 40), 0.20, 215, 34, 26)] },
   look: ['V2', 'V3', 'V4'],
   card: {
     def: 'Pattern di T in V2–V3 che segnala una stenosi critica della discendente anteriore prossimale, in un paziente che al momento non ha dolore.',
@@ -1625,13 +1637,24 @@ add({
 add({
   id: 'brugada', cat: 'Elettroliti e altro', name: 'Pattern di Brugada tipo 1', quiz: true,
   params: [F.hr(68, 45, 100)],
-  build: p => ({ rate: p.hr, pr: 180, qtc: 410, qrs: M.qrsRBBB(), qrsScale: 0.85, st: { a: 172, g: 52, amp: 0.36 }, T: { a: -10, g: -55, amp: 0.3 } }),
+  build: p => ({
+    /* Il Brugada è un fenomeno del tratto di efflusso destro, sotto V1-V2: con
+       un dipolo unico l'alterazione dilagava fino a V4 e scriveva sottoslivellamenti
+       in DI e V6. Qui è una componente di campo vicino, pesata sulle sole
+       precordiali destre; il QRS resta normale, senza le S larghe laterali di un
+       vero blocco di branca destra. */
+    rate: p.hr, pr: 180, qtc: 410, qrs: M.qrsNormal(), campoVicino: true,
+    extra: [
+      LOC([1, 0.9, 0.25, 0, 0, 0], B(null, 0.27, 95, 10, 45)),    // punto J alto: la «pseudo-r'»
+      LOC([1, 0.9, 0.25, 0, 0, 0], B(null, 0.10, 130, 30, 80)),   // ST convesso che scende lentamente (coved)
+      LOC([1, 0.9, 0.25, 0, 0, 0], B(null, -0.40, 300, 55, 45))   // T negativa
+    ], T: { a: 42, g: 8, amp: 0.26 } }),
   look: ['V1', 'V2'],
   card: {
     def: 'Sopraslivellamento del punto J con ST discendente a tenda e T negativa in V1–V2: la firma elettrocardiografica della sindrome di Brugada.',
     criteri: ['Punto J sopraslivellato ≥ 2 mm in almeno una derivazione fra V1 e V2', 'ST discendente, concavo verso il basso, a "coved type"', 'T negativa che segue senza linea isoelettrica in mezzo', 'Il tipo 1 è l\u2019unico diagnostico; i pattern tipo 2 a sella richiedono conferma', 'Le derivazioni vanno registrate anche al secondo e terzo spazio intercostale, dove il pattern è più evidente'],
     meccanismo: 'Perdita di funzione dei canali del sodio cardiaci: si crea una disomogeneità di ripolarizzazione fra epicardio ed endocardio del tratto di efflusso destro, che predispone al rientro di fase 2 e alla fibrillazione ventricolare.',
-    vettori: 'Vettore di ripolarizzazione anomalo diretto verso il tratto di efflusso del ventricolo destro, cioè in alto, a destra e in avanti: per questo si vede solo in V1–V2.',
+    vettori: 'Non è un vettore globale come quello di un infarto, ma un gradiente locale fra endocardio ed epicardio del tratto di efflusso destro, così vicino a V1–V2 da essere registrato quasi solo lì. Per questo nella vista 3D non compare una freccia che lo spieghi: nel modello è una componente di campo vicino che agisce solo sulle precordiali destre, mentre il QRS e la T globali restano normali.',
     guarda: 'V1 e V2, anche negli spazi intercostali più alti.',
     dd: ['Blocco di branca destra, dove il punto J non è sopraslivellato e la r′ è distinta', 'Ripolarizzazione precoce', 'Pectus excavatum e altre cause di falso pattern', 'Displasia aritmogena del ventricolo destro'],
     trappole: 'Il pattern può essere smascherato o peggiorato da febbre, farmaci bloccanti i canali del sodio, alcol e cocaina: nel dubbio, la febbre va trattata in fretta. Il pattern isolato non è la sindrome: serve la storia di sincope, di arresto o la familiarità.',
@@ -1917,9 +1940,9 @@ THEORY.forEach(ch => { if (APPRO[ch.id]) ch.html += APPRO[ch.id]; });
    e un ritmo sinusale non può coesistere con un flutter. */
 const COMB = 'Quadri combinati';
 const qrsEP = () => ({ w: 116, c: [
-  B(dirAG(-60, 10), 0.22, 14, 8, 8),          // vettore iniziale in alto a sinistra: q in DIII
+  B(dirAG(-60, 35), 0.22, 14, 8, 8),          // vettore iniziale in alto, a sinistra e in avanti: q in DIII, piccola r in V1
   B(dirAG(48, 5), 0.78, 42, 12, 12),
-  B(dirAG(175, -20), 0.46, 80, 11, 14)        // vettore terminale a destra: S larga in DI e V6
+  B(dirAG(170, 25), 0.42, 80, 11, 14)         // vettore terminale a destra e IN AVANTI (ventricolo destro in ritardo): r' in V1, S larga in DI e V6
 ] });
 // Ipertrofia sinistra con emiblocco anteriore: l'asse è a sinistra e in alto,
 // ma i voltaggi devono restare quelli di un'ipertrofia vera (Sokolow >= 35 mm),
@@ -2008,7 +2031,8 @@ add({
   id: 'ep-s1q3t3', cat: COMB, name: 'Embolia polmonare: tachicardia sinusale, S1Q3T3 e BBDx incompleto', quiz: true,
   params: [F.hr(112, 90, 150)],
   build: p => ({ rate: p.hr, pr: 150, qtc: 420, qrs: qrsEP(), pComps: M.pSinus(1, 1, 1.7, 0.9),
-    T: { a: 20, g: -72, amp: 0.3 } }),
+    // T negativa in DIII (il T3 del segno) e in V1-V4 (sovraccarico destro), positiva in DI
+    T: { a: -15, g: -62, amp: 0.32 } }),
   look: ['I', 'III', 'V1', 'V2', 'V3'],
   card: {
     def: 'Il quadro classico del cuore polmonare acuto: nessun segno è sensibile da solo, la combinazione orienta.',
@@ -2416,12 +2440,19 @@ function subendoCfg(terr, mm, hr, soloT) {
       T: { a, g, amp: 0.30 }
     };
   }
-  const t = TERR[terr], a = t.inj[0] + 180, g = -t.inj[1];
+  /* Il vettore della lesione subendocardica non è semplicemente quello dello
+     STEMI rovesciato: rovesciarlo darebbe un sopraslivellamento speculare
+     (DIII nella forma laterale, aVL nella forma inferiore) che il
+     sottoslivellamento ischemico non ha. Le direzioni sono scelte perché
+     l'unica derivazione a salire in modo apprezzabile sia aVR, come nella
+     clinica: il sottoslivellamento non localizza e non ha immagine speculare. */
+  const SUB = { anteriore: [220, -62, 1.45], laterale: [-160, -20, 1.2], inferiore: [-100, -15, 0.9] };
+  const [a, g, k] = SUB[terr];
   // la T larga e concorde ricade dentro il tratto ST: il fattore 1.55 fa sì che
   // il cursore indichi i millimetri che si misurano davvero al punto J
   return {
     rate: hr, pr: 158, qtc: 440, qrs: M.qrsNormal(),
-    st: soloT ? null : { a, g, amp: mm / 10 / t.k / 1.55 },
+    st: soloT ? null : { a, g, amp: mm / 10 / k / 1.55 },
     T: { a, g, amp: soloT ? 0.58 : 0.44 }, tShape: 'broad'
   };
 }
@@ -2493,7 +2524,7 @@ add({
 /* ================= nuovi quadri clinici ================= */
 S.push({
   id: 'tamponamento', cat: 'Elettroliti e altro', name: 'Versamento pericardico e tamponamento', quiz: true,
-  params: [F.hr(116, 90, 150), { k: 'alt', label: 'Alternanza elettrica', unit: '%', min: 0, max: 30, step: 2, def: 18 }, { k: 'volt', label: 'Voltaggi', unit: '%', min: 25, max: 80, step: 5, def: 45 }],
+  params: [F.hr(116, 90, 150), { k: 'alt', label: 'Alternanza elettrica', unit: '%', min: 0, max: 30, step: 2, def: 18 }, { k: 'volt', label: 'Voltaggi', unit: '%', min: 20, max: 80, step: 5, def: 30 }],
   build: p => ({
     rate: p.hr, pr: 148, qtc: 400, alternanza: p.alt / 100,
     qrs: M.qrsNormal({ r: p.volt / 100, q: p.volt / 100, s: p.volt / 100 }),
@@ -2609,23 +2640,25 @@ S.push({
   params: [F.hr(88, 65, 120), { k: 'fase', label: 'Fase', type: 'select', def: '1', opts: [['0', 'Acuta, ST sopraslivellato'], ['1', 'Subacuta, T negative giganti']] }],
   build: p => +p.fase
     ? { rate: p.hr, pr: 162, qtc: 530, T: { a: 218, g: -46, amp: 0.92 }, tShape: 'broad', st: { a: 40, g: 14, amp: 0.02 } }
-    : { rate: p.hr, pr: 162, qtc: 455, st: { a: 62, g: -32, amp: 0.20 }, T: { a: 62, g: -30, amp: 0.45 } },
+    : { rate: p.hr, pr: 162, qtc: 455, st: { a: 60, g: 26, amp: 0.20 }, T: { a: 55, g: 24, amp: 0.45 } },
   look: ['V3', 'V4', 'V5', 'II'],
   card: {
     def: 'Disfunzione ventricolare sinistra acuta, apicale e transitoria, senza coronaropatia ostruttiva.',
     criteri: [
-      'Fase acuta: sopraslivellamento ST anteriore che imita uno STEMI, senza reciprocità marcata e con aVR spesso risparmiata',
+      'Fase acuta: sopraslivellamento ST precordiale esteso, massimo in V3–V5, spesso anche in DII e aVF, che imita uno STEMI anteriore',
       'Fase subacuta, in prima o seconda giornata: T negative giganti, diffuse e simmetriche',
+      'Sottoslivellamento ST in aVR e assenza di sopraslivellamento in V1 (criteri di Kosuge): orientano verso il takotsubo rispetto allo STEMI anteriore',
+      'Reciprocità assente: nessun sottoslivellamento speculare, a parte aVR',
       'Allungamento marcato del QT, anche oltre 500 ms',
       'Alterazioni che superano il territorio di una singola coronaria',
-      'Normalizzazione in settimane'
+      'Normalizzazione in settimane; T negative e QT lungo possono durare mesi'
     ],
     meccanismo: 'Stordimento miocardico su base adrenergica, tipicamente dopo uno stress emotivo o fisico intenso. L’apice, più ricco di recettori beta, è il territorio colpito: da qui il ballonamento apicale e il nome giapponese della trappola per polpi.',
-    vettori: 'Il vettore della ripolarizzazione si rovescia in blocco puntando indietro e in alto: tutte le derivazioni anteriori e laterali lo vedono allontanarsi, cosa che nessuna singola coronaria potrebbe produrre.',
-    guarda: 'L’estensione delle T negative rispetto ai territori coronarici e la durata del QT.',
-    dd: ['STEMI anteriore (territoriale, con reciprocità e occlusione alla coronarografia)', 'Sindrome di Wellens (T bifasiche o negative in V2–V3, con stenosi critica della discendente anteriore)'],
-    trappole: 'In fase acuta è indistinguibile da uno STEMI: la coronarografia non è rimandabile. La diagnosi si fa escludendo l’occlusione, non riconoscendo il tracciato.',
-    fonte: 'ESC 2023, Sindromi coronariche acute'
+    vettori: 'In fase acuta il vettore di lesione punta in avanti, a sinistra e in basso, verso l’apice che si dilata: le precordiali da V2 a V6 e le inferiori lo vedono avvicinarsi, aVR lo vede allontanarsi, V1 gli è quasi perpendicolare. Dopo uno o due giorni il vettore della ripolarizzazione si rovescia in blocco verso l’alto e indietro: tutte le derivazioni anteriori e laterali lo vedono allontanarsi, cosa che nessuna singola coronaria potrebbe produrre.',
+    guarda: 'In fase acuta aVR e V1; in fase subacuta l’estensione delle T negative rispetto ai territori coronarici e la durata del QT.',
+    dd: ['STEMI anteriore (territoriale, con reciprocità e occlusione alla coronarografia)', 'Miocardite (coronarie indenni, alterazioni spesso diffuse, risonanza diagnostica)', 'Sindrome di Wellens (T bifasiche o negative in V2–V3, con stenosi critica della discendente anteriore)'],
+    trappole: 'aVR sottoslivellata, V1 risparmiata e assenza di reciprocità orientano, ma nessun segno ECG esclude uno STEMI: la coronarografia non è rimandabile. La diagnosi si fa escludendo l’occlusione, non riconoscendo il tracciato.',
+    fonte: 'ESC 2023, Sindromi coronariche acute; InterTAK, International Expert Consensus 2018'
   }
 });
 
@@ -2657,7 +2690,7 @@ S.push({
   params: [F.hr(122, 95, 160), { k: 'gr', label: 'Gravità', unit: '×', min: 1, max: 1.8, step: 0.05, def: 1.4 }],
   build: p => ({
     rate: p.hr, pr: 195, qtc: 470, qrsScale: p.gr,
-    extra: [B(dirAG(-148, -26), 0.30 + (p.gr - 1) * 1.15, 74, 13, 20)],
+    extra: [B(dirAG(-148, -26), 0.36 + (p.gr - 1) * 1.4, 78, 13, 20)],
     T: { a: 48, g: 16, amp: 0.26 }
   }),
   look: ['aVR', 'I', 'V6', 'II'],
@@ -2681,7 +2714,7 @@ S.push({
 
 S.push({
   id: 'ipotiroidismo', cat: 'Elettroliti e altro', name: 'Ipotiroidismo', quiz: true,
-  params: [F.hr(48, 35, 65), { k: 'volt', label: 'Voltaggi', unit: '%', min: 30, max: 80, step: 5, def: 45 }],
+  params: [F.hr(48, 35, 65), { k: 'volt', label: 'Voltaggi', unit: '%', min: 25, max: 80, step: 5, def: 35 }],
   build: p => ({
     rate: p.hr, pr: 205, qtc: 465,
     qrs: M.qrsNormal({ r: p.volt / 100, q: p.volt / 100, s: p.volt / 100 }),
@@ -2709,7 +2742,13 @@ S.push({
 S.push({
   id: 'brugada2', cat: 'Elettroliti e altro', name: 'Pattern di Brugada tipo 2', quiz: true,
   params: [F.hr(70, 48, 100)],
-  build: p => ({ rate: p.hr, pr: 176, qtc: 405, qrs: M.qrsRBBB(), qrsScale: 0.82, st: { a: 174, g: 48, amp: 0.17 }, T: { a: 46, g: 10, amp: 0.30 } }),
+  build: p => ({
+    // a sella: punto J alto, ST che scende ma resta sopra la linea di base, poi T positiva
+    rate: p.hr, pr: 176, qtc: 405, qrs: M.qrsNormal(), campoVicino: true,
+    extra: [
+      LOC([1, 0.85, 0.2, 0, 0, 0], B(null, 0.26, 92, 8, 13)),
+      LOC([1, 0.85, 0.2, 0, 0, 0], PL(null, 0.09, 105, 230, 20))
+    ] }),
   look: ['V1', 'V2'],
   card: {
     def: 'Aspetto "a sella" in V1–V2, che non è di per sé diagnostico di sindrome di Brugada.',
@@ -2831,18 +2870,25 @@ S.push({
     { k: 'situs', label: 'Quadro', type: 'select', def: 'tot', opts: [['tot', 'Situs inversus totalis'], ['iso', 'Destrocardia isolata (destroversione)'], ['dx', 'Con precordiali destre V1R-V6R']] }],
   build: p => Object.assign({ rate: p.hr }, artBase, {
     specchio: true,
-    precDestre: p.situs === 'dx'
-    /* Situs inversus totalis e destroversione danno lo stesso tracciato, e non
-       è una svista: l'ECG vede la posizione del cuore, non quella del fegato.
-       A distinguerli è l'ecografia dell'addome. L'eventuale cardiopatia
-       congenita della destroversione altera il tracciato secondo la
-       malformazione che c'è, e non esiste un quadro unico da disegnare. */
+    precDestre: p.situs === 'dx',
+    /* Nella destroversione i ventricoli sono a destra ma gli atri restano al
+       loro posto (situs solitus): il nodo del seno è a destra e la P conserva
+       l'asse normale, positiva in DI. Il motore ribalta l'intero vettore sul
+       piano sagittale, quindi qui la P viene fornita già ribaltata: il
+       secondo ribaltamento la riporta dritta. Nel situs inversus totalis anche
+       gli atri sono speculari e la P in DI è negativa: è il segno che
+       distingue i due quadri. */
+    pComps: p.situs === 'iso' ? [
+      B(dirAG(180 - 62, 38), 0.105, 34, 16, 15),
+      B(dirAG(180 - 18, -18), 0.055, 72, 17, 17)
+    ] : undefined
   }),
   look: ['I', 'aVR', 'V1', 'V6'],
   card: {
     def: 'Il cuore è collocato a destra, immagine speculare della posizione abituale.',
     criteri: [
-      'P, QRS e T negativi in DI, P positiva in aVR: come nell’inversione delle braccia',
+      'Situs inversus totalis: P, QRS e T negativi in DI, P positiva in aVR, come nell’inversione delle braccia',
+      'Destroversione (atri al loro posto): P positiva in DI con QRS e T negativi, perché il nodo del seno resta a destra',
       'Ma in più: progressione inversa dell’onda R, che decresce da V1 a V6',
       'Complessi sempre più piccoli verso le precordiali sinistre, perché ci si allontana dal cuore',
       'Con le precordiali ripetute a destra (V1R–V6R) il tracciato torna normale'
@@ -2851,7 +2897,7 @@ S.push({
     vettori: 'Il vettore medio punta in basso e a destra invece che in basso e a sinistra. Le precordiali, che sono fisse sul torace sinistro, lo vedono allontanarsi via via.',
     guarda: 'V1–V6: qui si decide fra destrocardia e cavi invertiti.',
     dd: ['Inversione dei cavi delle braccia (precordiali normali)'],
-    trappole: 'I primi due quadri danno lo stesso identico tracciato, ed è il punto: l\u2019ECG vede dove sta il cuore, non dove sta il fegato. Nel situs inversus totalis anche fegato, stomaco e milza sono ribaltati e il cuore è di solito sano. Nella destroversione, cioè cuore a destra e visceri al loro posto, la cardiopatia congenita è quasi la regola, ma il tracciato che ne deriva dipende dalla malformazione: a distinguere i due quadri è l\u2019ecografia dell\u2019addome, non l\u2019elettrocardiogramma. Con le precordiali ripetute a destra il tracciato precordiale si normalizza mentre DI resta invertita, perché gli elettrodi degli arti non si sono mossi: è la prova del nove.',
+    trappole: 'Guarda la P in DI prima di tutto: negativa nel situs inversus totalis, in cui anche gli atri sono speculari e il cuore è di solito sano; positiva nella destroversione, in cui gli atri restano al loro posto e una cardiopatia congenita associata è quasi la regola, con un QRS che dipende dalla malformazione. Con le precordiali ripetute a destra il tracciato precordiale si normalizza mentre DI resta invertita, perché gli elettrodi degli arti non si sono mossi: è la prova del nove.',
     fonte: 'AHA/ACC/HRS, raccomandazioni sulla standardizzazione dell’ECG'
   }
 });

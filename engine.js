@@ -42,9 +42,22 @@ function extentOf(comps) {
   return [lo, hi];
 }
 function sig(x) { return 1 / (1 + Math.exp(-x)); }
+/* Componente di campo vicino. Un dipolo unico vede allo stesso modo tutte le
+   derivazioni che guardano nella sua direzione: non può produrre un fenomeno
+   confinato a V1-V2, come quello del tratto di efflusso destro nel Brugada.
+   Queste componenti hanno un profilo nel tempo come le altre ma, invece di
+   una direzione, un peso per ciascuna precordiale (V1..V6). Le derivazioni
+   degli arti non le vedono, quindi la legge di Einthoven resta intatta. */
+function LOC(w, c) { return Object.assign({}, c, { loc: w }); }
+function valComp(c, tau) {
+  if (c.k === 'b') { const s = tau < c.t ? c.sl : c.sr; const x = (tau - c.t) / s; if (x > 3.4 || x < -3.4) return 0; return c.a * Math.exp(-0.5 * x * x); }
+  if (tau < c.t0 - 5 * c.e || tau > c.t1 + 5 * c.e) return 0;
+  return c.a * sig((tau - c.t0) / c.e * 4.4) * sig((c.t1 - tau) / c.e * 4.4);
+}
 function evalComps(comps, tau, out) {
   for (let i = 0; i < comps.length; i++) {
     const c = comps[i]; let v;
+    if (c.loc) continue;   // componente di campo vicino: agisce solo sulle precordiali, vedi leads()
     if (c.k === 'b') { const s = tau < c.t ? c.sl : c.sr; const x = (tau - c.t) / s; if (x > 3.4 || x < -3.4) continue; v = c.a * Math.exp(-0.5 * x * x); }
     else { if (tau < c.t0 - 5 * c.e || tau > c.t1 + 5 * c.e) continue; v = c.a * sig((tau - c.t0) / c.e * 4.4) * sig((c.t1 - tau) / c.e * 4.4); }
     out[0] += c.d[0] * v; out[1] += c.d[1] * v; out[2] += c.d[2] * v;
@@ -217,7 +230,9 @@ function buildV(tv, qrs, rr, opt) {
     comps.push(B(dirAG(T.a, T.g), T.amp * 0.62, tPeak - 0.13 * QT, 0.07 * QT, 0.05 * QT));
     comps.push(B(dirAG(T.a, T.g), T.amp * 0.6, tPeak, 0.06 * QT, sr));
   } else comps.push(B(dirAG(T.a, T.g), T.amp, tPeak, sl, sr));
-  if (opt.st && opt.st.amp) comps.push(PL(dirAG(opt.st.a, opt.st.g), opt.st.amp, w - 8, tPeak - 10, 14));
+  // fronte del plateau: di norma 14 ms; più morbido quando ST e T hanno verso
+  // opposto (es. infarto posteriore), altrimenti il passaggio ST→T è uno scalino
+  if (opt.st && opt.st.amp) comps.push(PL(dirAG(opt.st.a, opt.st.g), opt.st.amp, w - 8, tPeak - 10 - (opt.st.e ? opt.st.e : 0), opt.st.e || 14));
   if (opt.u) comps.push(B(dirAG(T.a, T.g), opt.u, QT + 70, 32, 38));
   return { t: tv, kind: 'V', comps, span: extentOf(comps), meta: Object.assign({ w, qt: QT, rr, focus: qrs.focus || null }, opt.meta || {}) };
 }
@@ -306,7 +321,9 @@ function* rhythm(cfg, R) {
 
   let ta = t, beat = 0, wk = 0, sk = 0, lastV = t - baseRR;
   const ect = S.ectopy || null; // {type:'pvc'|'pac', pattern:'isolate'|'bigeminismo'|'trigeminismo'|'coppie', prob}
-  let skipNextConduction = false;
+  // fine della refrattarietà lasciata dall'ultima extrasistole: le P che
+  // arriverebbero ai ventricoli prima di questo istante restano bloccate
+  let refrUntil = -1e9;
   for (;;) {
     const out = [];
     const resp = S.sa ? S.sa * Math.sin(2 * Math.PI * ta / 4600) : 0;
@@ -353,9 +370,8 @@ function* rhythm(cfg, R) {
       if (beat < 2) ectHere = false;
     }
 
-    if (skipNextConduction) {
+    if (ta + PR < refrUntil) {
       out.push(buildA(ta, pComps, { type: 'sinus', blocked: true, refractory: true }));
-      skipNextConduction = false;
       beat++; ta += rr; yield out; continue;
     }
 
@@ -379,6 +395,19 @@ function* rhythm(cfg, R) {
     }
 
     out.push(buildA(ta, pVar ? pVar[beat % pVar.length] : pComps, { type: 'sinus', blocked: !conducted }));
+    /* scappamento nel blocco avanzato: se la prossima P condotta arriverebbe
+       ai ventricoli oltre l'intervallo di scappamento, la giunzione scarica
+       prima. Senza questo un 5:1 a 80/min darebbe pause di quasi 4 secondi. */
+    if (!conducted && S.advEsc) {
+      const tEsc = lastV + S.advEsc;
+      let kn = 1; while ((wk + kn - 1) % (S.ratio || 3) !== 0 && kn < 12) kn++;
+      const tNext = ta + kn * rr + PR;
+      // interviene solo se la pausa supererebbe 2,5 s, e non a ridosso di un battito condotto
+      if (tNext - lastV > 2500 && tEsc < tNext - 1000 && tEsc < ta + rr + PR && tEsc > ta + 60) {
+        out.push(buildV(tEsc, qrs, tEsc - lastV, Object.assign({}, vOpt, { meta: { type: 'escape-j' } })));
+        lastV = tEsc;
+      }
+    }
     if (conducted) {
       const tv = ta + pr;
       out.push(buildV(tv, qrs, tv - lastV, Object.assign({}, vOpt, { meta: { type: 'conducted', pr, via: S.via } })));
@@ -399,9 +428,12 @@ function* rhythm(cfg, R) {
             out.push(buildV(tp, qz, gap, Object.assign({}, vOpt, { T: tz || { a: -95, g: 35, amp: 0.45 }, st: null, meta: { type: 'pvc' } })));
           }
           lastV = tp;
-          // pausa compensatoria: la P successiva cade nella refrattarietà
-          skipNextConduction = true;
-          lastV = te;
+          /* pausa compensatoria: ogni P che raggiungerebbe i ventricoli entro
+             poco più di mezzo ciclo dall'ultima extrasistole cade nella
+             refrattarietà. Con una salva lunga le P bloccate sono più d'una:
+             prima ne veniva bloccata solo una e la seconda produceva un QRS
+             condotto sovrapposto alle extrasistoli successive. */
+          refrUntil = tp + 0.55 * rr;
         } else {
           // PAC: P prematura, QRS condotto, ciclo sinusale reimpostato
           const tp = tv - pr + 0.72 * rr;
@@ -591,6 +623,17 @@ Stream.prototype.artefattiLead = function (tau, o) {
     o[i] = 0.012 * Math.sin(2 * Math.PI * 50 * s) + 0.004 * Math.sin(2 * Math.PI * 173 * s);
   }
 };
+Stream.prototype.locale = function (tau, k) {
+  const ev = this.ev; let lo = 0, hi = ev.length; const target = tau - 1300, j = k;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (ev[m].t < target) lo = m + 1; else hi = m; }
+  let v = 0;
+  for (let i = lo; i < ev.length; i++) {
+    const e = ev[i]; if (e.t > tau + 400) break;
+    const rel = tau - e.t; if (rel < e.span[0] || rel > e.span[1]) continue;
+    for (let n = 0; n < e.comps.length; n++) { const c = e.comps[n]; if (c.loc && c.loc[j]) v += c.loc[j] * valComp(c, rel); }
+  }
+  return v;
+};
 Stream.prototype.leads = function (tau, vec, outArr) {
   for (let i = 0; i < 12; i++) {
     const w = LEADS[i].w;
@@ -601,6 +644,7 @@ Stream.prototype.leads = function (tau, vec, outArr) {
        spostate. È la manovra che conferma una destrocardia. */
     const mx = (this.cfg.precDestre && i >= 6) ? -1 : 1;
     let v = (mx * vec[0] * w[0] + vec[1] * w[1] + vec[2] * w[2]) * this.amp;
+    if (i >= 6 && this.cfg.campoVicino) v += this.locale(tau, i - 6) * this.amp;
     if (this.scariche.length) {
       const a = this.artefattoLead(tau, i);
       if (a !== null) { outArr[i] = a; continue; }
@@ -900,6 +944,6 @@ Sampled.prototype.rilevaR = function () {
   this.ev = ev;
 };
 
-const API = { LEADS, M, B, PL, dirAG, Stream, Sampled, rng, buildV, buildA, applyVariation };
+const API = { LEADS, M, B, PL, LOC, dirAG, Stream, Sampled, rng, buildV, buildA, applyVariation };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ECG = API;
 })(typeof window !== 'undefined' ? window : this);
