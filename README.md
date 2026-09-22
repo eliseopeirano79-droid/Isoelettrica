@@ -83,3 +83,16 @@ Fonte: [PTB-XL 1.0.3, PhysioNet](https://physionet.org/content/ptb-xl/1.0.3/), C
 ## Aggiornamenti
 
 La revisione 40 risolve i rilievi F01–F21: vedere [CORREZIONI-v40.md](CORREZIONI-v40.md). Per una nuova versione, mantenere coerenti i riferimenti `?v=` nell'HTML, `VERSION` nel service worker e le etichette nell'interfaccia. Un download essenziale fallito impedisce l'attivazione del nuovo worker. Le immagini offline hanno una cache separata che sopravvive agli aggiornamenti.
+
+## Dispositivi sul tracciato (v42.0)
+
+In **Parametri → Aggiungi dispositivo** scegli Pacemaker, DAE, ICD o CRT-D. La barra sopra l’ECG mostra il dispositivo attivo; **Rimuovi** ricrea il quadro originale con i suoi parametri. Il dispositivo è temporaneo e viene tolto cambiando caso o aprendo una registrazione reale. Nei due scenari dedicati DAE/ICD è già collegato all’apertura.
+
+- **Pacemaker**: VVI a domanda, frequenza minima 40–100/min. I QRS spontanei inibiscono lo stimolo; nel BAV III le P continuano indipendenti e lo spike precede il QRS stimolato.
+- **DAE**: Defibrilla → analisi simulata → ritmo defibrillabile/non defibrillabile → eventuale Eroga scarica. Asistolia e PEA non generano scariche né cambi di ritmo. Per TV/torsione di punta il contesto di polso è esplicito; non viene ricavato dall’ECG. Le analisi successive valutano l’esito corrente, non il ritmo iniziale.
+- **ICD transvenoso**: riconoscimento, ATP per la TV monomorfa oppure carica/scarica, con supporto VVI nei ritmi compatibili. Non trasforma l’asistolia in un ritmo stimolato efficace.
+- **CRT-D**: funzione ICD e stimolazione biventricolare; esempio di QRS da 130 ms, con tracking delle P rilevate a 120 ms e frequenza massima di tracking 150/min. La morfologia non predice il beneficio clinico della CRT.
+
+Modello didattico con rilevazione e cattura ideali: tempi ed esiti esemplificativi, senza guasti o fusione. Non simula l’impianto né ne determina l’indicazione clinica. Gli indici di ipertrofia e l’inserimento manuale di extrasistoli sono disabilitati durante la stimolazione aggiunta. Le sequenze seguono il tempo del simulatore (pausa e rallentamento inclusi) e sono annullate quando cambia il caso, il dispositivo o un parametro del ritmo. I dati PTB-XL rimangono registrazioni originali.
+
+Riferimenti: [AHA 2025, Adult Advanced Life Support](https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support), [ESC 2021, Pacing e CRT](https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/cardiac-pacing-and-cardiac-resynchronization-therapy/).

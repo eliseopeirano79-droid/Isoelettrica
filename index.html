@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=41.0">
+<link rel="manifest" href="manifest.webmanifest?v=42.0">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -252,6 +252,12 @@ ul.dd{margin:4px 0;padding-left:18px;color:var(--muted)}
 .credit{font-size:11.5px;color:var(--muted);white-space:nowrap;letter-spacing:.01em}
 .foot{margin:26px 0 0;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);text-align:center}
 @media (max-width:860px){.credit{display:none}}
+.device-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--accent-soft);flex:none}
+.device-chip{display:flex;align-items:center;gap:10px;color:var(--accent);font-size:13px}
+.device-chip button{font-size:12px;min-height:32px}
+.device-options{display:flex;flex-wrap:wrap;gap:7px}
+.device-options .btn{min-height:38px}
+.device-bar .defstato{min-width:0;flex:1 1 230px;line-height:1.4}
 .defbtn{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:5px 12px;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.01em}
 .defbtn:disabled{opacity:.45}
 .defstato{font-size:12px;color:var(--muted);align-self:center;min-width:210px}
@@ -455,12 +461,15 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
         <div class="seg" id="slowSeg" aria-label="Tempo"><button data-t="1" class="on">1×</button><button data-t="0.25">¼×</button></div>
         <div class="seg" id="ectSeg" aria-label="Inserisci un battito prematuro"><span class="seglab">Extrasistole</span><button data-e="pvc" class="on" title="Inserisce subito un battito prematuro ventricolare, con pausa compensatoria (tasto E)">Ventricolare</button><button data-e="pac" title="Inserisce subito un battito prematuro atriale, con P diversa e pausa non compensatoria (tasto A)">Atriale</button></div>
         <select id="ectPat" class="toolsel" aria-label="Schema di ripetizione delle extrasistoli" title="Fa comparire le extrasistoli in modo continuo secondo uno schema"><option value="off">Nessuna ripetizione</option><option value="isolate">Sparse</option><option value="bigeminismo">Bigeminismo</option><option value="trigeminismo">Trigeminismo</option><option value="quadrigeminismo">Quadrigeminismo</option><option value="coppie">Coppie</option><option value="triplette">Triplette</option><option value="salve">Salve (TV non sostenuta)</option></select>
-        <div class="seg" id="defSeg" hidden aria-label="Defibrillatore"><span class="seglab" id="defLab">Defibrillatore</span><button id="defBtn" class="defbtn">Carica e scarica</button></div>
-        <span class="defstato" id="defStato" hidden></span>
         <button class="iconbtn tool" id="calBtn" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M5 2v12M11 2v12M5 8h6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Compasso</button>
         <button class="iconbtn tool" id="stripBtn" title="Apre una derivazione sola a schermo intero, su più righe, con il righello dei 6 secondi"><svg viewBox="0 0 16 16"><path d="M1 5h14M1 11h14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Striscia lunga</button>
         <button class="iconbtn tool" id="markBtn" aria-pressed="false" title="Mostra PR e P bloccate sulla striscia lunga"><svg viewBox="0 0 16 16"><path d="M3 11V5M13 11V5M3 7h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Intervalli</button>
         </div>
+      </div>
+      <div id="deviceBar" class="device-bar" hidden aria-label="Dispositivo sul tracciato">
+        <div class="device-chip"><strong id="deviceLab"></strong><button id="deviceRemove" class="iconbtn" title="Rimuovi il dispositivo e torna al ritmo originale">Rimuovi ×</button></div>
+        <div class="seg" id="defSeg" hidden aria-label="Defibrillatore"><span class="seglab" id="defLab"></span><button id="defBtn" class="defbtn">Defibrilla</button></div>
+        <span class="defstato" id="defStato" role="status" aria-live="polite" hidden></span>
       </div>
       <div class="measures num" id="measures"></div>
       <div class="record-bar" id="recordBar" hidden><button class="btn" id="recordBack">← Atlante PTB-XL</button><button class="btn" id="recordRestart">Ricomincia</button><span class="num" id="recordTime"></span><span class="note" id="recordOffline"></span></div>
@@ -623,15 +632,15 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=41.0"></script>
-<script src="cuore3d.js?v=41.0"></script>
-<script src="engine.js?v=41.0"></script>
-<script src="ipertrofie.js?v=41.0"></script>
-<script src="data.js?v=41.0"></script>
-<script src="atlante-digitale.js?v=41.0"></script>
-<script src="ptbxl.js?v=41.0"></script>
-<script src="quiz.js?v=41.0"></script>
-<script src="app.js?v=41.0"></script>
-<script src="coronarie.js?v=41.0"></script>
+<script src="three.min.js?v=42.0"></script>
+<script src="cuore3d.js?v=42.0"></script>
+<script src="engine.js?v=42.0"></script>
+<script src="ipertrofie.js?v=42.0"></script>
+<script src="data.js?v=42.0"></script>
+<script src="atlante-digitale.js?v=42.0"></script>
+<script src="ptbxl.js?v=42.0"></script>
+<script src="quiz.js?v=42.0"></script>
+<script src="app.js?v=42.0"></script>
+<script src="coronarie.js?v=42.0"></script>
 </body>
 </html>
