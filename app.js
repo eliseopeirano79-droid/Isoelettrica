@@ -3,6 +3,7 @@
 'use strict';
 const { LEADS, Stream, Sampled, dirAG } = window.ECG;
 const ECG = window.ECG;
+const PTB = window.ISO_PTBXL;
 const DIG = window.ISO_ATLANTE_DIG || {};
 /* Tracciati reali da PTB-XL (PhysioNet, CC BY 4.0), prodotti da ptbxl.py.
    Il file è facoltativo: se non c'è, l'app funziona esattamente come prima. */
@@ -28,8 +29,9 @@ try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {
 store.params = store.params || {};
 store.quiz = store.quiz || { ok: 0, tot: 0 };
 let REALE = null, realeG = store.realeG || '', realeCache = {};
+let realIndexTask = null, realIndexError = '';
 let atlasFonte = store.atlasFonte || 'corso';
-let rebuildT = null, shockTimer = null, caseVersion = 0, recordRequest = 0;
+let rebuildT = null, shockTimer = null, caseVersion = 0, recordRequest = 0, recordAbort = null;
 let saveTimer = null;
 function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }, 400); }
 if (store.theme === 'light' || store.theme === 'dark') document.documentElement.setAttribute('data-theme', store.theme);
@@ -131,9 +133,10 @@ class Monitor {
     const ctx = this.ctx, d = this.dpr, mm = this.pxmm, g = this.gain;
     ctx.strokeStyle = css.trace; ctx.lineWidth = 1.35 * d; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
-    let t = this.drawn; const step = 3;
+    let t = this.drawn; const step = st.fs ? Math.min(3, 1000 / st.fs) : 3;
     while (t < this.t) {
-      const tn = Math.min(this.t, t + step);
+      const tn = Math.min(this.t, (Math.floor((t + 1e-8) / step) + 1) * step);
+      if (st.crossesBoundary && st.crossesBoundary(t, tn)) this.last = this.panels.map(() => null);
       if (tn - this.pageStart >= P) {
         ctx.stroke(); this.pageStart += P; this.last = this.panels.map(() => null); ctx.beginPath();
       }
@@ -546,6 +549,8 @@ function defaultParams(sc) { return Object.fromEntries(sc.params.map(q => [q.k, 
 function paramsFor(sc) { return Object.assign(defaultParams(sc), store.params[sc.id] || {}); }
 function cancelCaseActions() {
   caseVersion++; recordRequest++; clearTimeout(rebuildT); clearTimeout(shockTimer); rebuildT = shockTimer = null;
+  if (recordAbort) { recordAbort.abort(); recordAbort = null; }
+  $('#recordBar').hidden = true;
   defUI(null);
 }
 /* Schema di ripetizione delle extrasistoli applicato al quadro corrente.
@@ -763,6 +768,7 @@ function apriDigitalizzato(id, recDato) {
   curCfg = stream.cfg;
   mon.setStream(stream, false);
   mon.setHighlight([]);
+  mon.cal = []; mon.drawOverlay();
   scene.setScenario({});
   $('#scTitle').textContent = rec.t;
   $('#scCat').textContent = 'Tracciato reale — ' + rec.f;
@@ -778,7 +784,7 @@ function apriDigitalizzato(id, recDato) {
     '<p class="note">Derivazioni disponibili: ' + stream.availableLeads.join(', ') + '. ' +
     (stream.availableLeads.length < 12 ? 'Le altre derivazioni non sono disponibili e non vengono interpretate come linee piatte.' : '') + '</p></div>' +
     (reale
-      ? '<div class="sec"><h3>Come leggerlo</h3><p>È un elettrocardiogramma vero, registrato in ospedale e refertato da uno o due cardiologi. ' +
+      ? '<div class="sec"><h3>Come leggerlo</h3><p>È un elettrocardiogramma registrato su un paziente. ' +
         'I campioni conservano la scala del segnale originale. Intervalli e voltaggi richiedono una misura sul tracciato e una verifica della qualità. ' +
         'Il rumore, la deriva della linea di base e gli artefatti fanno parte del tracciato: è questa la differenza con il simulatore.</p>' +
         (rec.scp && rec.scp.length ? '<p class="note">Codici del referto: ' + esc(rec.scp.join(', ')) + '</p>' : '') + '</div>'
@@ -789,15 +795,49 @@ function apriDigitalizzato(id, recDato) {
     (q ? '<div class="sec"><h3>Quadro didattico correlato</h3><p>' + esc(q.name) + '</p>' +
          '<ul class="crit">' + q.card.criteri.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
          '<button class="btn" id="digQuadro">Apri il quadro simulato</button></div>' : '') +
-    '<div class="sec"><p class="src"><b>Origine:</b> ' + esc(rec.f) + '</p></div>' + FIRMA;
+    (rec.ptb ? ptbRecordDetails(rec) : '<div class="sec"><p class="src"><b>Origine:</b> ' + esc(rec.f) + '</p></div>') + FIRMA;
   const bq = $('#digQuadro');
   if (bq) bq.addEventListener('click', () => loadScenario(rec.q, false));
   $('#p-params').innerHTML = '<div class="sec"><h3>Parametri</h3><p class="note">Questo è un tracciato registrato su un paziente vero: non ha parametri da muovere. Scegli un quadro nella libreria per tornare al simulatore.</p></div>';
   renderVolt();
   aggiornaEctUI();
   closeLib();
+  $('#recordBar').hidden = !rec.ptb;
+  $('#recordOffline').textContent = rec.ptb ? (rec.offline ? 'Segnale salvato sul dispositivo' : 'Segnale disponibile online; salvataggio sul dispositivo non riuscito') : '';
+  $('#measures').innerHTML = measure(stream, 0);
+  recordTime();
   setPlaying(true);
 }
+
+function ptbRecordDetails(rec) {
+  const p = rec.ptb, names = REALE && REALE.codes || {};
+  const quality = { baseline_drift:'Oscillazione della linea di base', static_noise:'Rumore', burst_noise:'Disturbi transitori', electrodes_problems:'Problemi agli elettrodi' };
+  return '<div class="sec"><h3>Referto originale PTB-XL #' + p.id + '</h3><p>' +
+    (p.validated ? 'Validazione umana indicata nel dataset.' : 'Validazione umana non indicata nel dataset.') +
+    (p.second ? ' È indicata anche una seconda lettura.' : '') + '</p>' +
+    '<ul class="crit">' + Object.keys(p.codes).map(c => '<li>' + esc(names[c] ? names[c].name : c) + ' <span class="note">(' + esc(c) + ')</span></li>').join('') + '</ul>' +
+    '<p class="note">Le etichette descrivono il referto del dataset e possono coesistere. L’etichetta «infarto» non specifica da sola un infarto acuto.</p>' +
+    '<details><summary>Testo del referto nella lingua originale</summary><p>' + esc(p.report || 'Non disponibile') + '</p></details>' +
+    (Object.keys(p.quality).length ? '<h3>Qualità del segnale</h3><ul>' + Object.keys(p.quality).map(k => '<li>' + esc(quality[k] || k) + ': ' + esc(p.quality[k]) + '</li>').join('') + '</ul>' : '') +
+    '</div><div class="sec"><h3>Fonte e licenza</h3>' + ptbCredits() +
+    '<p class="note">Segnale originale a 500 Hz, in millivolt, riprodotto senza filtri o normalizzazione. Le traduzioni e la presentazione sono di Isoelettrica. La ripetizione dei 10 secondi non rappresenta una registrazione più lunga.</p>' +
+    '<p><a href="https://physionet.org/content/ptb-xl/1.0.3/' + esc(p.path) + '.hea" target="_blank" rel="noopener">Scheda del file originale</a></p></div>';
+}
+function ptbCredits() {
+  return '<p class="src">Wagner P, Strodthoff N, Bousseljot R-D, Samek W, Schaeffter T. ' +
+    '<a href="https://doi.org/10.13026/kfzx-aw45" target="_blank" rel="noopener">PTB-XL 1.0.3 · PhysioNet</a>. ' +
+    '<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> · ' +
+    '<a href="atlante-reale/fonti.html" target="_blank" rel="noopener">Attribuzioni e licenza completa</a>.</p>';
+}
+function recordTime() {
+  if ($('#recordBar').hidden || !stream || !stream.dur) return;
+  $('#recordTime').textContent = fmt((mon.t % stream.dur) / 1000, 1) + ' / ' + fmt(stream.dur / 1000) + ' s · riproduzione in ciclo';
+}
+$('#recordRestart').addEventListener('click', () => {
+  if (!stream || stream.cfg.mode !== 'sampled') return;
+  mon.t = mon.pageStart = mon.drawn = 0; mon.cal = []; mon.redrawAll(); mon.drawOverlay(); recordTime(); setPlaying(true);
+});
+$('#recordBack').addEventListener('click', () => { atlasFonte = 'reale'; showView('atlas'); });
 
 const notePar = {};
 function renderParams(sc) {
@@ -1038,9 +1078,11 @@ function stDraw() {
     c.strokeStyle = css.trace; c.lineWidth = 1.5 * d; c.lineJoin = 'round'; c.lineCap = 'round';
     c.beginPath();
     let primo = true;
-    for (let t = tA; t <= tB; t += 3) {
+    const step = stream.fs ? Math.min(3, 1000 / stream.fs) : 3;
+    for (let t = Math.ceil(tA / step) * step; t <= tB; t += step) {
       if (t > fine) break;
       stream.vec(t, v); stream.leads(t, v, lv);
+      if (stream.crossesBoundary && stream.crossesBoundary(t - step, t)) primo = true;
       if (!Number.isFinite(lv[li])) { primo = true; continue; }
       const x = x0 + (t - tA) / 1000 * mon.speed * mm;
       const y = Math.max(2, Math.min(ST.cv.height - 2, base - lv[li] * g * mm));
@@ -1461,6 +1503,8 @@ function answer(btn) {
    ===================================================================== */
 let atlasG = store.atlasG || (ATLAS_G[0] ? ATLAS_G[0].id : '');
 let atlasQ = '';
+let realPage = 0, realValidation = 'all', realQuality = 'all', realOfflineOnly = false, realOffline = new Set();
+const REAL_PAGE_SIZE = 60;
 /* ---------- atlante dei tracciati reali (PTB-XL, CC BY 4.0) ----------
    Sezione separata da quelle delle slide. L'indice è un file solo, leggero; il
    segnale di ogni tracciato si scarica quando lo apri, così la raccolta può
@@ -1473,27 +1517,50 @@ function caricaIndiceReale() {
     REALE = { voci, gruppi: [...groups].map(([id, nome]) => ({ id, nome })), licenza: 'PTB-XL v1.0.3 - PhysioNet - CC BY 4.0 - https://doi.org/10.13026/kfzx-aw45' };
   }
   if (REALE !== null) return Promise.resolve(REALE);
-  return fetch('atlante-reale/indice.json').then(r => r.ok ? r.json() : null)
-    .catch(() => null)
-    .then(d => { REALE = d || { voci: [], gruppi: [], licenza: '' }; return REALE; });
+  if (realIndexTask) return realIndexTask;
+  realIndexError = '';
+  realIndexTask = fetch('atlante-reale/indice.json').then(r => {
+    if (!r.ok) throw Error('Catalogo non disponibile'); return r.json();
+  }).then(d => { REALE = d.schema === 2 ? PTB.expandCatalog(d) : d; return REALE; })
+    .catch(() => { realIndexError = 'Il catalogo non è disponibile. Collegati a Internet e riprova.'; return null; })
+    .finally(() => { realIndexTask = null; });
+  return realIndexTask;
 }
 function gruppiReali() {
   const g = [];
-  (REALE.gruppi || []).forEach(x => { if (REALE.voci.some(v => v.g === x.id)) g.push(x); });
+  (REALE.gruppi || []).forEach(x => { if (REALE.voci.some(v => v.groups ? v.groups.includes(x.id) : v.g === x.id)) g.push(x); });
   return g;
 }
 function apriReale(v) {
+  if (recordAbort) recordAbort.abort();
   const request = ++recordRequest;
+  const status = $('#realStatus');
+  status.textContent = 'Caricamento di ' + v.f + '…';
   const fatto = rec => {
     if (request !== recordRequest) return;
-    rec = Object.assign({}, rec, { reale: true, t: v.t, f: v.f, q: v.q, scp: v.scp });
+    recordAbort = null;
+    rec = Object.assign({}, rec, { reale: true, t: rec.ptb && rec.t ? rec.t : v.t, f: v.f, q: v.q, scp: v.scp });
+    status.textContent = '';
+    showView('trace');
     apriDigitalizzato(v.i, rec);
   };
   if (DIG[v.i]) return fatto(DIG[v.i]);
   if (realeCache[v.i]) return fatto(realeCache[v.i]);
-  fetch('atlante-reale/' + v.i + '.json').then(r => { if (!r.ok) throw new Error('Tracciato non disponibile'); return r.json(); }).then(rec => {
+  recordAbort = new AbortController();
+  const options = { signal:recordAbort.signal, progress:message => { if (request === recordRequest) status.textContent = v.f + ' · ' + message; } };
+  const loading = REALE && REALE.schema === 2 ? PTB.load(v, options)
+    : fetch('atlante-reale/' + v.i + '.json', options).then(r => { if (!r.ok) throw new Error('Tracciato non disponibile'); return r.json(); });
+  return loading.then(rec => {
+    if (request !== recordRequest) return;
+    if (rec.offline) realOffline.add(v.id);
+    const keys = Object.keys(realeCache); if (keys.length >= 8) delete realeCache[keys[0]];
     realeCache[v.i] = rec; fatto(rec);
-  }).catch(() => { if (request === recordRequest) alert('Non riesco a caricare questo tracciato. Se stai usando l\u2019app senza rete, aprilo una prima volta da collegato.'); });
+  }).catch(error => {
+    if (request !== recordRequest) return;
+    if (recordAbort) recordAbort.abort();
+    recordAbort = null;
+    status.textContent = 'ECG non caricato. ' + (error.name === 'AbortError' ? 'Il download è stato interrotto.' : error.message) + ' Se sei offline, scegli un ECG già salvato. Tocca di nuovo la scheda per riprovare.';
+  });
 }
 function atlasFiltered() {
   const q = atlasQ.trim().toLowerCase();
@@ -1520,25 +1587,30 @@ function offlineRequest(save) {
 }
 $('#offlineSave').addEventListener('click', () => offlineRequest(true));
 function renderAtlas() {
-  const real = atlasFonte === 'reale' && REALE;
+  const real = atlasFonte === 'reale';
   $('#offlineSave').hidden = $('#offlineStatus').hidden = !!real;
+  $('#realTools').hidden = !real;
+  $('#aSearch').placeholder = real ? 'Cerca diagnosi, codice o numero ECG…' : 'Cerca nell’atlante del corso…';
   if (!offlineBusy && !real) offlineRequest(false);
   const toc = $('#atoc'); toc.innerHTML = '';
-  if (REALE && REALE.voci.length) {
+  if (PTB || REALE && REALE.voci.length) {
     const barra = document.createElement('div'); barra.className = 'afonti';
-    [['corso', 'Slide del corso', ATLAS.length], ['reale', 'ECG reali', REALE.voci.length]].forEach(([id, nome, n]) => {
+    [['corso', 'Slide del corso', ATLAS.length], ['reale', 'PTB-XL', REALE ? REALE.voci.length : null]].forEach(([id, nome, n]) => {
       const b = document.createElement('button');
       b.className = 'afonte' + (atlasFonte === id ? ' on' : '');
-      b.textContent = nome + ' (' + n + ')';
+      b.textContent = nome + (n == null ? '' : ' (' + Number(n).toLocaleString('it-IT') + ')');
+      b.setAttribute('aria-pressed', atlasFonte === id ? 'true' : 'false');
       b.addEventListener('click', () => {
-        atlasFonte = id; atlasQ = ''; const c = $('#aSearch'); if (c) c.value = '';
+        if (recordAbort) { recordAbort.abort(); recordAbort = null; recordRequest++; $('#realStatus').textContent = ''; }
+        atlasFonte = id; atlasQ = ''; realPage = 0; const c = $('#aSearch'); if (c) c.value = '';
         store.atlasFonte = id; save(); renderAtlas(); const w = $('.agrid-wrap'); if (w) w.scrollTop = 0;
+        if (id === 'reale' && !REALE) caricaIndiceReale().then(renderAtlas);
       });
       barra.appendChild(b);
     });
     toc.appendChild(barra);
   }
-  if (atlasFonte === 'reale' && REALE) return renderAtlasReale(toc);
+  if (real) return renderAtlasReale(toc);
   ATLAS_G.forEach(g => {
     const n = ATLAS.filter(a => a.g === g.id).length;
     const b = document.createElement('button');
@@ -1568,38 +1640,72 @@ function renderAtlas() {
   });
 }
 function renderAtlasReale(toc) {
+  const grid = $('#agrid'); grid.innerHTML = '';
+  if (!REALE) {
+    $('#realSummary').textContent = 'ECG reali PTB-XL';
+    const p = document.createElement('p'); p.className = 'ahead'; p.textContent = realIndexError || 'Caricamento del catalogo…'; grid.appendChild(p);
+    if (realIndexError) { const retry = document.createElement('button'); retry.className = 'btn'; retry.textContent = 'Riprova'; retry.addEventListener('click', () => { caricaIndiceReale().then(renderAtlas); renderAtlas(); }); grid.appendChild(retry); }
+    return;
+  }
+  const modern = REALE.schema === 2;
+  $('#realFilters').hidden = !modern;
+  const eligible = REALE.voci.filter(v => (realValidation !== 'validated' || v.validated) && (realQuality !== 'clean' || !v.noisy) && (!realOfflineOnly || realOffline.has(v.id)));
   const gr = gruppiReali();
-  if (!realeG || !gr.some(g => g.id === realeG)) realeG = gr.length ? gr[0].id : '';
-  gr.forEach(g => {
-    const n = REALE.voci.filter(v => v.g === g.id).length;
+  if (!realeG || realeG !== 'all' && !gr.some(g => g.id === realeG)) realeG = 'all';
+  const inGroup = (v, id) => id === 'all' || (v.groups ? v.groups.includes(id) : v.g === id);
+  [{id:'all',nome:'Tutti i tracciati'}, ...gr].forEach(g => {
+    const n = eligible.filter(v => inGroup(v, g.id)).length;
     const b = document.createElement('button');
-    b.textContent = g.nome + ' (' + n + ')';
-    b.classList.toggle('on', !atlasQ && g.id === realeG);
-    b.addEventListener('click', () => { realeG = g.id; atlasQ = ''; const c = $('#aSearch'); if (c) c.value = ''; store.realeG = g.id; save(); renderAtlas(); const w = $('.agrid-wrap'); if (w) w.scrollTop = 0; });
+    b.textContent = g.nome + ' (' + Number(n).toLocaleString('it-IT') + ')';
+    b.classList.toggle('on', g.id === realeG);
+    b.addEventListener('click', () => { realeG = g.id; atlasQ = ''; realPage = 0; const c = $('#aSearch'); if (c) c.value = ''; store.realeG = g.id; save(); renderAtlas(); const w = $('.agrid-wrap'); if (w) w.scrollTop = 0; });
     toc.appendChild(b);
   });
-  const grid = $('#agrid'); grid.innerHTML = '';
-  const q = atlasQ.trim().toLowerCase();
-  const list = q
-    ? REALE.voci.filter(v => (v.t + ' ' + (v.scp || []).join(' ') + ' ' + v.gn).toLowerCase().indexOf(q) >= 0)
-    : REALE.voci.filter(v => v.g === realeG);
+  const words = atlasQ.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const exact = /^(?:ptb[- ]?xl[-# ]*)?#?(\d+)$/i.exec(atlasQ.trim());
+  const list = eligible.filter(v => {
+    if (!inGroup(v, realeG)) return false;
+    if (exact) return v.id === Number(exact[1]);
+    const text = v.search || (v.t + ' ' + (v.scp || []).join(' ') + ' ' + v.gn).toLowerCase();
+    return words.every(word => text.includes(word));
+  });
+  const pages = Math.max(1, Math.ceil(list.length / REAL_PAGE_SIZE)); realPage = Math.min(realPage, pages - 1);
+  const start = realPage * REAL_PAGE_SIZE;
+  $('#realSummary').textContent = Number(REALE.voci.length).toLocaleString('it-IT') + ' ECG reali · 12 derivazioni · 10 secondi · 500 Hz';
+  $('#realCount').textContent = Number(realOffline.size).toLocaleString('it-IT') + ' segnali salvati sul dispositivo. Apri un ECG online per conservarlo anche offline.';
   const head = document.createElement('p'); head.className = 'ahead';
-  head.textContent = q ? list.length + ' tracciati trovati' : (gr.find(g => g.id === realeG) || {}).nome || '';
+  head.textContent = Number(list.length).toLocaleString('it-IT') + ' tracciati' + (list.length ? ' · ' + (start + 1) + '–' + Math.min(start + REAL_PAGE_SIZE, list.length) : ' trovati');
   grid.appendChild(head);
   if (!list.length) { grid.insertAdjacentHTML('beforeend', '<p class="ahead">Nessun tracciato trovato</p>'); return; }
-  list.forEach(v => {
+  list.slice(start, start + REAL_PAGE_SIZE).forEach(v => {
     const b = document.createElement('button');
     b.className = 'acard areale';
-    b.innerHTML = '<div class="at">' + esc(v.t) + '</div>' +
-      '<div class="ascp">' + (v.scp || []).slice(0, 5).map(c => '<span>' + esc(c) + '</span>').join('') + '</div>' +
-      '<div class="as">▶ ' + fmt(v.n / v.fs, 0) + ' s · ' + esc(v.f) + '</div>';
+    b.dataset.record = v.i;
+    b.innerHTML = '<div class="as">' + esc(v.f) + (v.person ? ' · ' + esc(v.person) : '') + '</div><div class="at">' + esc(v.t) + '</div>' +
+      '<div class="ascp">' + (v.scp || []).map(c => '<span title="' + esc(modern ? REALE.codes[c].name : c) + '">' + esc(c) + '</span>').join('') + '</div>' +
+      (modern ? '<div class="as validation">' + (v.validated ? '✓ Referto con validazione umana' : 'Validazione umana non indicata') + (v.noisy ? ' · Artefatti segnalati' : '') + '</div>' : '') +
+      '<div class="as play-record">▶ Anima ECG · ' + fmt(v.n / v.fs, 0) + ' s' + (realOffline.has(v.id) ? ' · Offline' : '') + '</div>';
     b.addEventListener('click', () => apriReale(v));
     grid.appendChild(b);
   });
-  const nota = document.createElement('p'); nota.className = 'ahead arealenota';
-  nota.textContent = REALE.licenza || '';
+  if (pages > 1) {
+    const nav = document.createElement('nav'); nav.className = 'real-pages'; nav.setAttribute('aria-label', 'Pagine dei tracciati PTB-XL');
+    [['Precedente', -1], ['Successiva', 1]].forEach(([label, delta]) => {
+      const button = document.createElement('button'); button.className = 'btn'; button.textContent = label;
+      button.disabled = realPage + delta < 0 || realPage + delta >= pages;
+      button.addEventListener('click', () => { realPage += delta; renderAtlas(); $('.agrid-wrap').scrollTop = 0; });
+      nav.appendChild(button);
+      if (delta === -1) { const text = document.createElement('span'); text.textContent = 'Pagina ' + (realPage + 1) + ' di ' + pages; nav.appendChild(text); }
+    });
+    grid.appendChild(nav);
+  }
+  const nota = document.createElement('div'); nota.className = 'arealenota';
+  nota.innerHTML = modern ? ptbCredits() : esc(REALE.licenza || '');
   grid.appendChild(nota);
 }
+$('#realValidation').addEventListener('change', e => { realValidation = e.target.value; realPage = 0; renderAtlas(); });
+$('#realQuality').addEventListener('change', e => { realQuality = e.target.value; realPage = 0; renderAtlas(); });
+$('#realOffline').addEventListener('change', e => { realOfflineOnly = e.target.checked; realPage = 0; renderAtlas(); });
 let lbCur = null;
 function openLightbox(a) {
   lbCur = a;
@@ -1647,7 +1753,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#lbox'
 let aTimer = null;
 $('#aSearch').addEventListener('input', e => {
   clearTimeout(aTimer); const v = e.target.value;
-  aTimer = setTimeout(() => { atlasQ = v; renderAtlas(); }, 180);
+  aTimer = setTimeout(() => { atlasQ = v; realPage = 0; renderAtlas(); }, 180);
 });
 
 
@@ -1747,13 +1853,17 @@ function cmpShow() {
    NAVIGAZIONE, TEMA, LOOP
    ===================================================================== */
 function showView(v) {
+  if (recordAbort) { recordAbort.abort(); recordAbort = null; recordRequest++; $('#realStatus').textContent = ''; }
   if (zenOn && v !== 'trace') zenStage(false);
   if (v !== 'trace') document.body.classList.remove('zen-card');
   S.view = v; $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $$('.view').forEach(el => el.classList.toggle('on', el.id === 'v-' + v));
   if (v === 'trace') { requestAnimationFrame(() => { mon.layout(); scene.resize(); }); }
   if (v === 'theory') renderTheory();
-  if (v === 'atlas') caricaIndiceReale().then(renderAtlas);
+  if (v === 'atlas') {
+    renderAtlas(); caricaIndiceReale().then(renderAtlas);
+    if (PTB) PTB.offlineIds().then(ids => { realOffline = ids; if (S.view === 'atlas') renderAtlas(); }).catch(() => {});
+  }
   if (v === 'cmp') cmpShow();
   if (v === 'cor' && window.ISO_CORONARIE) window.ISO_CORONARIE.init();
   if (v === 'anat') {
@@ -1790,7 +1900,7 @@ function loop(now) {
     scene.update(mon.t, stream);
     if (mon.marks) mon.drawOverlay();
     if (zenOn) zAggiorna(now);
-    if (now - mT > 500) { mT = now; $('#measures').innerHTML = measure(stream, mon.t); if ($('#p-volt').classList.contains('on')) renderVolt(); }
+    if (now - mT > 500) { mT = now; $('#measures').innerHTML = measure(stream, mon.t); recordTime(); if ($('#p-volt').classList.contains('on')) renderVolt(); }
     if (now - phT > 120) { phT = now; $('#phase3d').textContent = scene.phase; }
   } else if (S.view === 'quiz' && Q.stream && Q.mode !== 'atlas') {
     if (Q.playing) qmon.t += dt;
@@ -1873,7 +1983,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v40.2 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v41.0 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {
