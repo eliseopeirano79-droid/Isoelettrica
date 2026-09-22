@@ -65,10 +65,12 @@ function rsV1(m) {
 
 /* --- aggregatore --- */
 function calcola(amp, opt) {
-  if (!amp || !amp.R) return null;
+  const leads = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'];
+  if (!amp || !amp.R || !amp.S || !leads.every(l => Number.isFinite(amp.R[l]) && Number.isFinite(amp.S[l]))) return null;
   const o = opt || {};
   const sesso = o.sesso === 'F' ? 'F' : 'M';
   const qrsMs = o.qrsMs || amp.qrsMs || 0;
+  if (!Number.isFinite(qrsMs) || qrsMs <= 0) return null;
   return {
     sesso, qrsMs,
     sinistra: [sokolowSx(amp), rAvl(amp), cornell(amp, sesso), cornellProd(amp, sesso, qrsMs),

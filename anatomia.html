@@ -314,7 +314,7 @@ const LEADS=[
   {id:'V1',p:'H',ang:120},{id:'V2',p:'H',ang:90},{id:'V3',p:'H',ang:75},
   {id:'V4',p:'H',ang:60},{id:'V5',p:'H',ang:30},{id:'V6',p:'H',ang:0}
 ];
-LEADS.forEach(L=>{L.dir=L.p==='F'?frontalDir(L.ang):horizDir(L.ang);});
+LEADS.forEach(L=>{L.dir=L.p==='F'?frontalDir(L.ang):horizDir(L.ang);L.gain=L.id.startsWith('aV')?Math.sqrt(3)/2:1;});
 const BANDS={QRS:[0.62,0.8],P:[0.98,1.1],Q:[1.14,1.26],R:[1.3,1.42],S:[1.46,1.58],T:[1.62,1.74]};
 
 /* ---------- Stato vettori ---------- */
@@ -350,7 +350,13 @@ readVars();
 
 /* ---------- Scena ---------- */
 const view=$('#view');
-const renderer=new THREE.WebGLRenderer({antialias:true});
+let renderer;
+try { renderer=new THREE.WebGLRenderer({antialias:true}); }
+catch(error) {
+  const note=document.createElement('p'); note.textContent='Vista 3D non disponibile. Puoi continuare a esplorare vettori e derivazioni nei grafici 2D.';
+  note.style.cssText='position:absolute;top:40%;left:20px;right:20px;text-align:center;z-index:3';note.setAttribute('role','status');view.appendChild(note);
+  renderer={domElement:document.createElement('canvas'),setPixelRatio(){},setSize(){},render(){}};
+}
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 view.insertBefore(renderer.domElement,view.firstChild);
 const scene=new THREE.Scene();
@@ -792,7 +798,7 @@ function applyLeadSel(){
 
 /* ---------- ECG ---------- */
 const NSAMP=CYCLE/2+1;const sig={};
-function computeSignals(){LEADS.forEach(L=>{const a=sig[L.id]||(sig[L.id]=new Float32Array(NSAMP));const pr={};ORDER.forEach(k=>{pr[k]=vec[k].m*dirs[k].dot(L.dir);});
+function computeSignals(){LEADS.forEach(L=>{const a=sig[L.id]||(sig[L.id]=new Float32Array(NSAMP));const pr={};ORDER.forEach(k=>{pr[k]=vec[k].m*dirs[k].dot(L.dir)*L.gain;});
   for(let i=0;i<NSAMP;i++){const t=i*2;let s=0;for(const k of ORDER)s+=pr[k]*gw(k,t);a[i]=s;}});}
 const ecgEl=$('#ecg');const cells=[];
 LEADS.forEach(L=>{const b=document.createElement('button');b.className='lead';b.dataset.lead=L.id;b.setAttribute('aria-label','Derivazione '+L.id+': mostra la proiezione');

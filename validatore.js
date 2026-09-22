@@ -181,3 +181,5 @@ D.SCENARIOS.forEach(sc => {
   else { nOk++; console.log('✓ ' + sc.id + (info.length ? '  — ' + info.join(' | ') : '')); }
 });
 console.log('\n' + nOk + ' quadri conformi, ' + nErr + ' da rivedere.');
+
+process.exitCode = nErr ? 1 : 0;

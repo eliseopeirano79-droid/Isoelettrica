@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=39">
+<link rel="manifest" href="manifest.webmanifest?v=40">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -65,6 +65,11 @@ button{cursor:pointer}
 #v-trace.on{display:grid;grid-template-columns:270px minmax(0,1fr)}
 .lib{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
 .lib .search{padding:10px 12px;border-bottom:1px solid var(--line)}
+.lib .search select{width:100%;margin-top:8px;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px}
+.lib-section{border-bottom:1px solid var(--line)}
+.lib-section summary{padding:12px 14px;cursor:pointer;font-size:13px;font-weight:650;background:var(--panel)}
+.lib-section summary span{float:right;color:var(--muted);font-weight:400}
+.lib-section h4{font-size:11px}
 .lib input[type=search]{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:7px 10px}
 .lib .list{overflow:auto;padding:4px 0 24px;flex:1}
 .lib h4{margin:14px 14px 4px;font-size:12.5px;color:var(--muted);font-weight:600}
@@ -240,7 +245,8 @@ ul.dd{margin:4px 0;padding-left:18px;color:var(--muted)}
 }
 .lmiss{color:#cbd5e1;font-size:14px;line-height:1.5;max-width:520px;margin:auto;padding:40px 24px;text-align:center}
 
-#v-anat.on{display:block;padding:0;overflow:hidden;min-height:78vh;min-height:78dvh}
+#v-anat.on{display:flex;flex-direction:column;padding:0;overflow:hidden;min-height:78vh;min-height:78dvh}
+#v-anat .note{margin:0;padding:6px 12px;flex:none;background:var(--panel)}
 #v-anat iframe{border:0;width:100%;height:100%;display:block;background:var(--stage)}
 
 .credit{font-size:11.5px;color:var(--muted);white-space:nowrap;letter-spacing:.01em}
@@ -392,6 +398,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .arealenota{opacity:.6;font-size:.72rem;margin-top:14px;line-height:1.45}
 .pnota{margin:6px 0 0;font-size:.76rem;line-height:1.4;opacity:.72}
 .pnota.fuori{opacity:1;color:#e8865f;font-weight:500}
+.scene-notice{position:absolute;inset:35% 20px auto;padding:16px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;z-index:5;text-align:center} :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 </style>
 </head>
 <body>
@@ -418,7 +425,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
   <!-- TRACCIATO -->
   <section class="view on" id="v-trace">
     <aside class="lib" id="lib">
-      <div class="search"><input type="search" id="q" placeholder="Cerca per nome o criterio: QRS largo, PR corto, onda delta…" aria-label="Cerca un quadro o un criterio"></div>
+      <div class="search"><input type="search" id="q" placeholder="Cerca per nome o criterio: QRS largo, PR corto, onda delta…" aria-label="Cerca un quadro o un criterio"><select id="libSection" aria-label="Filtra la libreria per argomento"><option value="">Tutti gli argomenti</option></select></div>
       <div class="list" id="libList"></div>
     </aside>
     <div class="scrim" id="scrim"></div>
@@ -480,7 +487,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
   <section class="view" id="v-cmp">
     <div class="cmpgrid">
       <div class="cmpcol" data-s="A">
-        <div class="cmphead"><select class="cmpsel" id="cmpSelA" aria-label="Quadro a sinistra"></select><button class="btn cmpswap" id="cmpSwap" title="Scambia i due quadri">⇄</button></div>
+        <div class="cmphead"><select class="cmpsel" id="cmpSelA" aria-label="Quadro a sinistra"></select><button class="btn" id="cmpPlay">Pausa confronto</button><button class="btn cmpswap" id="cmpSwap" title="Scambia i due quadri">⇄</button></div>
         <div class="measures num cmpmeas" id="cmpMeasA"></div>
         <div class="ecgwrap cmpwrap" id="cmpWrapA"><canvas id="cmpEcgA"></canvas><canvas id="cmpOvA" class="ov"></canvas></div>
         <div class="cmpbody"><div class="cmppar" id="cmpParA"></div><div class="cmpcard" id="cmpCardA"></div></div>
@@ -508,7 +515,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
           <input id="corPos" type="range" min="0" max="1000" step="1" value="0" disabled></div>
         <div class="ctrl"><div class="lab"><span>Tempo dall’occlusione</span><output class="num" id="corTempoOut">0 minuti</output></div>
           <input id="corTempo" type="range" min="0" max="1440" step="10" value="0"></div>
-        <button class="btn" id="corReset">Riapri l’arteria</button>
+        <button class="btn" id="corReset">Azzera simulazione</button>
       </div>
       <div class="corstage" id="corStage"></div>
       <p class="corhint">Trascina per ruotare, pizzica o rotella per lo zoom. Rosso: arteria pervia. Grigio: tratto chiuso. Giallo: miocardio a rischio ancora vivo. Grigio-blu: necrosi.</p>
@@ -517,13 +524,13 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
   </section>
 
   <!-- ANATOMIA: Orbitali ECG -->
-  <section class="view" id="v-anat"><iframe id="anatFrame" title="Orbitali ECG" loading="lazy"></iframe></section>
+  <section class="view" id="v-anat"><p class="note">Laboratorio autonomo: i vettori qui sono indipendenti dal caso nel Tracciato.</p><iframe id="anatFrame" title="Orbitali ECG" loading="lazy"></iframe></section>
 
   <!-- ATLANTE -->
   <section class="view" id="v-atlas">
     <nav class="toc" id="atoc"></nav>
     <div class="agrid-wrap">
-      <div class="asearch"><input id="aSearch" type="search" placeholder="Cerca nell'atlante: BBSx, Wenckebach, infarto inferiore…" aria-label="Cerca nell'atlante"></div>
+      <div class="asearch"><button class="btn" id="offlineSave">Scarica queste immagini per l’uso offline</button><p class="note" id="offlineStatus" role="status"></p><input id="aSearch" type="search" placeholder="Cerca nell'atlante: BBSx, Wenckebach, infarto inferiore…" aria-label="Cerca nell'atlante"></div>
       <div class="agrid" id="agrid"></div>
       <p class="foot">Isoelettrica — App made by Eliseo Peirano · 2026</p>
     </div>
@@ -597,15 +604,16 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=39"></script>
-<script src="cuore3d.js?v=39"></script>
-<script src="engine.js?v=39"></script>
-<script src="ipertrofie.js?v=39"></script>
-<script src="data.js?v=39"></script>
-<script src="atlante-digitale.js?v=39"></script>
+<script src="three.min.js?v=40"></script>
+<script src="cuore3d.js?v=40"></script>
+<script src="engine.js?v=40"></script>
+<script src="ipertrofie.js?v=40"></script>
+<script src="data.js?v=40"></script>
+<script src="atlante-digitale.js?v=40"></script>
 <!-- facoltativo: ECG reali da PTB-XL, prodotti con ptbxl.py. Se il file non c'è, l'app parte lo stesso -->
-<script src="atlante-reale.js?v=39" onerror="this.dataset.ok=0"></script>
-<script src="app.js?v=39"></script>
-<script src="coronarie.js?v=39"></script>
+<script src="atlante-reale.js?v=40" onerror="this.dataset.ok=0"></script>
+<script src="quiz.js?v=40"></script>
+<script src="app.js?v=40"></script>
+<script src="coronarie.js?v=40"></script>
 </body>
 </html>

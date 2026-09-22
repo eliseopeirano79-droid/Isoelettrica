@@ -25,7 +25,7 @@ const SRC = {
   va: 'ESC 2022, Aritmie ventricolari e prevenzione della morte improvvisa',
   peri: 'ESC 2025, Miocarditi e pericarditi',
   valv: 'ESC/EACTS 2025, Trattamento delle valvulopatie',
-  als: 'ERC 2021, Linee guida sul supporto vitale avanzato nell\u2019adulto'
+  als: 'ERC 2025, Adult Advanced Life Support, doi:10.1016/j.resuscitation.2025.110769'
 };
 
 const TERR = {
@@ -66,7 +66,7 @@ function ASSE_QRS(p) {
   if (a >= -30 && a <= 90) return { testo: 'Asse normale (da \u221230° a +90°). A +90° il vettore è perpendicolare a DI, che diventa isodifasica.' };
   if (a > 90 && a <= 120) return { testo: 'Deviazione assiale destra moderata. Cerca ipertrofia destra, emiblocco posteriore, cuore polmonare.', fuori: true };
   if (a > 120) return { testo: 'Deviazione assiale destra marcata, oltre +120°: sospetta anche un\u2019inversione dei cavi delle braccia.', fuori: true };
-  if (a < -30 && a >= -45) return { testo: 'Deviazione assiale sinistra. La causa più frequente è l\u2019emiblocco anteriore sinistro.', fuori: true };
+  if (a < -30 && a >= -90) return { testo: 'Deviazione assiale sinistra. La causa più frequente è l\u2019emiblocco anteriore sinistro.', fuori: true };
   return { testo: 'Asse indeterminato o del quadrante nord-ovest: quasi sempre patologico.', fuori: true };
 }
 function ASSE_P(p) {
@@ -440,7 +440,7 @@ add({
     vettori: 'Non esiste un vettore medio: nel 3D il vettore cambia direzione senza schema.',
     guarda: 'Qualsiasi derivazione, poi il paziente.',
     dd: ['Artefatto (paziente cosciente, elettrodo staccato)', 'Asistolia (FV molto fine)', 'Torsione di punta'],
-    trappole: 'Una FV fine può sembrare asistolia: controlla in più derivazioni e aumenta il guadagno.',
+    trappole: 'ERC 2025: anche la FV fine richiede defibrillazione immediata, senza prolungare le pause delle compressioni.',
     fonte: SRC.va
   }
 });
@@ -576,7 +576,7 @@ const THEORY = [
 <p>L'ECG registra dalla superficie del corpo l'attività elettrica di tutto il cuore. In ogni istante la somma dei fronti di attivazione forma un <b>dipolo</b>, rappresentabile come un <b>vettore istantaneo</b> con direzione e ampiezza.</p>
 <p>La regola da cui discende tutto: <b>un elettrodo che guarda la parte positiva del dipolo, cioè un fronte di depolarizzazione che gli si avvicina, registra una deflessione positiva; se il fronte si allontana la deflessione è negativa; se passa perpendicolare, isoelettrica o difasica</b>.</p>
 <h4>La carta</h4>
-<p>Velocità standard <b>25 mm/s</b>: 1 quadratino = 40 ms, 1 quadrato grande = 200 ms. Taratura standard <b>10 mm/mV</b>: il segnale di calibrazione all'inizio di ogni riga è alto 10 mm. A 50 mm/s i tempi raddoppiano sulla carta; con taratura a 5 mm/mV le ampiezze vanno raddoppiate.</p>
+<p>Velocità standard <b>25 mm/s</b>: 1 quadratino = 40 ms, 1 quadrato grande = 200 ms. Taratura standard <b>10 mm/mV</b>: il segnale di calibrazione all'inizio di ogni riga è alto 10 mm. A 50 mm/s un quadratino dura 20 ms: la distanza di uno stesso intervallo raddoppia; con taratura a 5 mm/mV le ampiezze vanno raddoppiate.</p>
 <p>La sequenza da tenere a mente leggendo un tracciato è quella degli eventi: <b>depolarizzazione atriale → conduzione atrio-ventricolare → depolarizzazione ventricolare → ripolarizzazione ventricolare</b>. La ripolarizzazione atriale non si vede perché è nascosta nel QRS.</p>` },
   { id: 'derivazioni', title: '2. Come si registra: le 12 derivazioni', html: `
 <h4>Derivazioni periferiche (piano frontale)</h4>
@@ -1425,7 +1425,7 @@ add({
 /* ===== Secondo blocco di quadri aggiunti ===== */
 
 const SRC2 = {
-  als: 'ERC 2021, Linee guida sul supporto avanzato delle funzioni vitali',
+  als: 'ERC 2025, Adult Advanced Life Support, doi:10.1016/j.resuscitation.2025.110769',
   bru: 'HRS/EHRA/APHRS 2013, Consenso sulle sindromi aritmiche ereditarie; ESC 2022',
   arvc: 'Criteri diagnostici rivisti per la cardiomiopatia aritmogena, 2010; ESC 2023 cardiomiopatie'
 };
@@ -1774,15 +1774,15 @@ THEORY.push({
 </ul>
 <h4>Le trappole del monitor</h4>
 <ul class="crit">
-<li><b>Fibrillazione ventricolare a onde fini</b>: assomiglia all\u2019asistolia. Aumenta il guadagno e controlla in due derivazioni prima di decidere.</li>
+<li><b>Fibrillazione ventricolare a onde fini</b>: richiede defibrillazione immediata. ERC 2025 indica lo shock anche nel dubbio tra FV fine e asistolia per l’operatore ALS; se la decisione non è rapida, usa la modalità DAE minimizzando le pause delle compressioni.</li>
 <li><b>Linea perfettamente piatta</b>: sospetta un elettrodo staccato o un cavo scollegato; l\u2019asistolia vera ha sempre un po\u2019 di rumore.</li>
 <li><b>Artefatti da compressione o da trasporto</b>: possono simulare una tachicardia o una fibrillazione. Il polso e il capnografo dicono la verità.</li>
 <li><b>Attività elettrica senza polso</b>: il tracciato può essere del tutto normale. È l\u2019unico caso in cui un ECG rassicurante non rassicura affatto.</li>
 </ul>
 <h4>Defibrillazione e cardioversione non sono la stessa cosa</h4>
 <p>La <b>defibrillazione</b> è una scarica non sincronizzata e si usa quando non c\u2019è polso: fibrillazione ventricolare e tachicardia ventricolare senza polso. La <b>cardioversione</b> è sincronizzata sull\u2019onda R e si usa nelle tachiaritmie con polso ma instabili: fibrillazione e flutter atriale, tachicardia sopraventricolare, tachicardia ventricolare con polso. La sincronizzazione serve a evitare che la scarica cada sull\u2019onda T, nella fase vulnerabile, provocando proprio la fibrillazione ventricolare che si voleva evitare.</p>
-<p>Due casi a parte: la <b>torsione di punta</b>, che si tratta con magnesio e con la correzione della causa, e va defibrillata se degenera; e la <b>fibrillazione atriale preeccitata</b>, dove i farmaci che bloccano il nodo sono controindicati e la strada è la cardioversione elettrica.</p>
-<p class="note">Fonti: ERC 2021, linee guida sul supporto avanzato delle funzioni vitali; ${SRC.va}.</p>` });
+<p>Due casi a parte: la <b>torsione di punta</b>, che si tratta con magnesio e con la correzione della causa, e richiede defibrillazione immediata se è senza polso; e la <b>fibrillazione atriale preeccitata</b>, dove i farmaci che bloccano il nodo sono controindicati e la strada è la cardioversione elettrica.</p>
+<p class="note">Fonti: <a href="https://doi.org/10.1016/j.resuscitation.2025.110769" target="_blank" rel="noopener noreferrer">ERC 2025, Adult Advanced Life Support</a>; ${SRC.va}.</p>` });
 
 /* ===== Approfondimenti dei capitoli di base ===== */
 const APPRO = {
@@ -1875,7 +1875,7 @@ const APPRO = {
   asse: `
 <h4>Tre modi di trovare l\u2019asse, dal più veloce al più preciso</h4>
 <ol class="crit">
-<li><b>I due pollici.</b> Guarda DI e aVF: entrambe positive, asse normale, cioè nel quadrante fra 0° e +90°; DI positiva e aVF negativa, asse deviato a sinistra; DI negativa e aVF positiva, asse deviato a destra; entrambe negative, asse nella terra di nessuno, fra −90° e 180°.</li>
+<li><b>I due pollici.</b> Guarda DI e aVF: entrambe positive, asse normale, cioè nel quadrante fra 0° e +90°; DI positiva e aVF negativa, controlla DII: se positiva l’asse è tra 0° e −30° (ancora normale), se negativa è deviato a sinistra; DI negativa e aVF positiva, asse deviato a destra; entrambe negative, asse nella terra di nessuno, fra −90° e −180°.</li>
 <li><b>La derivazione isoelettrica.</b> Cerca la derivazione frontale in cui il QRS è più vicino a zero, cioè dove positivo e negativo si equivalgono: l\u2019asse è <b>perpendicolare</b> a quella derivazione. Restano due possibilità opposte, e si sceglie quella verso cui punta una derivazione positiva.</li>
 <li><b>Il calcolo sul sistema esassiale.</b> Misura l\u2019area netta del QRS in DI e in aVF, riportale come componenti su due assi perpendicolari e componi il vettore. È il metodo che usa la macchina.</li>
 </ol>
@@ -1884,10 +1884,10 @@ const APPRO = {
 <tr><td>−30° / +90°</td><td>Normale</td><td>—</td></tr>
 <tr><td>−30° / −90°</td><td>Deviazione a sinistra</td><td>Emiblocco anteriore sinistro, infarto inferiore, ipertrofia sinistra, obesità e gravidanza, cuore orizzontale</td></tr>
 <tr><td>+90° / +180°</td><td>Deviazione a destra</td><td>Emiblocco posteriore sinistro, ipertrofia destra, embolia polmonare, broncopneumopatia, infarto laterale, longilineo</td></tr>
-<tr><td>−90° / 180°</td><td>Asse indeterminato</td><td>Ritmi ventricolari, iperkaliemia, cardiopatie congenite, inversione degli elettrodi</td></tr>
+<tr><td>−90° / −180°</td><td>Asse indeterminato</td><td>Ritmi ventricolari, iperkaliemia, cardiopatie congenite, inversione degli elettrodi</td></tr>
 </tbody></table>
 <h4>Non solo il QRS</h4>
-<p>Anche <b>P</b> e <b>T</b> hanno un asse. L\u2019asse della P è normalmente fra 0° e +75°, e se esce da lì il ritmo non nasce dal nodo del seno. L\u2019angolo fra asse del QRS e asse della T, il <b>QRS-T angle</b>, è normalmente stretto: un angolo largo indica che la ripolarizzazione non segue più la depolarizzazione, come nel sovraccarico, nell\u2019ischemia e nei blocchi di branca.</p>
+<p>Anche <b>P</b> e <b>T</b> hanno un asse. L\u2019asse della P è normalmente fra 0° e +75°, ma un asse esterno a questo intervallo va interpretato insieme a morfologia della P, assetto cardiaco e posizione degli elettrodi. L\u2019angolo fra asse del QRS e asse della T, il <b>QRS-T angle</b>, è normalmente stretto: un angolo largo indica che la ripolarizzazione non segue più la depolarizzazione, come nel sovraccarico, nell\u2019ischemia e nei blocchi di branca.</p>
 <p class="note">Approfondimento basato su ${SRC.aha3} e sui criteri del corso, capitolo 13.</p>`,
 
   fc: `
@@ -1895,12 +1895,12 @@ const APPRO = {
 <ul class="crit">
 <li><b>Regola del 300</b> per i ritmi regolari: 300 diviso il numero di quadrati grandi fra due R. La sequenza da tenere a memoria è 300, 150, 100, 75, 60, 50.</li>
 <li><b>Regola del 1500</b> quando serve precisione: 1500 diviso il numero di quadratini piccoli fra due R.</li>
-<li><b>Metodo dei sei secondi</b> per i ritmi irregolari, fibrillazione atriale in testa: conta i QRS in trenta quadrati grandi e moltiplica per dieci. È l\u2019unico metodo corretto quando gli RR variano.</li>
+<li><b>Metodo dei sei secondi</b> per i ritmi irregolari, fibrillazione atriale in testa: a 25 mm/s conta i QRS in trenta quadrati grandi e moltiplica per dieci. È una stima: puoi anche contare su dieci secondi e moltiplicare per sei, oppure usare l’RR medio di un intervallo adeguato.</li>
 <li><b>60.000 diviso l\u2019RR in millisecondi</b>: la formula da cui derivano tutte le altre.</li>
 </ul>
 <h4>Attenzioni</h4>
 <ul class="crit">
-<li>Se la carta scorre a 50 mm/s invece di 25, tutti i tempi sulla carta raddoppiano e la frequenza calcolata con le regole classiche va dimezzata. Controlla sempre la velocità stampata in fondo al tracciato.</li>
+<li>A 50 mm/s un quadratino dura 20 ms e un quadrato grande 100 ms: usa 3000 diviso i quadratini oppure 600 diviso i quadrati grandi. Per lo stesso RR la distanza raddoppia; il risultato ottenuto con 300 o 1500 va quindi raddoppiato, non dimezzato. Controlla sempre la velocità stampata in fondo al tracciato.</li>
 <li>Nei blocchi atrio-ventricolari le frequenze sono due, atriale e ventricolare, e vanno riportate entrambe.</li>
 <li>Nel flutter è utile calcolare la frequenza atriale e dedurne il rapporto di conduzione: 300 diviso 150 al minuto significa 2:1.</li>
 </ul>
@@ -2384,7 +2384,7 @@ add({
     dd: [
       'Artefatto da movimento o da compressioni toraciche (irregolare, senza il salto fuori scala iniziale)',
       'Distacco di elettrodo (linea piatta improvvisa in una sola derivazione)',
-      'Fibrillazione ventricolare a onde fini scambiata per asistolia: alza il guadagno e cambia derivazione prima di decidere'
+      'FV fine: defibrillare senza ritardare le compressioni; nel dubbio rapido usare la modalità DAE (ERC 2025)'
     ],
     trappole: 'La trappola sta tutta qui: premere il pulsante sull\u2019asistolia. Non succede nulla, si perde tempo di compressioni e si interrompe il massaggio. L\u2019asistolia si tratta con compressioni e adrenalina.',
     fonte: SRC.als
@@ -3008,7 +3008,23 @@ S.push({
   }
 });
 
+/* Immagini verificate per il quiz: nessuna risposta impressa né casi multipli.
+   Il collegamento q serve allo studio e non costituisce approvazione del quiz. */
+const QUIZ_ATLAS = { lett051: true, ari026: true, ari114: true, ari121: true, ari099: true,
+  ari035: [0, 685, 1400, 180] };
+ATLAS.forEach(a => { a.quizApproved = !!QUIZ_ATLAS[a.id]; if (Array.isArray(QUIZ_ATLAS[a.id])) a.quizCrop = QUIZ_ATLAS[a.id]; });
+
 const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', VALV, COMB, 'Elettroliti e altro', ART];
+const LIB_SECTIONS = [
+  { id: 'ritmo', name: 'Ritmo e aritmie', cats: ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Ventricolari'] },
+  { id: 'conduzione', name: 'Conduzione', cats: ['Blocchi AV', 'Conduzione intraventricolare'] },
+  { id: 'ischemia', name: 'Ischemia e infarto', cats: ['Ischemia'] },
+  { id: 'struttura', name: 'Ipertrofie e valvulopatie', cats: ['Ipertrofie', VALV] },
+  { id: 'combinati', name: 'Quadri combinati', cats: [COMB] },
+  { id: 'altro', name: 'Elettroliti e altri quadri', cats: ['Elettroliti e altro'] },
+  { id: 'dispositivi', name: 'Stimolazione e arresto cardiaco', cats: ['Stimolazione', 'Arresto cardiaco'] },
+  { id: 'artefatti', name: 'Artefatti ed elettrodi', cats: [ART] }
+];
 
 /* ==================== VERSIONE SENZA I RIFERIMENTI AL CORSO ====================
    Con window.ISO_SOLO_LINEE_GUIDA = true (una riga in index.html) la libreria
@@ -3035,6 +3051,6 @@ function soloLineeGuida() {
 }
 if (root.ISO_SOLO_LINEE_GUIDA === true) soloLineeGuida();
 
-const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G };
+const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G, LIB_SECTIONS };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ISO_DATA = API;
 })(typeof window !== 'undefined' ? window : this);

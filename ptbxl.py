@@ -22,22 +22,22 @@ Uso (una volta sola, sul computer, dopo aver scaricato il dataset):
 Produce un file JavaScript con i tracciati a 100 Hz, pronto per il visualizzatore
 dei tracciati registrati già presente nell'app.
 """
-import argparse, base64, csv, json, os, re, struct, sys
+import argparse, ast, base64, csv, json, os, re, struct, sys
 
 # SCP-ECG -> quadro di Isoelettrica. Solo le corrispondenze sicure: dove il
 # codice è generico o ambiguo si lascia il tracciato senza quadro associato.
 MAPPA = {
     'NORM': ('normale', 'ECG normale'),
-    'SR': ('normale', 'Ritmo sinusale'),
+    'SR': (None, 'Ritmo sinusale'),
     'SBRAD': ('bradisinusale', 'Bradicardia sinusale'),
     'STACH': ('tachisinusale', 'Tachicardia sinusale'),
     'SARRH': ('aritmiasinusale', 'Aritmia sinusale'),
     'AFIB': ('fa', 'Fibrillazione atriale'),
     'AFLT': ('flutter', 'Flutter atriale'),
-    'SVTAC': ('avnrt', 'Tachicardia sopraventricolare'),
-    'PSVT': ('avnrt', 'Tachicardia parossistica sopraventricolare'),
+    'SVTAC': (None, 'Tachicardia sopraventricolare'),
+    'PSVT': (None, 'Tachicardia parossistica sopraventricolare'),
     '1AVB': ('bav1', 'Blocco atrioventricolare di primo grado'),
-    '2AVB': ('wenck', 'Blocco atrioventricolare di secondo grado'),
+    '2AVB': (None, 'Blocco atrioventricolare di secondo grado'),
     '3AVB': ('bav3', 'Blocco atrioventricolare completo'),
     'CRBBB': ('bbdx', 'Blocco di branca destra completo'),
     'IRBBB': ('bbdxinc', 'Blocco di branca destra incompleto'),
@@ -49,25 +49,25 @@ MAPPA = {
     'WPW': ('wpw', 'Preeccitazione ventricolare'),
     'LVH': ('ivs', 'Ipertrofia ventricolare sinistra'),
     'RVH': ('ivd', 'Ipertrofia ventricolare destra'),
-    'LAO/LAE': ('interatriale', 'Ingrandimento atriale sinistro'),
-    'RAO/RAE': ('ivd', 'Ingrandimento atriale destro'),
-    'IMI': ('stemi-inferiore', 'Infarto inferiore'),
-    'ILMI': ('stemi-inferiore', 'Infarto infero-laterale'),
-    'AMI': ('stemi-anteriore', 'Infarto anteriore'),
-    'ASMI': ('stemi-anteriore', 'Infarto antero-settale'),
-    'ALMI': ('stemi-laterale', 'Infarto antero-laterale'),
-    'LMI': ('stemi-laterale', 'Infarto laterale'),
-    'IPLMI': ('stemi-posteriore', 'Infarto postero-laterale'),
-    'IPMI': ('stemi-posteriore', 'Infarto posteriore'),
+    'LAO/LAE': (None, 'Ingrandimento atriale sinistro'),
+    'RAO/RAE': (None, 'Ingrandimento atriale destro'),
+    'IMI': (None, 'Infarto inferiore'),
+    'ILMI': (None, 'Infarto infero-laterale'),
+    'AMI': (None, 'Infarto anteriore'),
+    'ASMI': (None, 'Infarto antero-settale'),
+    'ALMI': (None, 'Infarto antero-laterale'),
+    'LMI': (None, 'Infarto laterale'),
+    'IPLMI': (None, 'Infarto postero-laterale'),
+    'IPMI': (None, 'Infarto posteriore'),
     'PVC': ('esv', 'Extrasistoli ventricolari'),
     'PAC': ('esa', 'Extrasistoli atriali'),
-    'PACE': ('pmvvi', 'Ritmo da pacemaker'),
+    'PACE': (None, 'Ritmo da pacemaker'),
     'LNGQT': ('qtlungo', 'QT lungo'),
-    'ELECTRICAL_ALTERNANS': ('tamponamento', 'Alternanza elettrica'),
+    'ELECTRICAL_ALTERNANS': (None, 'Alternanza elettrica'),
 }
 # gruppi dell'atlante reale: come sono organizzate le sezioni nell'app
 GRUPPI = {
-    'normali': ('Tracciati normali', ['NORM', 'SR', 'SBRAD', 'STACH', 'SARRH']),
+    'normali': ('Normalità e ritmi sinusali', ['NORM', 'SR', 'SBRAD', 'STACH', 'SARRH']),
     'sopraventricolari': ('Aritmie sopraventricolari', ['AFIB', 'AFLT', 'SVTAC', 'PSVT', 'PAC']),
     'bav': ('Blocchi atrioventricolari', ['1AVB', '2AVB', '3AVB']),
     'branca': ('Blocchi di branca ed emiblocchi', ['CRBBB', 'IRBBB', 'CLBBB', 'ILBBB', 'LAFB', 'LPFB', 'IVCD']),
@@ -140,18 +140,20 @@ def scegli(db, per_classe, solo_validati, max_rumore):
     scelti, conta = [], {}
     for r in db:
         try:
-            codici = eval(r['scp_codes'], {'__builtins__': {}})
+            codici = ast.literal_eval(r['scp_codes'])
         except Exception:
             continue
         if solo_validati and r.get('validated_by_human', '').strip() not in ('True', 'true', '1'):
             continue
         if max_rumore and (r.get('static_noise', '').strip() or r.get('burst_noise', '').strip()):
             continue
-        # il codice con la verosimiglianza più alta fra quelli che sappiamo mappare
+        if not isinstance(codici, dict):
+            continue
+        # Preserve all labels; sinus rhythm must not hide another diagnosis.
         cand = [(c, float(l or 0)) for c, l in codici.items() if c in MAPPA]
         if not cand:
             continue
-        cand.sort(key=lambda x: -x[1])
+        cand.sort(key=lambda x: (x[0] in ('SR', 'NORM'), -x[1], x[0]))
         c = cand[0][0]
         if conta.get(c, 0) >= per_classe:
             continue
@@ -179,8 +181,7 @@ def main():
 
     scelti, conta = scegli(db, a.per_classe, not a.tutti, not a.tutti)
     if not scelti and not a.tutti:
-        print('nessun tracciato dopo i filtri: riprovo senza')
-        scelti, conta = scegli(db, a.per_classe, False, False)
+        sys.exit('Nessun tracciato supera i filtri. Usa --tutti soltanto per importare esplicitamente casi non filtrati.')
     print('%d tracciati scelti su %d classi' % (len(scelti), len(conta)))
 
     cartella = a.modo == 'cartella'
@@ -204,6 +205,8 @@ def main():
         if len(d) < len(campi):
             continue
         quadro, etichetta = MAPPA[c]
+        if c == 'NORM' and any(k not in ('NORM', 'SR') for k in tutti_i_codici):
+            quadro = None
         eta = r.get('age', ''); sesso = {'0': 'uomo', '1': 'donna'}.get(r.get('sex', ''), '')
         titolo = etichetta
         if eta and sesso:
@@ -212,7 +215,9 @@ def main():
         gid, gnome = gruppo_di(c)
         ident = 'ptbxl-%s' % r['ecg_id']
         voce = {'t': titolo, 'f': 'PTB-XL #%s (CC BY 4.0)' % r['ecg_id'], 'q': quadro,
-                'fs': int(hea['fs']), 'n': n, 'scp': list(tutti_i_codici), 'd': d}
+                'fs': hea['fs'], 'n': n, 'scp': list(tutti_i_codici), 'd': d, 'reale': True,
+                'g': gid, 'gn': gnome, 'validated_by_human': r.get('validated_by_human', ''),
+                'report': r.get('report', ''), 'infarction_stadium1': r.get('infarction_stadium1', '')}
         if cartella:
             with open(os.path.join(dirout, ident + '.json'), 'w', encoding='utf-8') as f:
                 json.dump(voce, f, ensure_ascii=False, separators=(',', ':'))

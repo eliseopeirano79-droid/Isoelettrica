@@ -502,7 +502,7 @@ D.SCENARIOS.forEach(sc => {
       let picco = 0, nan = 0;
       for (let t = 2000; t < 15000; t += 2) {
         st.vec(t, v); st.leads(t, v, lv);
-        for (let i = 0; i < 12; i++) { if (!isFinite(lv[i])) nanProve++; picco = Math.max(picco, Math.abs(lv[i])); }
+        for (let i = 0; i < 12; i++) { if (!isFinite(lv[i])) nan++; picco = Math.max(picco, Math.abs(lv[i])); }
       }
       if (nan) guai.push(nan + ' campioni non numerici');
       if (picco > 6) guai.push('ampiezza fuori scala ' + (picco * 10).toFixed(0) + ' mm');

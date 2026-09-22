@@ -61,6 +61,7 @@ var D = window.ISO_ATLANTE_DIG || {};
 var ORD = ['I','II','III','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6'];
 var KEY = 'isoelettrica.revisione';
 var stato = {};
+function esc(v){ return String(v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 try { stato = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e) { stato = {}; }
 function salva(){ try{ localStorage.setItem(KEY, JSON.stringify(stato)); }catch(e){} }
 
@@ -122,15 +123,15 @@ function render(){
   var box = document.getElementById('lista'); box.innerHTML = '';
   ids.forEach(function(id){
     var rec = D[id], st = stato[id] || {};
-    var el = document.createElement('div'); el.className='caso';
+    var el = document.createElement('div'); el.className='caso'; el.dataset.id = id;
     el.innerHTML =
-      '<h2>' + rec.t + ' <span class="tag' + (st.v==='ok'?' ok':st.v==='no'?' no':'') + '">' +
+      '<h2>' + esc(rec.t) + ' <span class="tag' + (st.v==='ok'?' ok':st.v==='no'?' no':'') + '">' +
         (st.v==='ok'?'approvato':st.v==='no'?'da rifare':'da vedere') + '</span></h2>' +
-      '<div class="meta">' + id + ' · ' + rec.f + ' · ' + Object.keys(rec.d).length + ' derivazioni · ' +
+      '<div class="meta">' + id + ' · ' + esc(rec.f) + ' · ' + Object.keys(rec.d).length + ' derivazioni · ' +
         rec.fs.toFixed(0) + ' Hz · ' + (rec.n/rec.fs).toFixed(2) + ' s</div>' +
       '<div class="due"><img loading="lazy" src="atlante/' + id + '.jpg" alt=""><canvas></canvas></div>' +
       '<div class="azioni"><button class="btn ok">Va bene</button><button class="btn no">Da rifare</button>' +
-      '<textarea rows="1" placeholder="nota (facoltativa)">' + (st.nota||'') + '</textarea></div>';
+      '<textarea rows="1" placeholder="nota (facoltativa)">' + esc(st.nota||'') + '</textarea></div>';
     box.appendChild(el);
     var cv = el.querySelector('canvas');
     requestAnimationFrame(function(){ disegna(cv, rec); });
@@ -152,7 +153,7 @@ document.getElementById('esporta').addEventListener('click', function(){
 });
 window.addEventListener('resize', function(){
   document.querySelectorAll('.caso').forEach(function(el,i){
-    var id = Object.keys(D).sort()[i]; if (D[id]) disegna(el.querySelector('canvas'), D[id]);
+    var id = el.dataset.id; if (D[id]) disegna(el.querySelector('canvas'), D[id]);
   });
 });
 render();

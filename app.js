@@ -6,8 +6,8 @@ const ECG = window.ECG;
 const DIG = window.ISO_ATLANTE_DIG || {};
 /* Tracciati reali da PTB-XL (PhysioNet, CC BY 4.0), prodotti da ptbxl.py.
    Il file è facoltativo: se non c'è, l'app funziona esattamente come prima. */
-(window.ISO_REALE || []).forEach((r, i) => { DIG['reale-' + i] = r; });
-const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G } = window.ISO_DATA;
+(window.ISO_REALE || []).forEach((r, i) => { DIG[r.i || ('reale-' + i)] = Object.assign({}, r, { reale: true }); });
+const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G, LIB_SECTIONS } = window.ISO_DATA;
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -15,7 +15,8 @@ const FIRMA = '<p class="foot">Isoelettrica — App made by Eliseo Peirano · 20
 const DEG = Math.PI / 180;
 const LIDX = {}; LEADS.forEach((L, i) => { LIDX[L.id] = i; });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const fmt = (v, d) => (d ? v.toFixed(d) : Math.round(v).toString()).replace('.', ',');
+const fmt = (v, d) => Number.isFinite(v) ? (d ? v.toFixed(d) : Math.round(v).toString()).replace('.', ',') : 'N/D';
+const cloneCase = value => JSON.parse(JSON.stringify(value));
 
 /* ---------- memoria ---------- */
 const KEY = 'isoelettrica.v1';
@@ -23,6 +24,9 @@ let store = {};
 try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { store = {}; }
 store.params = store.params || {};
 store.quiz = store.quiz || { ok: 0, tot: 0 };
+let REALE = null, realeG = store.realeG || '', realeCache = {};
+let atlasFonte = store.atlasFonte || 'corso';
+let rebuildT = null, shockTimer = null, caseVersion = 0, recordRequest = 0;
 let saveTimer = null;
 function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }, 400); }
 if (store.theme === 'light' || store.theme === 'dark') document.documentElement.setAttribute('data-theme', store.theme);
@@ -49,12 +53,17 @@ class Monitor {
     ov.addEventListener('pointerdown', e => this.onPointer(e));
   }
   pageMs() { return (this.mode === 'print' ? 250 : 125) / this.speed * 1000; }
-  setStream(st, keep) { this.stream = st; if (!keep) { this.t = 0; this.pageStart = 0; this.drawn = 0; this.redrawAll(); } }
+  setStream(st, keep) { this.stream = st; if (!keep) { this.t = 0; this.pageStart = 0; this.drawn = 0; } this.layout(); }
   layout() {
     const W = this.cv.parentElement.clientWidth; if (!W) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const panels = []; let pxmm, H;
-    if (this.mode === 'print') {
+    if (this.stream && this.stream.availableLeads && this.stream.availableLeads.length <= 6) {
+      const ids = this.stream.availableLeads, m = 9, row = 25, top = 3, width = this.mode === 'print' ? 250 : 125; pxmm = W / (m + width);
+      H = Math.round(pxmm * (top + ids.length * row + 2));
+      ids.forEach((id, i) => panels.push({ id, li: LIDX[id], g: 0, tw0: 0, tw1: 1, base: (top + i * row + 15) * pxmm, top: (top + i * row) * pxmm, h: row * pxmm, lx: m * pxmm, strip: true }));
+      this.groups = [{ x0: m * pxmm, w: width * pxmm }]; this.rows = panels.map(p => p.base);
+    } else if (this.mode === 'print') {
       const m = 9, row = 23, strip = 25, top = 3; pxmm = W / (m + 250);
       H = Math.round(pxmm * (top + 3 * row + strip + 2));
       PRINT.forEach((r, ri) => r.forEach((id, c) => panels.push({ id, li: LIDX[id], g: 0, tw0: c / 4, tw1: (c + 1) / 4, base: (top + ri * row + 14) * pxmm, top: (top + ri * row) * pxmm, h: row * pxmm, lx: (m + c * 62.5) * pxmm })));
@@ -95,9 +104,9 @@ class Monitor {
     c.font = '600 ' + font + 'px -apple-system, system-ui, sans-serif'; c.textBaseline = 'top';
     if (this.mode === 'print') {
       this.rows.forEach(b => cal(0.6 * mm, b * d));
-      this.panels.forEach(p => { c.fillText(p.id, p.lx * d + (p.strip ? 1.5 : 1.2) * mm + (p.lx === this.groups[0].x0 ? 0 : 0), p.top * d + 1.2 * mm); if (p.tw0 > 0 && !p.strip) { c.save(); c.strokeStyle = css.grid2; c.lineWidth = 2 * d; c.beginPath(); c.moveTo(p.lx * d, p.base * d - 3 * mm); c.lineTo(p.lx * d, p.base * d + 3 * mm); c.stroke(); c.restore(); } });
+      this.panels.forEach(p => { c.fillText(p.id + (this.stream && this.stream.hasLead && !this.stream.hasLead(p.li) ? ' · N/D' : ''), p.lx * d + (p.strip ? 1.5 : 1.2) * mm + (p.lx === this.groups[0].x0 ? 0 : 0), p.top * d + 1.2 * mm); if (p.tw0 > 0 && !p.strip) { c.save(); c.strokeStyle = css.grid2; c.lineWidth = 2 * d; c.beginPath(); c.moveTo(p.lx * d, p.base * d - 3 * mm); c.lineTo(p.lx * d, p.base * d + 3 * mm); c.stroke(); c.restore(); } });
     } else {
-      this.panels.forEach(p => { cal(p.lx * d - 6.4 * mm, p.base * d); c.fillText(p.id, p.lx * d + 1.2 * mm, p.top * d + 0.8 * mm); });
+      this.panels.forEach(p => { cal(p.lx * d - 6.4 * mm, p.base * d); c.fillText(p.id + (this.stream && this.stream.hasLead && !this.stream.hasLead(p.li) ? ' · N/D' : ''), p.lx * d + 1.2 * mm, p.top * d + 0.8 * mm); });
     }
   }
   redrawAll() {
@@ -127,7 +136,7 @@ class Monitor {
       const frac = (tn - this.pageStart) / P;
       for (let i = 0; i < this.panels.length; i++) {
         const p = this.panels[i];
-        if (frac < p.tw0 || frac >= p.tw1) { this.last[i] = null; continue; }
+        if (!Number.isFinite(this.lv[p.li]) || frac < p.tw0 || frac >= p.tw1) { this.last[i] = null; continue; }
         const x = this.xOf(p, frac) * d;
         let y = p.base - this.lv[p.li] * g * mm;
         y = clamp(y, 1, this.H - 1) * d;
@@ -265,6 +274,9 @@ class Scene3D {
   constructor(el) {
     this.el = el;
     const r = this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.available = true;
+    r.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); this.available = false; sceneNotice(el, 'Vista 3D temporaneamente non disponibile. Il tracciato resta utilizzabile.'); });
+    r.domElement.addEventListener('webglcontextrestored', () => { this.available = true; sceneNotice(el, ''); });
     r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     el.insertBefore(r.domElement, el.firstChild);
     const sc = this.scene = new THREE.Scene(); sc.background = new THREE.Color(css.stage || '#121926');
@@ -420,6 +432,7 @@ class Scene3D {
   resize() { const w = this.el.clientWidth, h = this.el.clientHeight; if (!w || !h) return; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.fov = w < h ? 50 : 38; this.camera.updateProjectionMatrix(); }
   lightPath(name, u, fade) { (this.paths[name] || []).forEach(p => { if (u < 0) { p.og.setDrawRange(0, 0); if (p.part) p.part.visible = false; return; } const uu = Math.min(1, u); p.og.setDrawRange(0, Math.floor(uu * p.seg) * p.rad * 6); p.om.opacity = u <= 1 ? 1 : Math.max(0, 1 - fade); if (p.part) { p.part.visible = u <= 1; if (u <= 1) p.curve.getPointAt(uu, p.part.position); } }); }
   update(t, st) {
+    if (this.available === false) return;
     if (!st) return;
     const o = this.orbit;
     if (this.anim) { this.anim.t = Math.min(1, this.anim.t + 0.05); const e = 1 - Math.pow(1 - this.anim.t, 3); ['theta', 'phi', 'r'].forEach(k => { o[k] = this.anim.from[k] + (this.anim.to[k] - this.anim.from[k]) * e; }); if (this.anim.t >= 1) this.anim = null; }
@@ -451,7 +464,11 @@ class Scene3D {
       const dA = t - A.t;
       if (A.meta.type === 'sinus' && dA < 260) { this.lightPath('atr', (dA - 5) / 78, (dA - 83) / 120); atrGlow = dA < 115 ? Math.sin(Math.PI * dA / 115) : 0; if (dA < 115) phase = 'Onda P: depolarizzazione atriale'; }
       if (A.meta.type === 'pac' && dA < 140) { const sp = this.sparks[0]; sp.visible = true; sp.position.set(-0.2, 0.18, -0.2); sp.scale.setScalar(0.25 + dA / 140 * 0.6); sp.material.opacity = 1 - dA / 140; atrGlow = Math.sin(Math.PI * Math.min(1, dA / 110)); phase = 'P prematura da focus atriale basso'; }
-      if (A.meta.blocked && dA > 90 && dA < 320) { navRed = true; phase = A.meta.refractory ? 'P nel periodo refrattario: non condotta' : 'P non condotta: blocco nel nodo AV'; }
+      if (A.meta.blocked && dA > 90 && dA < 320) {
+        const site = cfg.avBlockSite || (cfg.av === 'wenck' ? 'nodale' : cfg.av === 'mobitz2' ? 'infranodale' : 'non definita');
+        navRed = site === 'nodale';
+        phase = A.meta.refractory ? 'P nel periodo refrattario: non condotta' : 'P non condotta: sede del blocco ' + site;
+      }
       if (A.meta.type === 'retro' && dA < 80) { atrGlow = 0.6; }
     }
     if (Vt) {
@@ -501,11 +518,31 @@ const S = {
 let stream = null, curCfg = null, seed = 1;
 const mon = new Monitor($('#ecg'), $('#ecgOv'), { onSelect: id => { S.sel = S.sel === id ? null : id; mon.setSelected(S.sel); scene.selectLead(S.sel); $$('#p-card .chip').forEach(c => c.classList.toggle('on', c.dataset.l === S.sel)); } });
 mon.mode = S.mode; mon.speed = S.speed; mon.gain = S.gain;
-const scene = new Scene3D($('#stage'));
+function sceneNotice(el, message) {
+  let n = el.querySelector('.scene-notice');
+  if (!n) { n = document.createElement('p'); n.className = 'scene-notice'; n.setAttribute('role', 'status'); el.appendChild(n); }
+  n.textContent = message; n.hidden = !message;
+  el.querySelectorAll('[data-cam], [data-tg], #hOpac').forEach(b => { b.disabled = !!message; });
+}
+function createScene(el) {
+  try { return new Scene3D(el); }
+  catch (error) {
+    console.warn('Vista 3D non disponibile:', error.message);
+    sceneNotice(el, 'Vista 3D non disponibile su questo dispositivo. ECG, misure, teoria e quiz restano utilizzabili.');
+    return { available: false, phase: 'Vista 3D non disponibile', scene: { background: { set() {} } },
+      toggle() {}, resize() {}, cam() {}, selectLead() {}, setHeartOpacity() {}, setScenario() {}, update() {} };
+  }
+}
+const scene = createScene($('#stage'));
 if (S.tgl.anat && S.tgl.heart) S.tgl.anat = false;
 Object.keys(S.tgl).forEach(k => { scene.toggle(k, S.tgl[k]); const b = $('#hud3d [data-tg="' + k + '"]'); if (b) b.classList.toggle('on', S.tgl[k]); });
 
-function paramsFor(sc) { const p = {}; sc.params.forEach(q => { p[q.k] = q.def; }); Object.assign(p, store.params[sc.id] || {}); return p; }
+function defaultParams(sc) { return Object.fromEntries(sc.params.map(q => [q.k, q.def])); }
+function paramsFor(sc) { return Object.assign(defaultParams(sc), store.params[sc.id] || {}); }
+function cancelCaseActions() {
+  caseVersion++; recordRequest++; clearTimeout(rebuildT); clearTimeout(shockTimer); rebuildT = shockTimer = null;
+  defUI(null);
+}
 /* Schema di ripetizione delle extrasistoli applicato al quadro corrente.
    Funziona sui ritmi con base sinusale: negli altri (FA, flutter, TV, blocco
    completo, ritmi continui) il concetto di bigeminismo non ha senso. */
@@ -522,10 +559,12 @@ function applicaEctopia(cfg) {
 function aggiornaEctUI() {
   const sel = $('#ectPat'); if (sel) sel.value = S.ectPat;
   $$('#ectSeg button').forEach(b => b.classList.toggle('on', b.dataset.e === S.ectTipo));
+  const runs = $('#ectPat option[value="salve"]'); if (runs) runs.textContent = S.ectTipo === 'pac' ? 'Salve atriali' : 'Salve (TV non sostenuta)';
   const ok = curCfg ? ritmoSinusale(curCfg) : true;
   if (sel) { sel.disabled = !ok; sel.title = ok ? 'Fa comparire le extrasistoli in modo continuo secondo uno schema' : 'Lo schema di ripetizione vale solo sui ritmi a base sinusale'; }
 }
 function buildStream(sc, p, keepTime) {
+  cancelCaseActions();
   curCfg = sc.build(p); curCfg.noise = S.noise; curCfg.t0 = keepTime ? mon.t : 0;
   applicaEctopia(curCfg);
   stream = new Stream(curCfg, ++seed);
@@ -595,12 +634,14 @@ function defPrograma(sc, p, sh) {
 function defCambia(cfg, ritardo) {
   if (!stream) return;
   cfg.noise = S.noise;
+  if (typeof stream.cambiaRitmo !== 'function') return;
   stream.cambiaRitmo(cfg, mon.t + (ritardo || 250));
   scene.setScenario(cfg);
 }
 function defColpo(dopo, attesa) {
   if (!stream) return;
   if (dopo) dopo.noise = S.noise;
+  if (typeof stream.scarica !== 'function') return;
   stream.scarica(mon.t + 220, dopo, attesa);
   if (dopo) scene.setScenario(dopo);
 }
@@ -615,7 +656,11 @@ $('#defBtn').addEventListener('click', () => {
   const b = $('#defBtn');
   b.disabled = true; b.textContent = 'Carica…';
   defStato('Condensatore in carica…');
-  setTimeout(() => {
+  const version = caseVersion, target = stream;
+  clearTimeout(shockTimer);
+  shockTimer = setTimeout(() => {
+    shockTimer = null;
+    if (version !== caseVersion || target !== stream || DEF.sc !== sc) return;
     const esito = sh && p.esito !== 'nulla' ? DEF_DOPO[p.esito]() : null;
     defColpo(esito, 1400);
     b.disabled = false; b.textContent = 'Carica e scarica';
@@ -625,13 +670,20 @@ $('#defBtn').addEventListener('click', () => {
   }, 2600);
 });
 
-function loadScenario(id, keepTime) {
+function loadScenario(id, keepTime, snapshot) {
   const sc = byId[id]; if (!sc) return;
   digCur = null;
   S.sc = id; store.sc = id; save();
   $('#scTitle').textContent = sc.name; $('#scCat').textContent = sc.cat;
-  $$('#libList .item').forEach(b => b.classList.toggle('on', b.dataset.id === id));
-  buildStream(sc, paramsFor(sc), keepTime);
+  $$('#libList .item').forEach(b => { const selected = b.dataset.id === id; b.classList.toggle('on', selected); if (selected && b.closest('details')) b.closest('details').open = true; });
+  if (snapshot) {
+    cancelCaseActions(); curCfg = cloneCase(snapshot.cfg);
+    S.noise = curCfg.noise;
+    S.ectPat = curCfg.ectopy && curCfg.ectopy.pattern || 'off';
+    if (curCfg.ectopy) S.ectTipo = curCfg.ectopy.type;
+    stream = new Stream(curCfg, snapshot.seed); mon.setStream(stream, false); scene.setScenario(curCfg);
+    mon.t = snapshot.t; mon.draw();
+  } else buildStream(sc, paramsFor(sc), keepTime);
   aggiornaEctUI();
   defUI(sc);
   mon.setHighlight(sc.look || []);
@@ -654,11 +706,20 @@ function libHit(id, f) {
 }
 function renderLib(filter) {
   const f = (filter || '').trim().toLowerCase(); const box = $('#libList'); box.innerHTML = '';
-  CATS.forEach(cat => {
+  const selectedSection = $('#libSection').value;
+  LIB_SECTIONS.filter(section => !selectedSection || section.id === selectedSection).forEach(section => {
+    const group = document.createElement('details'); group.className = 'lib-section';
+    group.open = !!f || !!selectedSection || section.cats.includes((byId[S.sc] || {}).cat);
+    const heading = document.createElement('summary'); group.appendChild(heading);
+    let count = 0;
+    section.cats.forEach(cat => {
     const items = SCENARIOS.filter(s => s.cat === cat && (!f || (LIBIDX.find(x => x.id === s.id) || { hay: '' }).hay.includes(f)));
     if (!items.length) return;
-    const h = document.createElement('h4'); h.textContent = cat; box.appendChild(h);
-    items.forEach(s => { const b = document.createElement('button'); b.className = 'item' + (s.id === S.sc ? ' on' : ''); b.dataset.id = s.id; b.innerHTML = esc(s.name) + (f && !s.name.toLowerCase().includes(f) && libHit(s.id, f) ? '<span class="hit">' + libHit(s.id, f) + '</span>' : ''); b.addEventListener('click', () => loadScenario(s.id, true)); box.appendChild(b); });
+    count += items.length;
+    const h = document.createElement('h4'); h.textContent = cat; group.appendChild(h);
+    items.forEach(s => { const b = document.createElement('button'); b.className = 'item' + (s.id === S.sc ? ' on' : ''); b.dataset.id = s.id; b.innerHTML = esc(s.name) + (f && !s.name.toLowerCase().includes(f) && libHit(s.id, f) ? '<span class="hit">' + libHit(s.id, f) + '</span>' : ''); b.addEventListener('click', () => loadScenario(s.id, true)); group.appendChild(b); });
+    });
+    if (count) { heading.innerHTML = esc(section.name) + '<span>' + count + '</span>'; box.appendChild(group); }
   });
   if (f) { const n = $$('#libList .item').length; const t = document.createElement('p'); t.className = 'note'; t.style.padding = '8px 14px 0'; t.textContent = n + (n === 1 ? ' quadro trovato' : ' quadri trovati') + ' per "' + filter.trim() + '"'; box.insertBefore(t, box.firstChild); }
   if (!box.children.length) box.innerHTML = '<p class="note" style="padding:10px 14px">Nessun quadro corrisponde alla ricerca.</p>';
@@ -685,6 +746,7 @@ function renderCard(sc) {
 let digCur = null;
 function apriDigitalizzato(id, recDato) {
   const rec = recDato || DIG[id]; if (!rec) return;
+  cancelCaseActions();
   digCur = id;
   const reale = !!rec.reale;
   stream = new Sampled(rec, 1);
@@ -702,17 +764,19 @@ function apriDigitalizzato(id, recDato) {
     '<p class="note">' + (reale
       ? 'Registrazione reale a 12 derivazioni su paziente: '
       : 'Segnale estratto dalla scansione della slide: ' + der + ' derivazioni, ') +
-    fmt(rec.fs) + ' campioni al secondo, ' + fmt(rec.n / rec.fs, 1) + ' secondi che si ripetono in ciclo.</p></div>' +
+    fmt(rec.fs) + ' campioni al secondo, ' + fmt(rec.n / rec.fs, 1) + ' secondi che si ripetono in ciclo.</p>' +
+    '<p class="note">Derivazioni disponibili: ' + stream.availableLeads.join(', ') + '. ' +
+    (stream.availableLeads.length < 12 ? 'Le altre derivazioni non sono disponibili e non vengono interpretate come linee piatte.' : '') + '</p></div>' +
     (reale
       ? '<div class="sec"><h3>Come leggerlo</h3><p>È un elettrocardiogramma vero, registrato in ospedale e refertato da uno o due cardiologi. ' +
-        'I voltaggi sono quelli misurati dall\u2019apparecchio, quindi i criteri di ipertrofia e gli intervalli valgono davvero. ' +
+        'I campioni conservano la scala del segnale originale. Intervalli e voltaggi richiedono una misura sul tracciato e una verifica della qualità. ' +
         'Il rumore, la deriva della linea di base e gli artefatti fanno parte del tracciato: è questa la differenza con il simulatore.</p>' +
         (rec.scp && rec.scp.length ? '<p class="note">Codici del referto: ' + esc(rec.scp.join(', ')) + '</p>' : '') + '</div>'
       : '') +
     (reale ? '' : '<div class="sec"><h3>Come leggerlo</h3><p>I millivolt sono ricostruiti dalla geometria della carta: ' +
     'la larghezza di ogni pannello vale 2,5 secondi a 25 mm/s. Sono attendibili per la morfologia e per gli intervalli, ' +
     'meno per i voltaggi assoluti. Per i criteri di ipertrofia continua a fidarti del tracciato simulato.</p></div>') +
-    (q ? '<div class="sec"><h3>Quadro corrispondente</h3><p>' + esc(q.name) + '</p>' +
+    (q ? '<div class="sec"><h3>Quadro didattico correlato</h3><p>' + esc(q.name) + '</p>' +
          '<ul class="crit">' + q.card.criteri.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
          '<button class="btn" id="digQuadro">Apri il quadro simulato</button></div>' : '') +
     '<div class="sec"><p class="src"><b>Origine:</b> ' + esc(rec.f) + '</p></div>' + FIRMA;
@@ -725,7 +789,6 @@ function apriDigitalizzato(id, recDato) {
   setPlaying(true);
 }
 
-let rebuildT = null;
 const notePar = {};
 function renderParams(sc) {
   notePar[sc.id] = [];
@@ -750,6 +813,7 @@ function renderParams(sc) {
       const agg = () => { const r = q.nota(paramsFor(sc)); n.innerHTML = r.testo; n.classList.toggle('fuori', !!r.fuori); };
       agg(); d.appendChild(n); (notePar[sc.id] = notePar[sc.id] || []).push(agg);
     }
+    const control = d.querySelector('input, select'); if (control) control.setAttribute('aria-label', q.label + (q.unit ? ' (' + q.unit + ')' : ''));
     sec.appendChild(d);
   });
   const reset = document.createElement('button'); reset.className = 'btn'; reset.textContent = 'Ripristina i valori tipici';
@@ -788,6 +852,9 @@ function renderVolt() {
   const box = $('#p-volt'); if (!box) return;
   const IP = window.ISO_IPERTROFIE;
   const amp = stream && stream.qrsAmplitudes ? stream.qrsAmplitudes(mon.t) : null;
+  if (stream && stream.cfg.mode === 'sampled') {
+    box.dataset.shell = ''; box.innerHTML = '<div class="sec"><h3>Misure sul tracciato registrato</h3><p>Voltaggi R/S, durata QRS e indici automatici: <b>non disponibili</b>. Il segnale non ha una delimitazione del QRS validata. Usa il compasso sul tracciato originale; i canali mancanti non valgono zero.</p></div>' + FIRMA; return;
+  }
   if (!IP || !amp) {
     const attesa = mon.t < 2500 && stream && stream.cfg.mode !== 'continuous';
     box.dataset.shell = '';
@@ -801,6 +868,7 @@ function renderVolt() {
   const sx = $('#voltSex');
   if (sx && sx.value !== S.sesso && document.activeElement !== sx) sx.value = S.sesso;
   const r = IP.calcola(amp, { sesso: S.sesso });
+  if (!r) { box.dataset.shell = ''; box.innerHTML = '<div class="sec"><p>Indici non disponibili: servono tutte le derivazioni e una durata QRS valida.</p></div>'; return; }
   const sc = byId[S.sc] || {};
   const riga = i => '<li style="display:flex;gap:8px;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line)">' +
     '<span><b>' + esc(i.nome) + '</b><br><span class="note">' + esc(i.formula) + (i.nota ? ' — ' + esc(i.nota) : '') + '</span></span>' +
@@ -825,12 +893,18 @@ function renderVolt() {
 function setParam(sc, k, v) {
   setTimeout(() => (notePar[sc.id] || []).forEach(f => f()), 0);
   store.params[sc.id] = Object.assign({}, store.params[sc.id] || {}, { [k]: v }); save();
-  clearTimeout(rebuildT); rebuildT = setTimeout(() => { buildStream(sc, paramsFor(sc), true); defUI(sc); }, 90);
+  const version = caseVersion;
+  clearTimeout(rebuildT); rebuildT = setTimeout(() => {
+    if (version !== caseVersion || S.sc !== sc.id || digCur) return;
+    buildStream(sc, paramsFor(sc), true); defUI(sc);
+  }, 90);
 }
 function openLib() { $('#lib').classList.add('open'); $('#scrim').classList.add('open'); }
 function closeLib() { $('#lib').classList.remove('open'); $('#scrim').classList.remove('open'); }
 $('#libBtn').addEventListener('click', openLib); $('#scrim').addEventListener('click', closeLib);
 $('#q').addEventListener('input', e => renderLib(e.target.value));
+LIB_SECTIONS.forEach(section => { const option = document.createElement('option'); option.value = section.id; option.textContent = section.name; $('#libSection').appendChild(option); });
+$('#libSection').addEventListener('change', () => renderLib($('#q').value));
 
 const ICON_PLAY = '<svg viewBox="0 0 14 14"><path d="M3 1.5v11l9.5-5.5z"/></svg>', ICON_PAUSE = '<svg viewBox="0 0 14 14"><rect x="2.5" y="1.5" width="3.2" height="11" rx="1"/><rect x="8.3" y="1.5" width="3.2" height="11" rx="1"/></svg>';
 function setPlaying(p) {
@@ -843,6 +917,7 @@ function setPlaying(p) {
   if (z) { z.textContent = p ? 'Pausa' : 'Riprendi'; z.classList.toggle('on', !p); }
   const sp = $('#stPlay');
   if (sp) { sp.textContent = p ? 'Pausa' : 'Riprendi'; sp.classList.toggle('on', !p); }
+  const cp = $('#cmpPlay'); if (cp) cp.textContent = p ? 'Pausa confronto' : 'Riprendi confronto';
 }
 $('#playBtn').addEventListener('click', () => setPlaying(!S.playing));
 $('#zenPlay').addEventListener('click', () => setPlaying(!S.playing));
@@ -956,6 +1031,7 @@ function stDraw() {
     for (let t = tA; t <= tB; t += 3) {
       if (t > fine) break;
       stream.vec(t, v); stream.leads(t, v, lv);
+      if (!Number.isFinite(lv[li])) { primo = true; continue; }
       const x = x0 + (t - tA) / 1000 * mon.speed * mm;
       const y = Math.max(2, Math.min(ST.cv.height - 2, base - lv[li] * g * mm));
       if (primo) { c.moveTo(x, y); primo = false; } else c.lineTo(x, y);
@@ -969,14 +1045,14 @@ function stDraw() {
   // conteggio nella finestra dei sei secondi
   if (ST.sei) {
     const n = stream.ev.filter(e => e.kind === 'V' && e.t >= inizio && e.t < inizio + 6000).length;
-    $('#stMis').innerHTML = '<b>' + n + '</b> QRS in 6 s → <b>' + n * 10 + '/min</b>' +
+    $('#stMis').innerHTML = '<b>' + n + '</b> ' + (stream.cfg.mode === 'sampled' ? 'picchi stimati' : 'QRS') + ' in 6 s → <b>' + n * 10 + '/min</b>' +
       ' · ' + ST.secRiga + ' s per riga · ' + mon.speed + ' mm/s · ' + mon.gain + ' mm/mV';
   } else {
     $('#stMis').textContent = ST.secRiga + ' s per riga · ' + mon.speed + ' mm/s · ' + mon.gain + ' mm/mV';
   }
 }
 function stChips() {
-  $('#stLeads').innerHTML = LEADS.map(L => '<button data-l="' + L.id + '"' + (L.id === ST.lead ? ' class="on"' : '') + '>' + L.id + '</button>').join('');
+  $('#stLeads').innerHTML = LEADS.filter(L => !stream.hasLead || stream.hasLead(L.id)).map(L => '<button data-l="' + L.id + '"' + (L.id === ST.lead ? ' class="on"' : '') + '>' + L.id + '</button>').join('');
   $$('#stLeads button').forEach(b => b.addEventListener('click', () => {
     ST.lead = b.dataset.l; store.stLead = ST.lead; save();
     $$('#stLeads button').forEach(x => x.classList.toggle('on', x.dataset.l === ST.lead));
@@ -992,7 +1068,8 @@ function stripOn(on) {
   if (!ST.cv) { ST.cv = $('#stCv'); ST.ctx = ST.cv.getContext('2d'); }
   ST.lead = store.stLead || (byId[S.sc] && byId[S.sc].look && byId[S.sc].look[0]) || 'II';
   if (LIDX[ST.lead] === undefined) ST.lead = 'II';
-  $('#stTitolo').textContent = byId[S.sc] ? byId[S.sc].name : '—';
+  if (stream.hasLead && !stream.hasLead(ST.lead)) ST.lead = stream.availableLeads[0];
+  $('#stTitolo').textContent = $('#scTitle').textContent;
   stChips();
   requestAnimationFrame(() => { stLayout(); stDraw(); });
 }
@@ -1069,12 +1146,13 @@ function zAggiorna(now) {
   // la scala non si ricalcola a ogni fotogramma: cresce subito e cala piano,
   // altrimenti a vettore piccolo le barre resterebbero lunghe e sembrerebbero
   // impazzite. Così la lunghezza della barra è confrontabile nel tempo.
-  const picco = Math.max.apply(null, zLv.map(Math.abs)) * 1.15;
+  const picco = Math.max.apply(null, zLv.filter(Number.isFinite).map(Math.abs).concat([0])) * 1.15;
   zScala = Math.max(0.6, picco, zScala * 0.992);
   const scala = zScala;
   LEADS.forEach((L, i) => {
     const b = document.getElementById('zb-' + L.id), u = document.getElementById('zv-' + L.id);
     if (!b) return;
+    if (!Number.isFinite(zLv[i])) { b.style.width = '0%'; u.textContent = 'N/D'; return; }
     const f = Math.max(-1, Math.min(1, zLv[i] / scala));
     b.style.left = (f >= 0 ? 50 : 50 + f * 50) + '%';
     b.style.width = Math.abs(f) * 50 + '%';
@@ -1094,7 +1172,11 @@ $('#markBtn').addEventListener('click', () => {
 function ectopia(kind) {
   S.ectTipo = kind; store.ectTipo = kind; save();
   $$('#ectSeg button').forEach(b => b.classList.toggle('on', b.dataset.e === kind));
+  aggiornaEctUI();
   if (!stream || !stream.injectEctopic) return;
+  if (S.ectPat !== 'off' && ritmoSinusale(curCfg)) {
+    buildStream(byId[S.sc], paramsFor(byId[S.sc]), true); defUI(byId[S.sc]); return;
+  }
   if (!S.playing) setPlaying(true);            // ferma il tracciato non si vedrebbe
   const r = stream.injectEctopic(mon.t, kind);
   const b = $('#ectSeg button[data-e="' + kind + '"]');
@@ -1103,7 +1185,7 @@ function ectopia(kind) {
 $$('#ectSeg button').forEach(b => b.addEventListener('click', () => ectopia(b.dataset.e)));
 $('#ectPat').addEventListener('change', e => {
   S.ectPat = e.target.value; store.ectPat = S.ectPat; save();
-  buildStream(byId[S.sc], paramsFor(byId[S.sc]), true);
+  if (!digCur) { buildStream(byId[S.sc], paramsFor(byId[S.sc]), true); defUI(byId[S.sc]); }
   aggiornaEctUI();
 });
 aggiornaEctUI();
@@ -1130,8 +1212,8 @@ function measure(st, t) {
     const B = st.battiti || [];
     if (B.length < 2) return '<span>Tracciato reale digitalizzato</span>';
     const rr = (B[B.length-1] - B[0]) / (B.length - 1);
-    return '<span>FC <b>' + fmt(60000/rr) + '/min</b></span><span>RR medio <b>' + fmt(rr) + ' ms</b></span>' +
-      '<span>' + B.length + ' battiti nel segmento</span>' +
+    return '<span>FC stimata <b>' + fmt(60000/rr) + '/min</b></span><span>RR medio <b>' + fmt(rr) + ' ms</b></span>' +
+      '<span>' + B.length + ' picchi rilevati nel segmento; verifica sul tracciato</span>' +
       '<span class="note">Usa il compasso per PR, QRS e QT: su un tracciato reale si misurano, non si leggono da un modello</span>';
   }
   const cont = st.cfg.mode === 'continuous';
@@ -1245,7 +1327,7 @@ if (!ATLAS.length) {
 }
 const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null, mode: (store.qmode === 'atlas' && ATLAS.length) ? 'atlas' : 'gen' };
 /* immagini dell'atlante utilizzabili come domanda: quelle con un quadro collegato */
-const QATL = ATLAS.filter(a => a.q && byId[a.q]);
+const QATL = ATLAS.filter(a => a.quizApproved && a.q && byId[a.q]);
 $('#qPause').addEventListener('click', () => {
   Q.playing = !Q.playing;
   $('#qPause').textContent = Q.playing ? 'Pausa' : 'Riprendi';
@@ -1253,7 +1335,7 @@ $('#qPause').addEventListener('click', () => {
 });
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function catDisponibili() {
-  if (Q.mode !== 'atlas') return CATS;
+  if (Q.mode !== 'atlas') return CATS.filter(c => SCENARIOS.some(s => s.cat === c && s.quiz));
   const set = {}; QATL.forEach(a => { set[byId[a.q].cat] = 1; });
   return CATS.filter(c => set[c]);
 }
@@ -1271,8 +1353,8 @@ $$('#qModeSeg button').forEach(b => b.addEventListener('click', () => {
 }));
 if (Q.mode === 'atlas') $$('#qModeSeg button').forEach(b => b.classList.toggle('on', b.dataset.qm === 'atlas'));
 function opzioni(sc) {
-  const same = shuffle(SCENARIOS.filter(x => x.id !== sc.id && x.cat === sc.cat));
-  const other = shuffle(SCENARIOS.filter(x => x.id !== sc.id && x.cat !== sc.cat));
+  const same = shuffle(SCENARIOS.filter(x => x.quiz && x.id !== sc.id && x.cat === sc.cat));
+  const other = shuffle(SCENARIOS.filter(x => x.quiz && x.id !== sc.id && x.cat !== sc.cat));
   return shuffle([sc].concat(same.slice(0, 2), other).slice(0, 4));
 }
 function feedback(sc, ok, extra) {
@@ -1292,7 +1374,18 @@ function newQuestionAtlas() {
   $('#qEcgWrap').hidden = true; $('#qImg').hidden = false;
   const img = $('#qImgEl');
   img.onerror = () => { img.alt = 'Immagine non disponibile in questa copia dell\u2019app.'; };
-  img.src = 'atlante/' + a.id + '.jpg';
+  img.onload = null; img.alt = 'Tracciato ECG da interpretare';
+  if (a.quizCrop) {
+    img.hidden = true;
+    const source = new Image(), question = a.id;
+    source.onload = () => {
+      if (!Q.cur || !Q.cur.atl || Q.cur.atl.id !== question) return;
+      const c = document.createElement('canvas'), crop = a.quizCrop; c.width = crop[2]; c.height = crop[3];
+      c.getContext('2d').drawImage(source, ...crop, 0, 0, crop[2], crop[3]);
+      img.src = c.toDataURL('image/png'); img.hidden = false;
+    }; source.onerror = () => { if (!Q.cur || !Q.cur.atl || Q.cur.atl.id !== question) return; img.hidden = false; img.removeAttribute('src'); img.alt = 'Immagine non disponibile offline.'; };
+    source.src = 'atlante/' + a.id + '.jpg';
+  } else { img.hidden = false; img.src = 'atlante/' + a.id + '.jpg'; }
   $('#qImg').classList.remove('zoom'); $('#qImg').scrollTop = 0; $('#qImg').scrollLeft = 0;
   $('#qMeasures').innerHTML = '<span>Tracciato reale dalle slide del corso — ' + esc(a.f) + '</span>';
   const opts = opzioni(sc);
@@ -1316,19 +1409,7 @@ function answerAtlas(btn) {
   renderQFilter();
 }
 $('#qImg').addEventListener('click', () => $('#qImg').classList.toggle('zoom'));
-const QZ = { 'iperk.k': [6.4, 8.6], 'ipok.k': [1.9, 2.9], 'qtlungo.qtc': [500, 620], 'bav1.pr': [240, 380], 'wpw.pr': [88, 112], 'normale.axis': [-20, 90], 'pericardite.st': [1.5, 3.5], 'normale.hr': [60, 95], 'aritmiasinusale.sa': [12, 28], 'esa.prob': [18, 40] };
-function randomParams(sc) {
-  const p = {};
-  sc.params.forEach(q => {
-    if (q.type === 'select') { let opts = q.opts; if (q.k === 'fase') opts = opts.slice(0, 3); p[q.k] = opts[Math.floor(Math.random() * opts.length)][0]; return; }
-    let r = QZ[sc.id + '.' + q.k];
-    if (!r && q.k === 'hr' && !['bradisinusale', 'tachisinusale'].includes(sc.id)) r = [Math.max(q.min, q.def * 0.85), Math.min(q.max, q.def * 1.15)];
-    if (!r && sc.id.startsWith('stemi') && q.k === 'st') r = [2, 5];
-    if (!r) r = [q.min + (q.max - q.min) * 0.1, q.max - (q.max - q.min) * 0.1];
-    p[q.k] = Math.round((r[0] + Math.random() * (r[1] - r[0])) / q.step) * q.step;
-  });
-  return p;
-}
+function randomParams(sc) { return window.ISO_QUIZ.params(sc); }
 function newQuestion() {
   if (Q.mode === 'atlas') return newQuestionAtlas();
   $('#qEcgWrap').hidden = false; $('#qImg').hidden = true;
@@ -1336,23 +1417,19 @@ function newQuestion() {
   const pool = SCENARIOS.filter(s => s.quiz && (Q.cat === 'Tutte' || s.cat === Q.cat));
   let sc = pool[Math.floor(Math.random() * pool.length)];
   if (Q.cur && pool.length > 1 && sc.id === Q.cur.sc.id) sc = pool[(pool.indexOf(sc) + 1) % pool.length];
-  const p = randomParams(sc);
-  const cfg = sc.build(p); cfg.noise = 0.35;
-  // stessa patologia, paziente diverso: asse, voltaggi, P, T, frequenza e rumore
+  if (!sc) { $('#qRight').textContent = 'Nessun caso disponibile in questa categoria.'; return; }
   const qSeed = Math.floor(Math.random() * 1e6);
-  if (window.ECG.applyVariation) {
-    const stretto = sc.cat === 'Ipertrofie' || sc.indici;   // qui i voltaggi sono la diagnosi
-    window.ECG.applyVariation(cfg, qSeed, stretto ? { ampiezza: 0.05, asse: 6, onT: 0.12 } : null);
-  }
+  const caso = window.ISO_QUIZ.create(sc, qSeed), p = caso.p, cfg = caso.cfg;
   Q.stream = new Stream(cfg, qSeed);
   Q.seed = qSeed;
   qmon.setStream(Q.stream, false);
   qmon.t = qmon.pageMs() - 40; qmon.draw();
   const opts = opzioni(sc);
-  Q.cur = { sc, p, opts }; Q.done = false;
+  Q.cur = { sc, p, opts, cfg: cloneCase(cfg), seed: qSeed }; Q.done = false;
   $('#qMeasures').innerHTML = '<span>Le misure compaiono dopo la risposta. Usa il tempo: guarda ritmo, P, PR, QRS, ST, T.</span>';
   const r = $('#qRight');
-  r.innerHTML = '<p class="note">Osserva il tracciato e scegli la diagnosi.</p><div class="opts">' + opts.map(o => '<button data-id="' + o.id + '">' + esc(o.name) + '</button>').join('') + '</div><div id="qFeed"></div>';
+  const context = window.ISO_QUIZ.context(sc);
+  r.innerHTML = (context ? '<p class="note">' + esc(context) + '</p>' : '') + '<p class="note">' + (context ? 'Quale quadro è più compatibile con tracciato e dati clinici?' : 'Osserva il tracciato e scegli il quadro ECG.') + '</p><div class="opts">' + opts.map(o => '<button data-id="' + o.id + '">' + esc(o.name) + '</button>').join('') + '</div><div id="qFeed"></div>';
   r.querySelectorAll('.opts button').forEach(b => b.addEventListener('click', () => answer(b)));
 }
 function answer(btn) {
@@ -1362,7 +1439,7 @@ function answer(btn) {
   $$('#qRight .opts button').forEach(b => { b.disabled = true; if (b.dataset.id === Q.cur.sc.id) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); });
   $('#qFeed').innerHTML = feedback(Q.cur.sc, ok) + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="qNext">Prossimo ECG</button><button class="btn" id="qOpen">Apri nel Tracciato</button></div>';
   $('#qNext').addEventListener('click', newQuestion);
-  $('#qOpen').addEventListener('click', () => { store.params[Q.cur.sc.id] = Q.cur.p; save(); showView('trace'); loadScenario(Q.cur.sc.id, true); });
+  $('#qOpen').addEventListener('click', () => { store.params[Q.cur.sc.id] = Q.cur.p; save(); showView('trace'); loadScenario(Q.cur.sc.id, false, { cfg: Q.cur.cfg, seed: Q.cur.seed, t: qmon.t }); });
   qmon.setHighlight(Q.cur.sc.look || []);
   $('#qMeasures').innerHTML = measure(Q.stream, qmon.t);
   renderQFilter();
@@ -1379,9 +1456,12 @@ let atlasQ = '';
    segnale di ogni tracciato si scarica quando lo apri, così la raccolta può
    contenerne migliaia senza appesantire l'avvio. Se la cartella non c'è,
    la sezione semplicemente non compare. */
-let atlasFonte = store.atlasFonte || 'corso';
-let REALE = null, realeG = store.realeG || '', realeCache = {};
 function caricaIndiceReale() {
+  if (REALE === null && window.ISO_REALE && window.ISO_REALE.length) {
+    const groups = new Map();
+    const voci = window.ISO_REALE.map((r, i) => { const g = r.g || 'altro'; groups.set(g, r.gn || 'Altri quadri'); return Object.assign({}, r, { i: r.i || ('reale-' + i), g }); });
+    REALE = { voci, gruppi: [...groups].map(([id, nome]) => ({ id, nome })), licenza: 'PTB-XL v1.0.3 - PhysioNet - CC BY 4.0 - https://doi.org/10.13026/kfzx-aw45' };
+  }
   if (REALE !== null) return Promise.resolve(REALE);
   return fetch('atlante-reale/indice.json').then(r => r.ok ? r.json() : null)
     .catch(() => null)
@@ -1393,21 +1473,46 @@ function gruppiReali() {
   return g;
 }
 function apriReale(v) {
+  const request = ++recordRequest;
   const fatto = rec => {
+    if (request !== recordRequest) return;
     rec = Object.assign({}, rec, { reale: true, t: v.t, f: v.f, q: v.q, scp: v.scp });
     apriDigitalizzato(v.i, rec);
   };
+  if (DIG[v.i]) return fatto(DIG[v.i]);
   if (realeCache[v.i]) return fatto(realeCache[v.i]);
-  fetch('atlante-reale/' + v.i + '.json').then(r => r.json()).then(rec => {
+  fetch('atlante-reale/' + v.i + '.json').then(r => { if (!r.ok) throw new Error('Tracciato non disponibile'); return r.json(); }).then(rec => {
     realeCache[v.i] = rec; fatto(rec);
-  }).catch(() => alert('Non riesco a caricare questo tracciato. Se stai usando l\u2019app senza rete, aprilo una prima volta da collegato.'));
+  }).catch(() => { if (request === recordRequest) alert('Non riesco a caricare questo tracciato. Se stai usando l\u2019app senza rete, aprilo una prima volta da collegato.'); });
 }
 function atlasFiltered() {
   const q = atlasQ.trim().toLowerCase();
   if (q) return ATLAS.filter(a => (a.t + ' ' + a.n + ' ' + a.f).toLowerCase().indexOf(q) >= 0);
   return ATLAS.filter(a => a.g === atlasG);
 }
+let offlineBusy = false, offlineJob = 0, offlineTimer = null;
+function offlineRequest(save) {
+  const status = $('#offlineStatus'), button = $('#offlineSave');
+  if (!('serviceWorker' in navigator)) { status.textContent = 'Il browser non supporta il salvataggio offline.'; button.disabled = true; return; }
+  const urls = atlasFiltered().map(a => 'atlante/' + a.id + '.jpg');
+  if (!urls.length) { status.textContent = 'Nessuna immagine in questa selezione.'; return; }
+  const id = ++offlineJob;
+  clearTimeout(offlineTimer);
+  const failed = () => { if (id !== offlineJob) return; offlineJob++; offlineBusy = false; button.disabled = false; status.textContent = 'Salvataggio offline non disponibile. Riapri l’app quando sei collegato.'; };
+  offlineTimer = setTimeout(failed, 12000);
+  if (save) { offlineBusy = true; button.disabled = true; status.textContent = 'Salvataggio delle immagini…'; }
+  navigator.serviceWorker.ready.then(reg => {
+    if (id !== offlineJob) return;
+    const worker = navigator.serviceWorker.controller || reg.active;
+    if (!worker) throw new Error('Servizio offline non ancora disponibile');
+    worker.postMessage({ type: save ? 'offline-save' : 'offline-status', urls, id });
+  }).catch(() => { clearTimeout(offlineTimer); failed(); });
+}
+$('#offlineSave').addEventListener('click', () => offlineRequest(true));
 function renderAtlas() {
+  const real = atlasFonte === 'reale' && REALE;
+  $('#offlineSave').hidden = $('#offlineStatus').hidden = !!real;
+  if (!offlineBusy && !real) offlineRequest(false);
   const toc = $('#atoc'); toc.innerHTML = '';
   if (REALE && REALE.voci.length) {
     const barra = document.createElement('div'); barra.className = 'afonti';
@@ -1497,7 +1602,18 @@ function openLightbox(a) {
       ? 'Questa è l\u2019anteprima: i tracciati dell\u2019atlante ci sono solo nell\u2019app installata. Qui restano il titolo e la didascalia della slide.'
       : 'Immagine non trovata. Controlla di aver caricato su GitHub anche la cartella atlante, accanto agli altri file.';
   };
-  img.src = 'atlante/' + a.id + '.jpg';
+  img.onload = null; img.alt = 'Tracciato ECG da interpretare';
+  if (a.quizCrop) {
+    img.hidden = true;
+    const source = new Image(), question = a.id;
+    source.onload = () => {
+      if (!Q.cur || !Q.cur.atl || Q.cur.atl.id !== question) return;
+      const c = document.createElement('canvas'), crop = a.quizCrop; c.width = crop[2]; c.height = crop[3];
+      c.getContext('2d').drawImage(source, ...crop, 0, 0, crop[2], crop[3]);
+      img.src = c.toDataURL('image/png'); img.hidden = false;
+    }; source.onerror = () => { img.hidden = false; img.removeAttribute('src'); img.alt = 'Immagine non disponibile offline.'; };
+    source.src = 'atlante/' + a.id + '.jpg';
+  } else { img.hidden = false; img.src = 'atlante/' + a.id + '.jpg'; }
   img.alt = a.t;
   $('#lbNote').textContent = a.n || '';
   $('#lbNote').hidden = !a.n;
@@ -1566,10 +1682,11 @@ function cmpParams(side) {
       const inp = d.querySelector('input'), out = d.querySelector('output');
       inp.addEventListener('input', () => { out.textContent = fmt(+inp.value, q.step < 1 ? 1 : 0) + ' ' + (q.unit || ''); S2.p[q.k] = +inp.value; cmpBuild(side, true); });
     }
+    const control = d.querySelector('input, select'); if (control) control.setAttribute('aria-label', q.label + (q.unit ? ' (' + q.unit + ')' : ''));
     sec.appendChild(d);
   });
   const r = document.createElement('button'); r.className = 'btn'; r.textContent = 'Valori tipici';
-  r.addEventListener('click', () => { S2.p = paramsFor(byId[S2.sel]); cmpParams(side); cmpBuild(side, true); });
+  r.addEventListener('click', () => { S2.p = defaultParams(byId[S2.sel]); cmpParams(side); cmpBuild(side, true); });
   sec.appendChild(r); box.appendChild(sec);
 }
 function cmpBuild(side, keep) {
@@ -1579,15 +1696,18 @@ function cmpBuild(side, keep) {
   S2.mon.setStream(S2.st, keep);
   S2.mon.setHighlight(sc.look || []);
 }
-function cmpLoad(side, id) {
-  const S2 = CMP[side]; S2.sel = id; S2.p = paramsFor(byId[id]);
+function cmpLoad(side, id, snapshot) {
+  const S2 = CMP[side]; S2.sel = id; S2.p = snapshot ? cloneCase(snapshot.p) : paramsFor(byId[id]);
   store['cmp' + side] = id; save();
   $('#cmpSel' + side).value = id;
   $('#cmpCard' + side).innerHTML = cmpCardHTML(byId[id]);
-  cmpParams(side); cmpBuild(side, false);
+  cmpParams(side);
+  if (snapshot) { S2.st = snapshot.st; S2.mon.setStream(S2.st, false); S2.mon.t = snapshot.t; S2.mon.pageStart = snapshot.pageStart; S2.mon.setHighlight(byId[id].look || []); S2.mon.layout(); }
+  else cmpBuild(side, false);
 }
 function cmpInit() {
   if (CMP.ready) return; CMP.ready = true;
+  $('#cmpPlay').addEventListener('click', () => setPlaying(!S.playing));
   ['A', 'B'].forEach(side => {
     const sel = $('#cmpSel' + side);
     CATS.forEach(cat => {
@@ -1600,13 +1720,17 @@ function cmpInit() {
     sel.addEventListener('change', e => cmpLoad(side, e.target.value));
     if (window.ResizeObserver) new ResizeObserver(() => { if (S.view === 'cmp') CMP[side].mon.layout(); }).observe($('#cmpWrap' + side));
   });
-  $('#cmpSwap').addEventListener('click', () => { const a = CMP.A.sel, b = CMP.B.sel; cmpLoad('A', b); cmpLoad('B', a); });
+  $('#cmpSwap').addEventListener('click', () => {
+    const snapshot = s => ({ sel: s.sel, p: cloneCase(s.p), st: s.st, t: s.mon.t, pageStart: s.mon.pageStart });
+    const a = snapshot(CMP.A), b = snapshot(CMP.B); cmpLoad('A', b.sel, b); cmpLoad('B', a.sel, a);
+  });
   cmpLoad('A', byId[store.cmpA] ? store.cmpA : 'stemi-inferiore');
   cmpLoad('B', byId[store.cmpB] ? store.cmpB : 'normale');
 }
 function cmpShow() {
   cmpInit();
-  ['A', 'B'].forEach(s => { CMP[s].mon.layout(); CMP[s].mon.t = CMP[s].mon.pageMs() - 40; CMP[s].mon.draw(); });
+  setPlaying(S.playing);
+  ['A', 'B'].forEach(s => { const m = CMP[s].mon; if (!m.t) m.t = m.pageMs() - 40; m.layout(); m.draw(); });
 }
 
 /* =====================================================================
@@ -1637,7 +1761,7 @@ $('#themeBtn').addEventListener('click', () => {
   const r = document.documentElement; const dark = getComputedStyle(r).getPropertyValue('color-scheme').trim() === 'dark';
   r.setAttribute('data-theme', dark ? 'light' : 'dark'); store.theme = dark ? 'light' : 'dark'; save(); onTheme();
 });
-function onTheme() { readVars(); scene.scene.background.set(css.stage); if (S.view === 'trace') mon.layout(); if (S.view === 'quiz') qmon.layout(); if (S.view === 'theory') renderTheory(); }
+function onTheme() { readVars(); scene.scene.background.set(css.stage); if (S.view === 'trace') mon.layout(); if (S.view === 'quiz') qmon.layout(); if (S.view === 'theory') renderTheory(); if (CMP.ready) ['A', 'B'].forEach(s => CMP[s].mon.layout()); }
 if (window.matchMedia) { const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', onTheme); }
 
 let lastW = 0;
@@ -1668,7 +1792,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-window.ISO_OPEN = id => { showView('trace'); loadScenario(id, false); };
+window.ISO_OPEN = (id, params) => { if (!byId[id]) return; if (params) store.params[id] = Object.assign(defaultParams(byId[id]), params); showView('trace'); loadScenario(id, false); };
 renderLib('');
 setPlaying(S.playing);
 loadScenario(S.sc, false);
@@ -1689,23 +1813,29 @@ function barraAggiornamento() {
     '<button class="btn" id="updNo">Più tardi</button>';
   document.body.appendChild(d);
   document.getElementById('updGo').addEventListener('click', () => {
-    const w = swReg && (swReg.waiting || swReg.installing);
-    if (w) w.postMessage({ type: 'skipWaiting' });
-    setTimeout(() => { if (!ricaricando) { ricaricando = true; location.reload(); } }, 600);
+    const w = swReg && swReg.waiting;
+    if (w) { document.getElementById('updGo').disabled = true; w.postMessage({ type: 'skipWaiting' }); }
   });
   document.getElementById('updNo').addEventListener('click', () => d.remove());
 }
 function controllaAggiornamenti(forza) {
   const ora = Date.now();
-  if (!forza && ora - ultimoCheck < 20000) return;
+  if (!forza && ora - ultimoCheck < 20000) return Promise.resolve('recent');
   ultimoCheck = ora;
-  if (swReg) swReg.update().catch(() => {});
+  if (!swReg) return Promise.resolve('unavailable');
+  return swReg.update().then(() => swReg.waiting ? 'ready' : swReg.installing ? 'installing' : 'checked').catch(() => 'offline');
 }
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (ricaricando) return; ricaricando = true; location.reload();
   });
   navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'offline-progress' && e.data.id === offlineJob) {
+      clearTimeout(offlineTimer);
+      const d = e.data; $('#offlineStatus').textContent = d.done + '/' + d.total + ' immagini disponibili offline' + (d.failed ? ' · ' + d.failed + ' non salvate: verifica rete e spazio disponibile.' : d.complete ? '.' : '…');
+      if (d.complete) { offlineBusy = false; $('#offlineSave').disabled = false; }
+      else offlineTimer = setTimeout(() => { offlineJob++; offlineBusy = false; $('#offlineSave').disabled = false; $('#offlineStatus').textContent += ' Download interrotto: puoi riprovare.'; }, 12000);
+    }
     if (e.data && e.data.type === 'version') {
       const el = $('#credit');
       if (el) el.textContent = 'App made by Eliseo Peirano · 2026 · v' + e.data.version;
@@ -1729,15 +1859,19 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener('focus', () => controllaAggiornamenti());
   /* tocca la firma in alto a destra per forzare il controllo e, se serve, ripulire tutto */
   const cr = $('#credit');
-  if (cr) cr.addEventListener('click', () => {
-    controllaAggiornamenti(true);
-    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'version' });
-    const t = cr.textContent; cr.textContent = 'Controllo aggiornamenti…';
-    setTimeout(() => { if (!document.getElementById('updBar')) cr.textContent = t + ' · aggiornata'; }, 1600);
+  if (cr) cr.addEventListener('click', async () => {
+    cr.textContent = 'Controllo aggiornamenti…';
+    const result = await controllaAggiornamenti(true);
+    const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
+    cr.textContent = 'Isoelettrica · v40 · ' + (messages[result] || 'Controllo completato');
+    if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {
-    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'purge' });
-    setTimeout(() => { ricaricando = true; location.reload(); }, 400);
+    if (!navigator.onLine) { cr.textContent = 'Per ripristinare la cache è necessaria una connessione.'; return; }
+    const worker = navigator.serviceWorker.controller; if (!worker) return;
+    const channel = new MessageChannel();
+    channel.port1.onmessage = e => { if (e.data.type === 'purged') { channel.port1.close(); ricaricando = true; location.reload(); } };
+    worker.postMessage({ type: 'purge' }, [channel.port2]);
   });
 }
 })();
