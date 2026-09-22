@@ -489,11 +489,11 @@ class Scene3D {
         if (m.via === 'wpw') this.lightPath('kent', (dV + 8) / 38, (dV - 30) / 120);
         if (this.blocked.length && dV > 20 && dV < W) { this.wave.visible = true; const f = (dV - 20) / (W - 20); const from = cfg.via === 'rbbb' ? V3(0.15, -0.35, 0.2) : V3(0.15, -0.35, 0.1); this.wave.position.copy(from); this.wave.scale.setScalar(0.1 + f * 0.8); this.wave.material.opacity = 0.22 * (1 - f); }
       }
-      if (m.type === 'pvc' || m.type === 'vt' || m.type === 'escape-v') {
+      if (m.paced || m.type === 'pvc' || m.type === 'vt' || m.type === 'escape-v') {
         const fpos = FOCI[m.focus] || FOCI.lvInf; this.focus.visible = true; this.focus.position.copy(fpos);
         if (dV < W * 1.2) { this.wave.visible = true; const f = dV / (W * 1.2); this.wave.position.copy(fpos); this.wave.scale.setScalar(0.08 + f * 1.15); this.wave.material.opacity = 0.28 * (1 - f); }
       }
-      if (dV < W) { ventGlow = Math.sin(Math.PI * dV / W); phase = m.type === 'pvc' ? 'Extrasistole ventricolare: il fronte parte dal focus' : m.type === 'vt' ? 'Tachicardia ventricolare: attivazione dal circuito di rientro' : m.type === 'escape-v' ? 'Scappamento ventricolare' : m.via === 'wpw' && dV < 45 ? 'Onda delta: pre-eccitazione dal fascio di Kent' : 'QRS: depolarizzazione ventricolare'; }
+      if (dV < W) { ventGlow = Math.sin(Math.PI * dV / W); phase = m.type === 'paced-crt' ? 'CRT-D: stimolazione biventricolare' : m.paced ? 'Spike e depolarizzazione ventricolare stimolata' : m.type === 'pvc' ? 'Extrasistole ventricolare: il fronte parte dal focus' : m.type === 'vt' ? 'Tachicardia ventricolare: attivazione dal circuito di rientro' : m.type === 'escape-v' ? 'Scappamento ventricolare' : m.via === 'wpw' && dV < 45 ? 'Onda delta: pre-eccitazione dal fascio di Kent' : 'QRS: depolarizzazione ventricolare'; }
       else if (m.qt && dV < m.qt) { tGlow = Math.sin(Math.PI * (dV - W) / (m.qt - W)); if (!phase) phase = 'ST e T: ripolarizzazione ventricolare'; }
     }
     if (cfg.cont === 'af' || cfg.cont === 'vf' || cfg.cont === 'torsade') {
@@ -557,7 +557,7 @@ function cancelCaseActions() {
    Funziona sui ritmi con base sinusale: negli altri (FA, flutter, TV, blocco
    completo, ritmi continui) il concetto di bigeminismo non ha senso. */
 function ritmoSinusale(cfg) {
-  return !cfg.mode && !cfg.atrial && !cfg.cont && cfg.av !== 'III' && cfg.av !== 'dissoc';
+  return !cfg.mode && !cfg.atrial && !cfg.cont && !cfg.pacing && cfg.av !== 'III' && cfg.av !== 'dissoc';
 }
 function applicaEctopia(cfg) {
   if (!S.ectPat || S.ectPat === 'off' || !ritmoSinusale(cfg)) return;
@@ -571,117 +571,189 @@ function aggiornaEctUI() {
   $$('#ectSeg button').forEach(b => b.classList.toggle('on', b.dataset.e === S.ectTipo));
   const runs = $('#ectPat option[value="salve"]'); if (runs) runs.textContent = S.ectTipo === 'pac' ? 'Salve atriali' : 'Salve (TV non sostenuta)';
   const ok = curCfg ? ritmoSinusale(curCfg) : true;
+  $$('#ectSeg button').forEach(b => { b.disabled = !!(curCfg && curCfg.pacing); });
   if (sel) { sel.disabled = !ok; sel.title = ok ? 'Fa comparire le extrasistoli in modo continuo secondo uno schema' : 'Lo schema di ripetizione vale solo sui ritmi a base sinusale'; }
 }
 function buildStream(sc, p, keepTime) {
   cancelCaseActions();
   curCfg = sc.build(p); curCfg.noise = S.noise; curCfg.t0 = keepTime ? mon.t : 0;
   applicaEctopia(curCfg);
+  devicePacing(sc, curCfg);
   stream = new Stream(curCfg, ++seed);
   mon.setStream(stream, keepTime);
   scene.setScenario(curCfg);
 }
 
-/* ==================== DEFIBRILLATORE ====================
-   Due modi. Manuale: il pulsante c'è solo in quel quadro, lo premi tu e la
-   scarica parte da dove sta scorrendo il tracciato. Automatico (dispositivo
-   impiantabile): nessun pulsante, il dispositivo riconosce, conferma, carica e
-   interviene da solo, con i tempi veri. Sui ritmi non defibrillabili premere non
-   cambia niente: si vede solo l'artefatto, ed è la cosa da imparare. */
-const DEF = { sc: null, coda: [], t0: 0, fatto: false };
+/* ==================== DISPOSITIVI DIDATTICI ==================== */
+const DEVICE = { type: 'none', rate: 70, pulse: 'present' };
+const DEVICE_NAMES = { none: 'Nessuno', pm: 'Pacemaker', dae: 'DAE', icd: 'ICD', crtd: 'CRT-D' };
+const DEF = { sc: null, coda: [], t0: 0, stage: 'idle', rhythm: null };
 const DEF_DOPO = {
   sinusale: () => ({ rate: 74, pr: 170, qtc: 425, qrs: ECG.M.qrsNormal() }),
   bradi: () => ({ rate: 44, pr: 200, qtc: 450, qrs: ECG.M.qrsNormal() }),
-  asistolia: () => ({ mode: 'continuous' }),
-  paced: () => ({ mode: 'vt', vRate: 60, aRate: 0.5, vtQrs: ECG.M.qrsPaced(), vtT: { a: 150, g: 30, amp: 0.4 }, qtc: 440 })
+  asistolia: () => ({ mode: 'continuous' })
 };
 const DEF_SHOCK = { fv: 1, fvfine: 1, tvsp: 1, flutterv: 1, tdp: 1 };
+function devicePacing(sc, cfg) {
+  // Nessuna cattura miracolosa in asistolia/PEA/FV o nelle tachiaritmie.
+  const arrest = ['asistolia', 'pea', 'agonico'].includes(sc.id) ||
+    (sc.defib && ['asistolia', 'pea', 'agonico'].includes(paramsFor(sc).ritmo));
+  if (!['pm', 'icd', 'crtd'].includes(DEVICE.type) || arrest || cfg.cont ||
+      cfg.mode === 'continuous' || (cfg.mode === 'vt' && cfg.vRate >= 100) ||
+      (cfg.qrs && cfg.qrs.spike) || (cfg.escQrs && cfg.escQrs.spike)) return;
+  cfg.pacing = { type: DEVICE.type === 'crtd' ? 'crt' : 'vvi', rate: DEVICE.rate, device: DEVICE.type };
+}
+function deviceRhythm(sc) {
+  if (sc.defib) return paramsFor(sc).ritmo;
+  if (curCfg.cont === 'vf') return 'fv';
+  if (curCfg.cont === 'torsade') return 'tdp';
+  if (sc.id === 'flutterv') return 'flutterv';
+  if (curCfg.mode === 'vt' && curCfg.vRate >= 120) return 'tvsp';
+  return sc.id;
+}
+function deviceShockable() {
+  if (!DEF_SHOCK[DEF.rhythm]) return false;
+  // Il polso è un dato dello scenario: non viene dedotto dal segnale ECG.
+  return DEVICE.type !== 'dae' || DEF.sc.defib ||
+    !['tvsp', 'tdp'].includes(DEF.rhythm) || DEVICE.pulse === 'absent';
+}
+function deviceNote(sc) {
+  if (DEVICE.type === 'none') return 'Aggiungi un dispositivo per vedere i comandi sopra il tracciato. Rimuovilo per tornare al quadro originale.';
+  if (DEVICE.type === 'dae') return 'Defibrilla avvia l’analisi simulata. La scarica si abilita solo per un ritmo defibrillabile nel contesto scelto.';
+  const support = curCfg.pacing ? ' Stimolazione a domanda: gli spike compaiono quando il dispositivo stimola.' : ' In questo quadro non viene aggiunta stimolazione di supporto.';
+  if (DEVICE.type === 'pm') return 'Pacemaker VVI: stimola il ventricolo e lascia indipendente l’attività atriale.' + support;
+  if (DEVICE.type === 'icd') return 'ICD transvenoso: riconosce le tachiaritmie ventricolari e può stimolare come un VVI. Un BAV isolato non è un’indicazione all’ICD.' + support;
+  return 'CRT-D: stimolazione biventricolare e funzione ICD. Esempio didattico di QRS stimolato; la scelta clinica richiede anche funzione ventricolare e quadro di scompenso.' + support;
+}
+function renderDeviceParams(sc, box) {
+  const sec = document.createElement('div'); sec.className = 'sec device-params';
+  sec.innerHTML = '<h3>Aggiungi dispositivo</h3><div class="device-options">' +
+    Object.entries(DEVICE_NAMES).map(([id, name]) => '<button class="btn' + (DEVICE.type === id ? ' primary' : '') + '" data-device="' + id + '" aria-pressed="' + (DEVICE.type === id) + '">' + name + '</button>').join('') + '</div>' +
+    '<p class="note">' + esc(deviceNote(sc)) + '</p>';
+  sec.querySelectorAll('[data-device]').forEach(b => b.addEventListener('click', () => setDevice(b.dataset.device)));
+  if (['pm', 'icd', 'crtd'].includes(DEVICE.type)) {
+    const d = document.createElement('div'); d.className = 'ctrl';
+    d.innerHTML = '<label class="lab" for="deviceRate">Frequenza minima di stimolazione <output>' + DEVICE.rate + ' /min</output></label><input id="deviceRate" type="range" min="40" max="100" step="5" value="' + DEVICE.rate + '">';
+    const inp = d.querySelector('input');
+    inp.addEventListener('input', () => { DEVICE.rate = +inp.value; d.querySelector('output').textContent = DEVICE.rate + ' /min'; buildStream(sc, paramsFor(sc), true); defUI(sc); });
+    sec.appendChild(d);
+  }
+  if (!sc.defib && DEVICE.type === 'dae' && ['tvsp', 'tdp'].includes(deviceRhythm(sc))) {
+    const d = document.createElement('div'); d.className = 'ctrl';
+    d.innerHTML = '<label for="devicePulse">Contesto clinico simulato</label><select id="devicePulse"><option value="present">Polso presente</option><option value="absent">Polso assente · arresto cardiaco</option></select><p class="note">L’ECG da solo non determina la presenza del polso.</p>';
+    d.querySelector('select').value = DEVICE.pulse;
+    d.querySelector('select').addEventListener('change', e => { DEVICE.pulse = e.target.value; buildStream(sc, paramsFor(sc), true); defUI(sc); });
+    sec.appendChild(d);
+  }
+  box.appendChild(sec);
+}
+function setDevice(type) {
+  if (digCur || !Object.hasOwn(DEVICE_NAMES, type)) return;
+  DEVICE.type = type;
+  const sc = byId[S.sc];
+  buildStream(sc, paramsFor(sc), true); defUI(sc); renderParams(sc); aggiornaEctUI();
+  $('#measures').innerHTML = measure(stream, mon.t);
+}
 function defStato(testo, vivo) {
-  const el = $('#defStato'); if (!el) return;
+  const el = $('#defStato');
   el.hidden = !testo; el.textContent = testo || ''; el.classList.toggle('vivo', !!vivo);
 }
 function defUI(sc) {
-  const d = sc && sc.defib;
-  $('#defSeg').hidden = !d;
-  DEF.sc = d ? sc : null; DEF.coda = []; DEF.fatto = false; DEF.t0 = mon.t;
+  const active = !!sc && DEVICE.type !== 'none';
+  $('#deviceBar').hidden = !active;
+  DEF.sc = active ? sc : null; DEF.rhythm = null; DEF.coda = []; DEF.stage = 'idle'; DEF.t0 = mon.t;
   defStato('');
-  if (!d) return;
-  const p = paramsFor(sc), sh = !!DEF_SHOCK[p.ritmo];
-  if (d.tipo === 'manuale') {
-    $('#defLab').textContent = p.j + ' J';
-    $('#defBtn').hidden = false;
-    $('#defBtn').disabled = false;
-    $('#defBtn').textContent = 'Carica e scarica';
-    defStato(sh ? 'Ritmo defibrillabile: premi quando vuoi.' : 'Ritmo non defibrillabile: la scarica non serve.', sh);
-  } else {
-    $('#defLab').textContent = 'Dispositivo impiantabile';
-    $('#defBtn').hidden = true;
-    defPrograma(sc, p, sh);
+  if (!active) return;
+  DEF.rhythm = deviceRhythm(sc);
+  $('#deviceLab').textContent = DEVICE_NAMES[DEVICE.type] + (DEVICE.type === 'dae' ? ' collegato' : ' attivo');
+  $('#deviceRemove').setAttribute('aria-label', 'Rimuovi ' + DEVICE_NAMES[DEVICE.type]);
+  $('#defSeg').hidden = DEVICE.type !== 'dae';
+  $('#defLab').textContent = (paramsFor(sc).j || 200) + ' J';
+  const b = $('#defBtn'); b.disabled = false; b.textContent = 'Defibrilla';
+  if (DEVICE.type === 'dae') defStato('Pronto per l’analisi del ritmo');
+  else if (DEVICE.type === 'pm') defStato(curCfg.pacing ? 'VVI · ' + DEVICE.rate + '/min · spike sui battiti stimolati' : 'Dispositivo collegato · nessuna stimolazione aggiunta');
+  else {
+    defStato('Sorveglianza del ritmo · ' + (curCfg.pacing ? (DEVICE.type === 'crtd' ? 'pacing biventricolare' : 'supporto VVI') : 'analisi in corso'));
+    defPrograma(sc, paramsFor(sc), deviceShockable());
   }
 }
-/* Sequenza del dispositivo impiantabile, con i tempi che ha davvero */
+function defSchedule(dt, fn) { DEF.coda.push({ t: mon.t + dt, fn, fatta: false }); }
 function defPrograma(sc, p, sh) {
-  const atp = p.terapia === 'atp' || (p.terapia === 'auto' && (p.ritmo === 'tvsp' || p.ritmo === 'flutterv'));
-  const q = [];
   if (!sh) {
-    q.push([1200, () => defStato(p.ritmo === 'asistolia'
-      ? 'Nessuna attività da trattare: il dispositivo passa alla stimolazione di supporto.'
-      : 'Ritmo non in zona di terapia: il dispositivo osserva e non interviene.')]);
-    if (p.ritmo === 'asistolia') q.push([5200, () => { defStato('Stimolazione di supporto', true); defCambia(DEF_DOPO.paced(), 300); }]);
-  } else if (atp && p.terapia !== 'shock') {
-    q.push([2600, () => defStato('Aritmia in zona di tachicardia: conteggio degli intervalli…')]);
-    q.push([5200, () => defStato('Stimolazione antitachicardica in corso', true)]);
-    q.push([5600, () => defCambia({ mode: 'vt', vRate: 250, aRate: 0.5, vtQrs: ECG.M.qrsPaced(), vtT: { a: 150, g: 30, amp: 0.3 }, qtc: 330 }, 250)]);
-    q.push([7900, () => { defStato('Aritmia interrotta, ritmo proprio ripreso', true); defCambia(DEF_DOPO.sinusale(), 250); }]);
-  } else {
-    q.push([2400, () => defStato('Aritmia rilevata: conferma sugli intervalli…')]);
-    q.push([4600, () => defStato('Carica del condensatore in corso', true)]);
-    q.push([10400, () => { defStato('Scarica erogata', true); defColpo(DEF_DOPO.sinusale(), 1500); }]);
-    q.push([12600, () => defStato('Ritmo sinusale ripristinato')]);
+    defSchedule(2400, () => defStato('Ritmo non defibrillabile · nessuna scarica' + (curCfg.pacing ? ' · stimolazione a domanda attiva' : '')));
+    return;
   }
-  DEF.coda = q.map(([dt, fn]) => ({ t: DEF.t0 + dt, fn: fn, fatta: false }));
+  const monomorphic = DEF.rhythm === 'tvsp';
+  const atp = monomorphic && p.terapia !== 'shock';
+  defSchedule(2400, () => defStato('Aritmia ventricolare rilevata · conferma in corso…'));
+  if (atp) {
+    defSchedule(5200, () => {
+      defStato('Stimolazione antitachicardica in corso', true);
+      defCambia({ mode: 'vt', vRate: 250, aRate: 0.5, vtQrs: ECG.M.qrsPaced(), vtT: { a: 150, g: 30, amp: 0.3 }, qtc: 330 }, 250);
+    });
+    defSchedule(7900, () => { DEF.rhythm = 'sinusale'; defCambia(defAfter('sinusale'), 250); defStato('Esito simulato: aritmia interrotta · sorveglianza attiva', true); });
+  } else if (p.terapia === 'atp') {
+    defSchedule(4600, () => defStato('ATP non adatta a questo ritmo · shock disabilitato dalla modalità scelta'));
+  } else {
+    defSchedule(4600, () => defStato('Ritmo defibrillabile · carica in corso…', true));
+    defSchedule(10400, () => { defColpo(defAfter('sinusale'), 1400); DEF.rhythm = 'sinusale'; defStato('Scarica simulata erogata', true); });
+    defSchedule(12600, () => defStato('Esito simulato: ritmo organizzato · sorveglianza attiva'));
+  }
+}
+function defAfter(esito) {
+  const cfg = DEF_DOPO[esito](); cfg.noise = S.noise;
+  // Dopo la terapia, la stimolazione dipende dal ritmo risultante, non dal caso iniziale.
+  if (esito !== 'asistolia' && ['icd', 'crtd'].includes(DEVICE.type))
+    cfg.pacing = { type: DEVICE.type === 'crtd' ? 'crt' : 'vvi', rate: DEVICE.rate, device: DEVICE.type };
+  return cfg;
 }
 function defCambia(cfg, ritardo) {
-  if (!stream) return;
-  cfg.noise = S.noise;
-  if (typeof stream.cambiaRitmo !== 'function') return;
-  stream.cambiaRitmo(cfg, mon.t + (ritardo || 250));
-  scene.setScenario(cfg);
+  if (!stream || typeof stream.cambiaRitmo !== 'function') return;
+  cfg.noise = S.noise; stream.cambiaRitmo(cfg, mon.t + (ritardo || 250));
+  curCfg = cfg; scene.setScenario(cfg); aggiornaEctUI();
 }
 function defColpo(dopo, attesa) {
-  if (!stream) return;
-  if (dopo) dopo.noise = S.noise;
-  if (typeof stream.scarica !== 'function') return;
+  if (!stream || typeof stream.scarica !== 'function') return;
   stream.scarica(mon.t + 220, dopo, attesa);
-  if (dopo) scene.setScenario(dopo);
+  if (dopo) { curCfg = dopo; scene.setScenario(dopo); aggiornaEctUI(); }
 }
 function defTick() {
-  if (!DEF.sc || !DEF.coda.length) return;
-  DEF.coda.forEach(a => { if (!a.fatta && mon.t >= a.t) { a.fatta = true; a.fn(); } });
+  if (!DEF.sc) return;
+  // Una nuova coda aggiunta da un callback viene esaminata dal frame successivo.
+  for (const a of [...DEF.coda]) if (!a.fatta && mon.t >= a.t) { a.fatta = true; a.fn(); }
+  DEF.coda = DEF.coda.filter(a => !a.fatta);
 }
+$('#deviceRemove').addEventListener('click', () => setDevice('none'));
 $('#defBtn').addEventListener('click', () => {
-  const sc = DEF.sc; if (!sc || !stream) return;
-  const p = paramsFor(sc), sh = !!DEF_SHOCK[p.ritmo];
+  if (!DEF.sc || DEVICE.type !== 'dae' || !stream) return;
   if (!S.playing) setPlaying(true);
-  const b = $('#defBtn');
-  b.disabled = true; b.textContent = 'Carica…';
-  defStato('Condensatore in carica…');
-  const version = caseVersion, target = stream;
-  clearTimeout(shockTimer);
-  shockTimer = setTimeout(() => {
-    shockTimer = null;
-    if (version !== caseVersion || target !== stream || DEF.sc !== sc) return;
-    const esito = sh && p.esito !== 'nulla' ? DEF_DOPO[p.esito]() : null;
-    defColpo(esito, 1400);
-    b.disabled = false; b.textContent = 'Carica e scarica';
-    defStato(!sh
-      ? 'Scarica erogata su un ritmo non defibrillabile: solo artefatto, il ritmo è identico. Riprendi le compressioni.'
-      : esito ? 'Scarica erogata: guarda che cosa esce dopo l\u2019artefatto.' : 'Scarica erogata: l\u2019aritmia persiste, serve un nuovo ciclo.', true);
-  }, 2600);
+  const b = $('#defBtn'); b.disabled = true;
+  if (DEF.stage === 'ready') {
+    if (!deviceShockable()) return;
+    DEF.stage = 'charging'; b.textContent = 'Carica…'; defStato('Carica in corso…');
+    defSchedule(1600, () => {
+      const p = paramsFor(DEF.sc), esito = p.esito || 'sinusale';
+      defColpo(esito === 'nulla' ? null : defAfter(esito), 1400);
+      if (esito !== 'nulla') DEF.rhythm = esito;
+      defStato('Scarica simulata erogata · osserva il tracciato', true);
+      defSchedule(1800, () => { DEF.stage = 'idle'; b.disabled = false; b.textContent = 'Analizza di nuovo'; defStato('Esito simulato · puoi ripetere l’analisi'); });
+    });
+  } else {
+    DEF.stage = 'analysing'; b.textContent = 'Analisi…'; defStato('Analisi del ritmo in corso…');
+    defSchedule(2600, () => {
+      const sh = deviceShockable(); DEF.stage = sh ? 'ready' : 'idle';
+      b.disabled = false; b.textContent = sh ? 'Eroga scarica' : 'Analizza di nuovo';
+      defStato(sh ? 'Ritmo defibrillabile · scarica pronta' :
+        (['tvsp', 'tdp'].includes(DEF.rhythm) && DEVICE.pulse === 'present' && !DEF.sc.defib
+          ? 'Polso presente · defibrillazione DAE non indicata in questo contesto'
+          : 'Ritmo non defibrillabile · scarica non consigliata'), sh);
+    });
+  }
 });
 
 function loadScenario(id, keepTime, snapshot) {
   const sc = byId[id]; if (!sc) return;
+  if (id !== S.sc || !keepTime || snapshot || digCur) { DEVICE.type = snapshot ? 'none' : sc.defib ? (sc.defib.tipo === 'manuale' ? 'dae' : 'icd') : 'none'; DEVICE.rate = 70; DEVICE.pulse = 'present'; }
   digCur = null;
   S.sc = id; store.sc = id; save();
   $('#scTitle').textContent = sc.name; $('#scCat').textContent = sc.cat;
@@ -761,7 +833,7 @@ function renderCard(sc) {
 let digCur = null;
 function apriDigitalizzato(id, recDato) {
   const rec = recDato || DIG[id]; if (!rec) return;
-  cancelCaseActions();
+  cancelCaseActions(); DEVICE.type = 'none';
   digCur = id;
   const reale = !!rec.reale;
   stream = new Sampled(rec, 1);
@@ -843,6 +915,7 @@ const notePar = {};
 function renderParams(sc) {
   notePar[sc.id] = [];
   const p = paramsFor(sc); const box = $('#p-params'); box.innerHTML = '';
+  renderDeviceParams(sc, box);
   const sec = document.createElement('div'); sec.className = 'sec'; sec.innerHTML = '<h3>' + esc(sc.name) + '</h3>';
   sc.params.forEach(q => {
     const d = document.createElement('div'); d.className = 'ctrl';
@@ -867,7 +940,7 @@ function renderParams(sc) {
     sec.appendChild(d);
   });
   const reset = document.createElement('button'); reset.className = 'btn'; reset.textContent = 'Ripristina i valori tipici';
-  reset.addEventListener('click', () => { delete store.params[sc.id]; save(); renderParams(sc); buildStream(sc, paramsFor(sc), true); defUI(sc); });
+  reset.addEventListener('click', () => { delete store.params[sc.id]; save(); buildStream(sc, paramsFor(sc), true); defUI(sc); renderParams(sc); aggiornaEctUI(); });
   sec.appendChild(reset); box.appendChild(sec);
   const g = document.createElement('div'); g.className = 'sec';
   g.innerHTML = '<h3>Registrazione</h3><div class="ctrl"><div class="lab"><span>Rumore e deriva della linea di base</span><output class="num">' + Math.round(S.noise * 100) + '%</output></div><input type="range" min="0" max="1" step="0.05" value="' + S.noise + '"></div><p class="note">A 0% il tracciato è pulito. Aumenta il rumore per simulare disturbi e oscillazioni della linea di base.</p>';
@@ -902,6 +975,9 @@ function renderVolt() {
   const box = $('#p-volt'); if (!box) return;
   const IP = window.ISO_IPERTROFIE;
   const amp = stream && stream.qrsAmplitudes ? stream.qrsAmplitudes(mon.t) : null;
+  if (stream && stream.cfg.pacing) {
+    box.dataset.shell = ''; box.innerHTML = '<div class="sec"><h3>Tracciato stimolato</h3><p>Gli indici di ipertrofia non sono applicabili al QRS stimolato. Usa il compasso per osservare spike e morfologia, oppure rimuovi il dispositivo per studiare il quadro originale.</p></div>'; return;
+  }
   if (stream && stream.cfg.mode === 'sampled') {
     box.dataset.shell = ''; box.innerHTML = '<div class="sec"><h3>Misure sul tracciato registrato</h3><p>Voltaggi R/S, durata QRS e indici automatici: <b>non disponibili</b>. Il segnale non ha una delimitazione del QRS validata. Usa il compasso sul tracciato originale; i canali mancanti non valgono zero.</p></div>' + FIRMA; return;
   }
@@ -946,7 +1022,7 @@ function setParam(sc, k, v) {
   const version = caseVersion;
   clearTimeout(rebuildT); rebuildT = setTimeout(() => {
     if (version !== caseVersion || S.sc !== sc.id || digCur) return;
-    buildStream(sc, paramsFor(sc), true); defUI(sc);
+    buildStream(sc, paramsFor(sc), true); defUI(sc); aggiornaEctUI();
   }, 90);
 }
 function openLib() { $('#lib').classList.add('open'); $('#scrim').classList.add('open'); }
@@ -1276,14 +1352,15 @@ function measure(st, t) {
   const rr = b.t - a.t, fc = 60000 / rr;
   const narrowOrigin = b.meta.type === 'conducted' || b.meta.type === 'escape-j';
   // ultimo battito "di base" per PR, QRS e QT
-  const base = Vs.slice().reverse().find(e => e.meta.type === 'conducted' || e.meta.type === 'escape-j' || e.meta.type === 'escape-v' || e.meta.type === 'vt') || b;
+  const base = Vs.slice().reverse().find(e => e.meta.paced || e.meta.type === 'conducted' || e.meta.type === 'escape-j' || e.meta.type === 'escape-v' || e.meta.type === 'vt') || b;
   const prevBase = Vs.slice(0, Vs.indexOf(base)).reverse().find(e => e.meta.type === base.meta.type);
   const rrB = prevBase ? base.t - prevBase.t : rr;
   let pr = '—';
   if (base.meta.type === 'conducted' && st.cfg.atrial !== 'af' && st.cfg.atrial !== 'flutter' && st.cfg.mode !== 'svt') {
     const A = st.ev.filter(e => e.kind === 'A' && e.t < base.t && base.t - e.t < 450 && !e.meta.blocked && e.meta.type !== 'retro').slice(-1)[0];
     if (A) pr = fmt(base.t - A.t) + ' ms';
-  } else if (st.cfg.mode === 'vt' || st.cfg.av === 'III') pr = 'dissociato';
+  } else if (base.meta.type === 'paced-crt') pr = 'stimolato';
+  else if (base.meta.paced || st.cfg.mode === 'vt' || st.cfg.av === 'III') pr = 'dissociato';
   const irr = st.cfg.atrial === 'af' ? ' (RR variabile)' : '';
   let s = '<span>FC <b>' + fmt(fc) + '/min</b>' + irr + '</span><span>RR <b>' + fmt(rr) + ' ms</b></span><span>PR <b>' + pr + '</b></span><span>QRS <b>' + fmt(base.meta.w) + ' ms</b></span>';
   if (base.meta.type !== 'vt') {
@@ -1983,7 +2060,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v41.0 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v42.0 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {

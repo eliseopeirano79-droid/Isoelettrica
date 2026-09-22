@@ -2334,12 +2334,9 @@ add({
 });
 
 /* ==================== DEFIBRILLAZIONE ====================
-   Due tracciati che si comandano: il defibrillatore manuale, dove la scarica la
-   dai tu, e il defibrillatore impiantabile, che decide da solo. Il ritmo si
-   sceglie fra quelli dell'arresto, defibrillabili e non. La scarica si vede sul
-   tracciato come nella realtà: un artefatto enorme, qualche decimo di secondo di
-   silenzio e poi quello che c'è dopo. Sui ritmi non defibrillabili premere non
-   serve a niente, ed è esattamente la cosa da imparare. */
+   Scenari dedicati al DAE e al dispositivo impiantabile. Gli stessi dispositivi
+   sono aggiungibili agli altri quadri da Parametri. L'analisi è simulata; il DAE
+   impedisce la scarica sui ritmi non defibrillabili. */
 const ARRESTO = {
   fv: { nome: 'Fibrillazione ventricolare grossolana', shock: true, cfg: () => ({ mode: 'continuous', cont: 'vf', vfAmp: 0.55 }) },
   fvfine: { nome: 'Fibrillazione ventricolare a onde fini', shock: true, cfg: () => ({ mode: 'continuous', cont: 'vf', vfAmp: 0.17 }) },
@@ -2359,7 +2356,7 @@ const DOPO = {
 const OPZ_RITMO = Object.keys(ARRESTO).map(k => [k, ARRESTO[k].nome + (ARRESTO[k].shock ? '' : ' \u00b7 non defibrillabile')]);
 
 add({
-  id: 'dae', cat: 'Arresto cardiaco', name: 'Defibrillatore manuale: eroga la scarica',
+  id: 'dae', cat: 'Arresto cardiaco', name: 'DAE: analisi del ritmo e defibrillazione',
   params: [
     { k: 'ritmo', label: 'Ritmo dell\u2019arresto', type: 'select', def: 'fv', opts: OPZ_RITMO },
     { k: 'esito', label: 'Esito della scarica', type: 'select', def: 'sinusale', opts: [['sinusale', 'Ripresa del ritmo sinusale'], ['bradi', 'Ripresa con bradicardia'], ['asistolia', 'Asistolia dopo la scarica'], ['nulla', 'Aritmia che persiste']] },
@@ -2369,9 +2366,9 @@ add({
   defib: { tipo: 'manuale' },
   look: ['II', 'V1'],
   card: {
-    def: 'Tracciato comandato: scegli il ritmo dell\u2019arresto, premi Scarica e guarda che cosa succede. Sui ritmi defibrillabili la scarica pu\u00f2 interrompere l\u2019aritmia; sugli altri produce solo l\u2019artefatto.',
+    def: 'Scegli il ritmo dell’arresto e premi Defibrilla: il DAE simula l’analisi e indica se la scarica è consigliata. Solo dopo un esito defibrillabile puoi erogarla e osservare l’esito didattico selezionato.',
     criteri: [
-      'Ritmi defibrillabili: fibrillazione ventricolare, tachicardia ventricolare senza polso, flutter ventricolare, torsione di punta',
+      'Ritmi defibrillabili in questo scenario di arresto: fibrillazione ventricolare, tachicardia ventricolare senza polso, flutter ventricolare e torsione di punta senza polso',
       'Ritmi non defibrillabili: asistolia, attivit\u00e0 elettrica senza polso, ritmo agonico',
       'La scarica sul tracciato: deflessione fuori scala, poi qualche decimo di secondo di tracciato muto per saturazione dell\u2019amplificatore, poi deriva lenta della linea di base',
       'Defibrillazione in onda bifasica: energia secondo le indicazioni del costruttore, di regola 150-200 J alla prima scarica e pari o superiore alle successive',
@@ -2407,8 +2404,8 @@ add({
       'Conferma su un numero di intervalli consecutivi prima di erogare, per non trattare aritmie che si esauriscono da sole',
       'Stimolazione antitachicardica: una salva di impulsi leggermente pi\u00fa rapida della tachicardia, che entra nel circuito di rientro e lo interrompe senza dolore',
       'Se la stimolazione antitachicardica fallisce o il ritmo \u00e8 la fibrillazione, il condensatore si carica in alcuni secondi e viene erogata la scarica',
-      'Dopo la scarica il dispositivo stimola di supporto se il ritmo sottostante \u00e8 lento',
-      'Sui ritmi non defibrillabili il dispositivo non eroga scariche: al massimo stimola'
+      'Dopo la scarica può stimolare di supporto se il ritmo organizzato sottostante è lento; i tempi e gli esiti mostrati sono esemplificativi',
+      'Sui ritmi non defibrillabili non eroga scariche. Il supporto antibradicardico non è una terapia dell’asistolia o della PEA in arresto'
     ],
     guarda: 'La striscia lunga: prima l\u2019aritmia, poi la salva di stimoli oppure l\u2019artefatto della scarica, poi il ritmo che ne esce.',
     meccanismo: 'La stimolazione antitachicardica funziona perch\u00e9 il rientro ha una finestra eccitabile: stimolando appena pi\u00fa veloce, il fronte artificiale entra nel circuito, lo trova refrattario davanti e lo spegne. Se invece l\u2019attivazione \u00e8 caotica, come nella fibrillazione, non c\u2019\u00e8 nessun circuito da catturare e serve la scarica.',

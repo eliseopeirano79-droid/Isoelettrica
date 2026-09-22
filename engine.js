@@ -207,6 +207,15 @@ M.qrsPaced = () => ({
   ]
 });
 
+// Esempio didattico biventricolare: QRS distinto dal pacing apicale destro.
+// Morfologia e grado di restringimento non predicono la risposta clinica alla CRT.
+M.qrsCRT = () => ({
+  w: 130, focus: 'rvApex', spike: true, c: [
+    B(dirAG(-45, 35), 0.75, 36, 20, 20),
+    B(dirAG(-20, 20), 0.8, 90, 25, 25)
+  ]
+});
+
 // ripolarizzazione: direzione della T di default in base al QRS
 M.tNormal = { a: 42, g: 22, amp: 0.34 };
 
@@ -234,7 +243,7 @@ function buildV(tv, qrs, rr, opt) {
   // opposto (es. infarto posteriore), altrimenti il passaggio ST→T è uno scalino
   if (opt.st && opt.st.amp) comps.push(PL(dirAG(opt.st.a, opt.st.g), opt.st.amp, w - 8, tPeak - 10 - (opt.st.e ? opt.st.e : 0), opt.st.e || 14));
   if (opt.u) comps.push(B(dirAG(T.a, T.g), opt.u, QT + 70, 32, 38));
-  return { t: tv, kind: 'V', comps, span: extentOf(comps), meta: Object.assign({ w, qt: QT, rr, focus: qrs.focus || null }, opt.meta || {}) };
+  return { t: tv, kind: 'V', comps, span: extentOf(comps), meta: Object.assign({ w, qt: QT, rr, paced: !!qrs.spike, focus: qrs.focus || null }, opt.meta || {}) };
 }
 function buildA(ta, comps, meta) {
   return { t: ta, kind: 'A', comps, span: extentOf(comps), meta: meta || {} };
@@ -501,11 +510,54 @@ function makeContinuous(cfg, seed) {
   return null;
 }
 
+/* Stimolazione ventricolare a domanda. Il generatore nativo conserva P,
+   blocchi e battiti condotti. Ogni V rilevato inibisce e reimposta il timer;
+   uno scappamento è reimpostato anche da un V stimolato. Nella CRT le P
+   rilevate anticipano lo stimolo con ritardo AV di 120 ms (limite 150/min).
+   Modello didattico con cattura/rilevazione ideali, senza fusione né guasti. */
+function* pacedRhythm(cfg, R) {
+  const native = rhythm(cfg, R), setting = cfg.pacing;
+  const rr = 60000 / Math.max(40, Math.min(100, setting.rate || 70));
+  const crt = setting.type === 'crt', qrs = crt ? M.qrsCRT() : M.qrsPaced();
+  let pending = [], frontier = -Infinity;
+  let lastV = (cfg.t0 || 0) + 400, deadline = lastV + rr;
+  let lastPaced = false;
+  for (;;) {
+    while (frontier < deadline + 2500) {
+      const next = native.next(); if (next.done) break;
+      for (const e of next.value) { pending.push(e); frontier = Math.max(frontier, e.t); }
+    }
+    pending.sort((a, b) => a.t - b.t);
+    const e = pending[0];
+    if (!e || e.t > deadline) {
+      const tv = deadline;
+      const v = buildV(tv, qrs, tv - lastV, { qtc: cfg.qtc || 440,
+        T: { a: 150, g: crt ? -20 : 30, amp: 0.38 },
+        meta: { type: crt ? 'paced-crt' : 'paced', device: setting.device } });
+      lastV = tv; lastPaced = true; deadline = tv + rr;
+      yield [v];
+      continue;
+    }
+    pending.shift();
+    if (e.kind === 'A') {
+      // Le P native restano visibili anche nel BAV completo.
+      if (crt && e.meta.type === 'sinus' && e.t - lastV >= 250)
+        deadline = Math.min(deadline, Math.max(e.t + 120, lastV + 400));
+      yield [e];
+    } else if (e.kind === 'V') {
+      const escape = /^escape-/.test(e.meta.type);
+      if (lastPaced && (e.t - lastV < 250 || (escape && e.t - lastV < e.meta.rr - 2))) continue;
+      lastV = e.t; lastPaced = false; deadline = e.t + rr;
+      yield [e];
+    } else yield [e];
+  }
+}
+
 /* ---------- stream ---------- */
 function Stream(cfg, seed) {
   this.cfg = cfg; this.seed = seed || 1;
   this.R = rng(this.seed);
-  this.gen = rhythm(cfg, this.R);
+  this.gen = cfg.pacing ? pacedRhythm(cfg, this.R) : rhythm(cfg, this.R);
   this.ev = []; this.tGen = 0;
   this.contSeg = [{ t0: -1e12, t1: 1e12, fn: makeContinuous(cfg, this.seed) }];
   this.scariche = [];        // defibrillazioni erogate, con l'artefatto sul tracciato
@@ -712,7 +764,7 @@ Stream.prototype.cambiaRitmo = function (cfg2, tDa) {
   if (cfg.noise == null) cfg.noise = this.cfg.noise;
   this.cfg = cfg;
   this.contSeg.push({ t0: tDa, t1: 1e12, fn: makeContinuous(cfg, this.seed + this.contSeg.length * 17) });
-  this.gen = rhythm(cfg, this.R);
+  this.gen = cfg.pacing ? pacedRhythm(cfg, this.R) : rhythm(cfg, this.R);
   this.tShift = tDa;
   this.tGen = tDa;
   this.baseQrs = cfg.qrs || this.baseQrs;
@@ -780,6 +832,7 @@ Stream.prototype.qrsAmplitudes = function (tRef) {
    kind: 'pvc' (ventricolare, pausa compensatoria) oppure 'pac' (sopraventricolare,
    P prematura di morfologia diversa e pausa non compensatoria). */
 Stream.prototype.injectEctopic = function (tNow, kind) {
+  if (this.cfg.pacing) return null; // Richiederebbe sensing/refrattarietà anche per l’evento inserito.
   this.ensure(tNow + 2600);
   const Vs = this.ev.filter(e => e.kind === 'V');
   if (!Vs.length) return null;
