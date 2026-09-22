@@ -2768,7 +2768,7 @@ S.push({
 });
 
 S.push({
-  id: 'qt-corto', cat: 'Elettroliti e altro', name: 'Sindrome del QT corto', quiz: true,
+  id: 'qt-corto', cat: 'Elettroliti e altro', name: 'QT corto', quiz: true,
   params: [F.hr(62, 45, 95), { k: 'qt', label: 'QTc', unit: 'ms', min: 280, max: 360, step: 5, def: 310 }],
   build: p => ({ rate: p.hr, pr: 150, qtc: p.qt, T: { a: 44, g: 14, amp: 0.68 }, peaked: 0.85 }),
   look: ['V2', 'V3', 'II'],
@@ -3015,6 +3015,15 @@ const QUIZ_ATLAS = { lett051: true, ari026: true, ari114: true, ari121: true, ar
 ATLAS.forEach(a => { a.quizApproved = !!QUIZ_ATLAS[a.id]; if (Array.isArray(QUIZ_ATLAS[a.id])) a.quizCrop = QUIZ_ATLAS[a.id]; });
 
 const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', VALV, COMB, 'Elettroliti e altro', ART];
+// Ordine di consultazione condiviso da libreria e confronto dei tracciati.
+const LIB_ORDER = {
+  'Elettroliti e altro': [
+    'iperk', 'ipok', 'ipercalcemia', 'ipocalcemia',
+    'qtlungo', 'qt-corto', 'brugada', 'brugada2', 'arvc',
+    'pericardite', 'tamponamento', 'digitale', 'triciclici',
+    'ipotermia', 'ipotiroidismo', 't-cerebrali'
+  ]
+};
 const LIB_SECTIONS = [
   { id: 'ritmo', name: 'Ritmo e aritmie', cats: ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Ventricolari'] },
   { id: 'conduzione', name: 'Conduzione', cats: ['Blocchi AV', 'Conduzione intraventricolare'] },
@@ -3051,6 +3060,6 @@ function soloLineeGuida() {
 }
 if (root.ISO_SOLO_LINEE_GUIDA === true) soloLineeGuida();
 
-const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G, LIB_SECTIONS };
+const API = { SCENARIOS: S, THEORY, CATS, ATLAS, ATLAS_G, LIB_SECTIONS, LIB_ORDER };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.ISO_DATA = API;
 })(typeof window !== 'undefined' ? window : this);

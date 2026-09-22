@@ -95,7 +95,8 @@ function disegna(cv, rec){
   nomi.forEach(function(n, k){
     var s = rec.d[n] ? decodifica(rec.d[n]) : null; if (!s) return;
     var col = dodici ? Math.floor(k/3) : 0, row = dodici ? k%3 : k;
-    var x0 = 4*mm + col*62.5*mm, base = (3 + row*rowmm + rowmm*0.55)*mm;
+    var x0 = 4*mm + col*62.5*mm;
+    var base = Math.round(Math.round((3 + row*rowmm + rowmm*0.55)/5)*5*mm)+.5;
     c.fillText(n, x0+1.5*mm, (3 + row*rowmm + 4)*mm);
     c.beginPath();
     for (var j=0;j<s.length;j++){

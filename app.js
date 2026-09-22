@@ -7,7 +7,7 @@ const DIG = window.ISO_ATLANTE_DIG || {};
 /* Tracciati reali da PTB-XL (PhysioNet, CC BY 4.0), prodotti da ptbxl.py.
    Il file è facoltativo: se non c'è, l'app funziona esattamente come prima. */
 (window.ISO_REALE || []).forEach((r, i) => { DIG[r.i || ('reale-' + i)] = Object.assign({}, r, { reale: true }); });
-const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G, LIB_SECTIONS } = window.ISO_DATA;
+const { SCENARIOS, THEORY, CATS, ATLAS, ATLAS_G, LIB_SECTIONS, LIB_ORDER } = window.ISO_DATA;
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -17,6 +17,9 @@ const LIDX = {}; LEADS.forEach((L, i) => { LIDX[L.id] = i; });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = (v, d) => Number.isFinite(v) ? (d ? v.toFixed(d) : Math.round(v).toString()).replace('.', ',') : 'N/D';
 const cloneCase = value => JSON.parse(JSON.stringify(value));
+// Stessa coordinata, anche nei pixel, della riga principale più vicina (5 mm).
+// Si allinea lo zero grafico: i valori in mV del segnale restano invariati.
+const gridBaseline = (mm, preferred) => Math.round(Math.round(preferred / (5 * mm)) * 5 * mm) + 0.5;
 
 /* ---------- memoria ---------- */
 const KEY = 'isoelettrica.v1';
@@ -77,6 +80,8 @@ class Monitor {
       this.groups = [{ x0: m * pxmm, w: 125 * pxmm }, { x0: (2 * m + 125) * pxmm, w: 125 * pxmm }];
       this.rows = [];
     }
+    panels.forEach(p => { p.base = gridBaseline(pxmm * dpr, p.base * dpr) / dpr; });
+    this.rows = this.rows.map(base => gridBaseline(pxmm * dpr, base * dpr) / dpr);
     Object.assign(this, { W, H, dpr, pxmm, panels });
     this.last = panels.map(() => null);
     this.cv.width = this.ov.width = this.bg.width = Math.round(W * dpr);
@@ -512,7 +517,7 @@ const S = {
   sc: byId[store.sc] ? store.sc : 'normale',
   mode: store.mode || 'print', speed: store.speed || 25, gain: store.gain || 10, slow: 1,
   playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  sel: null, noise: store.noise == null ? 0.35 : store.noise, sesso: store.sesso === 'F' ? 'F' : 'M',
+  sel: null, noise: store.noise == null ? 0 : store.noise, sesso: store.sesso === 'F' ? 'F' : 'M',
   ectTipo: store.ectTipo === 'pac' ? 'pac' : 'pvc', ectPat: store.ectPat || 'off', view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 0.6 : store.opac
 };
 let stream = null, curCfg = null, seed = 1;
@@ -704,6 +709,11 @@ function libHit(id, f) {
   const j = t.toLowerCase().indexOf(f);
   return j < 0 ? esc(t) : esc(t.slice(0, j)) + '<mark>' + esc(t.slice(j, j + f.length)) + '</mark>' + esc(t.slice(j + f.length));
 }
+function scenariosByCategory(cat) {
+  const order = LIB_ORDER[cat] || [];
+  const rank = id => { const i = order.indexOf(id); return i < 0 ? order.length : i; };
+  return SCENARIOS.filter(s => s.cat === cat).sort((a, b) => rank(a.id) - rank(b.id));
+}
 function renderLib(filter) {
   const f = (filter || '').trim().toLowerCase(); const box = $('#libList'); box.innerHTML = '';
   const selectedSection = $('#libSection').value;
@@ -713,7 +723,7 @@ function renderLib(filter) {
     const heading = document.createElement('summary'); group.appendChild(heading);
     let count = 0;
     section.cats.forEach(cat => {
-    const items = SCENARIOS.filter(s => s.cat === cat && (!f || (LIBIDX.find(x => x.id === s.id) || { hay: '' }).hay.includes(f)));
+    const items = scenariosByCategory(cat).filter(s => !f || (LIBIDX.find(x => x.id === s.id) || { hay: '' }).hay.includes(f));
     if (!items.length) return;
     count += items.length;
     const h = document.createElement('h4'); h.textContent = cat; group.appendChild(h);
@@ -820,7 +830,7 @@ function renderParams(sc) {
   reset.addEventListener('click', () => { delete store.params[sc.id]; save(); renderParams(sc); buildStream(sc, paramsFor(sc), true); defUI(sc); });
   sec.appendChild(reset); box.appendChild(sec);
   const g = document.createElement('div'); g.className = 'sec';
-  g.innerHTML = '<h3>Registrazione</h3><div class="ctrl"><div class="lab"><span>Rumore e deriva della linea di base</span><output class="num">' + Math.round(S.noise * 100) + '%</output></div><input type="range" min="0" max="1" step="0.05" value="' + S.noise + '"></div><p class="note">Un po\u2019 di rumore rende il tracciato più simile a un ECG reale.</p>';
+  g.innerHTML = '<h3>Registrazione</h3><div class="ctrl"><div class="lab"><span>Rumore e deriva della linea di base</span><output class="num">' + Math.round(S.noise * 100) + '%</output></div><input type="range" min="0" max="1" step="0.05" value="' + S.noise + '"></div><p class="note">A 0% il tracciato è pulito. Aumenta il rumore per simulare disturbi e oscillazioni della linea di base.</p>';
   const ni = g.querySelector('input'), no = g.querySelector('output');
   ni.addEventListener('input', () => { S.noise = +ni.value; store.noise = S.noise; no.textContent = Math.round(S.noise * 100) + '%'; save(); if (stream) stream.noise = S.noise; });
   box.appendChild(g);
@@ -1004,7 +1014,7 @@ function stDraw() {
   const li = LIDX[ST.lead], v = [0, 0, 0], lv = new Array(12);
   const font = Math.max(10, Math.round(3.4 * ST.pxmm)) * d;
   for (let r = 0; r < ST.nRighe; r++) {
-    const base = (1 + r * ST.rowMm + ST.rowMm * 0.5) * mm;
+    const base = gridBaseline(mm, (1 + r * ST.rowMm + ST.rowMm * 0.5) * mm);
     const tA = inizio + r * durata, tB = tA + durata;
     // secondi: tacca a ogni secondo sul bordo inferiore della riga
     c.strokeStyle = css.grid2; c.lineWidth = 1.2 * d;
@@ -1277,9 +1287,9 @@ function widgetFC(el) {
     el.querySelector('#fcNote').textContent = '1500 ÷ ' + mmRR + ' quadratini, oppure 300 ÷ ' + fmt(mmRR / 5, 1) + ' quadrati grandi';
     const d = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth; cv.width = W * d; cv.height = 120 * d; const c = cv.getContext('2d'); readVars();
     const mm = W / 150 * d; c.fillStyle = css.paper; c.fillRect(0, 0, cv.width, cv.height);
-    for (let i = 0; i * mm <= cv.width; i++) { c.strokeStyle = i % 5 ? css.grid : css.grid2; c.lineWidth = d * 0.6; c.beginPath(); c.moveTo(i * mm + 0.5, 0); c.lineTo(i * mm + 0.5, cv.height); c.stroke(); }
-    for (let j = 0; j * mm <= cv.height; j++) { c.strokeStyle = j % 5 ? css.grid : css.grid2; c.beginPath(); c.moveTo(0, j * mm + 0.5); c.lineTo(cv.width, j * mm + 0.5); c.stroke(); }
-    c.strokeStyle = css.trace; c.lineWidth = 1.6 * d; c.beginPath(); const base = 80 * d; c.moveTo(0, base);
+    for (let i = 0; i * mm <= cv.width; i++) { c.strokeStyle = i % 5 ? css.grid : css.grid2; c.lineWidth = d * 0.6; c.beginPath(); c.moveTo(Math.round(i * mm) + 0.5, 0); c.lineTo(Math.round(i * mm) + 0.5, cv.height); c.stroke(); }
+    for (let j = 0; j * mm <= cv.height; j++) { c.strokeStyle = j % 5 ? css.grid : css.grid2; c.beginPath(); c.moveTo(0, Math.round(j * mm) + 0.5); c.lineTo(cv.width, Math.round(j * mm) + 0.5); c.stroke(); }
+    c.strokeStyle = css.trace; c.lineWidth = 1.6 * d; c.beginPath(); const base = gridBaseline(mm, 80 * d); c.moveTo(0, base);
     for (let x = 10; x * mm < cv.width; x += mmRR) { c.lineTo((x - 1) * mm, base); c.lineTo((x - 0.5) * mm, base + 4 * d); c.lineTo(x * mm, base - 60 * d); c.lineTo((x + 0.6) * mm, base + 10 * d); c.lineTo((x + 1.2) * mm, base); }
     c.lineTo(cv.width, base); c.stroke();
   };
@@ -1712,7 +1722,7 @@ function cmpInit() {
     const sel = $('#cmpSel' + side);
     CATS.forEach(cat => {
       const g = document.createElement('optgroup'); g.label = cat;
-      SCENARIOS.filter(s => s.cat === cat).forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; g.appendChild(o); });
+      scenariosByCategory(cat).forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; g.appendChild(o); });
       sel.appendChild(g);
     });
     CMP[side].mon = new Monitor($('#cmpEcg' + side), $('#cmpOv' + side), {});
@@ -1863,7 +1873,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v40.1 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v40.2 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {
