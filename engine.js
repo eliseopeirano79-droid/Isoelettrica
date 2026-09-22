@@ -882,7 +882,7 @@ function Sampled(rec, seed) {
   this.cfg = { mode: 'sampled', titolo: rec.t, fonte: rec.f, quadro: rec.q };
   this.fs = rec.fs; this.n = rec.n;
   this.dur = rec.n / rec.fs * 1000;
-  this.sig = LEADS.map(L => rec.d[L.id] ? decodifica(rec.d[L.id]) : null);
+  this.sig = LEADS.map(L => rec.d[L.id] ? (rec.encoding === 'mv' ? Float64Array.from(rec.d[L.id]) : decodifica(rec.d[L.id])) : null);
   if (this.sig.some(s => s && s.length !== rec.n)) throw new Error('Numero di campioni non coerente con il tracciato');
   /* Delle dodici derivazioni solo otto portano informazione: DIII e le tre
      aumentate si ricavano da DI e DII con Einthoven e Goldberger. Salvando solo
@@ -915,12 +915,15 @@ Sampled.prototype.ensure = function (t) {
   }));
 };
 Sampled.prototype.prune = function () {};
+Sampled.prototype.crossesBoundary = function (a, b) { return Math.floor(a / this.dur) !== Math.floor(b / this.dur); };
 Sampled.prototype.campiona = function (i, tau) {
   const s = this.sig[i]; if (!s) return NaN;
   let x = (tau % this.dur) / 1000 * this.fs;
   if (x < 0) x += s.length;
   const a = Math.floor(x), f = x - a;
-  return s[a % s.length] * (1 - f) + s[(a + 1) % s.length] * f;
+  // Il riavvio del file non è un battito: non interpolare l'ultimo campione
+  // con il primo, che appartiene a un'altra ripetizione della registrazione.
+  return f === 0 ? s[a % s.length] : s[a % s.length] * (1 - f) + s[Math.min(a + 1, s.length - 1)] * f;
 };
 Sampled.prototype.vec = function (tau, out) { out[0] = 0; out[1] = 0; out[2] = 0; return out; };
 Sampled.prototype.leads = function (tau, vec, outArr) {
@@ -936,12 +939,12 @@ Sampled.prototype.qrsAmplitudes = function () {
 /* battiti riconosciuti sul segnale, così le misure di FC e RR restano vive */
 Sampled.prototype.rilevaR = function () {
   const s = this.sig[1] || this.sig[0] || this.uni; if (!s) return;
-  let mx = 0; for (let i = 0; i < s.length; i++) mx = Math.max(mx, Math.abs(s[i]));
+  let mx = 0; for (let i = 0; i < s.length; i++) if (Number.isFinite(s[i])) mx = Math.max(mx, Math.abs(s[i]));
   const soglia = mx * 0.45, rifr = Math.round(0.25 * this.fs);
   const picchi = [];
   for (let i = 1; i < s.length - 1; i++) {
     const v = Math.abs(s[i]);
-    if (v < soglia || v < Math.abs(s[i-1]) || v < Math.abs(s[i+1])) continue;
+    if (!Number.isFinite(v) || !Number.isFinite(s[i-1]) || !Number.isFinite(s[i+1]) || v < soglia || v <= Math.abs(s[i-1]) || v < Math.abs(s[i+1])) continue;
     if (picchi.length && i - picchi[picchi.length-1] < rifr) {
       if (v > Math.abs(s[picchi[picchi.length-1]])) picchi[picchi.length-1] = i;
     } else picchi.push(i);

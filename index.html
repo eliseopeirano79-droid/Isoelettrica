@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=40.2">
+<link rel="manifest" href="manifest.webmanifest?v=41.0">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -389,13 +389,27 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 @media (max-width:900px){#v-cor.on{grid-template-columns:minmax(0,1fr);overflow:auto}.corout{border-left:none;border-top:1px solid var(--line)}.corstage{min-height:300px;height:44vh}}
 
 /* atlante: selettore della fonte e schede dei tracciati reali */
-.afonti{display:flex;gap:6px;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid var(--bordo,#2a2f3a)}
-.afonte{flex:1;padding:8px 6px;border-radius:9px;border:1px solid var(--bordo,#2a2f3a);background:transparent;color:inherit;font:inherit;font-size:.82rem;cursor:pointer}
-.afonte.on{background:var(--acc,#3b82f6);border-color:var(--acc,#3b82f6);color:#fff}
+.afonti{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid var(--line)}
+.afonte{flex:1;padding:8px 6px;border-radius:9px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-size:.82rem;cursor:pointer}
+.toc .afonte.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .acard.areale{display:flex;flex-direction:column;gap:6px;padding:12px;min-height:0;text-align:left}
 .ascp{display:flex;flex-wrap:wrap;gap:4px}
 .ascp span{font-size:.68rem;padding:2px 6px;border-radius:5px;background:rgba(127,127,127,.18);letter-spacing:.02em}
-.arealenota{opacity:.6;font-size:.72rem;margin-top:14px;line-height:1.45}
+.arealenota{grid-column:1/-1;color:var(--muted);font-size:.75rem;margin-top:14px;line-height:1.45}
+.real-tools{padding:4px 0 10px;line-height:1.45}
+.real-tools p{margin:4px 0}
+.real-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:10px 0}
+.real-filters label{display:flex;align-items:center;gap:6px;font-size:12px}
+.real-filters select{max-width:100%;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);font:inherit}
+.real-filters input[type=checkbox]{width:auto}
+.real-pages{grid-column:1/-1;display:flex;justify-content:center;align-items:center;gap:18px;padding:14px 0;font-size:13px}
+.acard.areale .at,.acard.areale .as{padding:0}
+.acard.areale .validation{margin-top:auto;padding-top:8px;line-height:1.4}
+.acard.areale .play-record{color:var(--accent);font-weight:650;padding-top:6px}
+.record-bar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:9px 14px;background:var(--accent-soft);font-size:12px}
+.record-bar[hidden],.real-tools[hidden],.real-filters[hidden]{display:none}
+#realStatus{color:var(--accent);font-weight:600}
+@media(max-width:760px){.afonti{flex-direction:row;margin:0;padding:0;border:0}.real-filters{gap:8px}.real-filters label{flex-wrap:wrap}.real-tools .note{font-size:11px}}
 .pnota{margin:6px 0 0;font-size:.76rem;line-height:1.4;opacity:.72}
 .pnota.fuori{opacity:1;color:#e8865f;font-weight:500}
 .scene-notice{position:absolute;inset:35% 20px auto;padding:16px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;z-index:5;text-align:center} :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
@@ -449,6 +463,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
         </div>
       </div>
       <div class="measures num" id="measures"></div>
+      <div class="record-bar" id="recordBar" hidden><button class="btn" id="recordBack">← Atlante PTB-XL</button><button class="btn" id="recordRestart">Ricomincia</button><span class="num" id="recordTime"></span><span class="note" id="recordOffline"></span></div>
       <div class="ecgwrap" id="ecgWrap"><canvas id="ecg"></canvas><canvas id="ecgOv" class="ov"></canvas></div>
       <div class="lower">
         <div class="stage" id="stage">
@@ -530,7 +545,11 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
   <section class="view" id="v-atlas">
     <nav class="toc" id="atoc"></nav>
     <div class="agrid-wrap">
-      <div class="asearch"><button class="btn" id="offlineSave">Scarica queste immagini per l’uso offline</button><p class="note" id="offlineStatus" role="status"></p><input id="aSearch" type="search" placeholder="Cerca nell'atlante: BBSx, Wenckebach, infarto inferiore…" aria-label="Cerca nell'atlante"></div>
+      <div class="asearch"><button class="btn" id="offlineSave">Scarica queste immagini per l’uso offline</button><p class="note" id="offlineStatus" role="status"></p>
+        <div class="real-tools" id="realTools" hidden><strong id="realSummary">ECG reali PTB-XL</strong><p class="note">Apri una scheda per animare la registrazione, fermarla e misurarla con il compasso. Un ECG può appartenere a più gruppi.</p>
+          <div class="real-filters" id="realFilters"><label>Referti <select id="realValidation"><option value="all">Tutti</option><option value="validated">Con validazione umana</option></select></label><label>Qualità <select id="realQuality"><option value="all">Tutti i segnali</option><option value="clean">Senza artefatti segnalati</option></select></label><label><input id="realOffline" type="checkbox">Solo salvati sul dispositivo</label></div>
+          <p class="note" id="realCount"></p><p class="note" id="realStatus" role="status" aria-live="polite"></p>
+        </div><input id="aSearch" type="search" placeholder="Cerca nell'atlante: BBSx, Wenckebach, infarto inferiore…" aria-label="Cerca nell'atlante"></div>
       <div class="agrid" id="agrid"></div>
       <p class="foot">Isoelettrica — App made by Eliseo Peirano · 2026</p>
     </div>
@@ -604,16 +623,15 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=40.2"></script>
-<script src="cuore3d.js?v=40.2"></script>
-<script src="engine.js?v=40.2"></script>
-<script src="ipertrofie.js?v=40.2"></script>
-<script src="data.js?v=40.2"></script>
-<script src="atlante-digitale.js?v=40.2"></script>
-<!-- facoltativo: ECG reali da PTB-XL, prodotti con ptbxl.py. Se il file non c'è, l'app parte lo stesso -->
-<script src="atlante-reale.js?v=40.2" onerror="this.dataset.ok=0"></script>
-<script src="quiz.js?v=40.2"></script>
-<script src="app.js?v=40.2"></script>
-<script src="coronarie.js?v=40.2"></script>
+<script src="three.min.js?v=41.0"></script>
+<script src="cuore3d.js?v=41.0"></script>
+<script src="engine.js?v=41.0"></script>
+<script src="ipertrofie.js?v=41.0"></script>
+<script src="data.js?v=41.0"></script>
+<script src="atlante-digitale.js?v=41.0"></script>
+<script src="ptbxl.js?v=41.0"></script>
+<script src="quiz.js?v=41.0"></script>
+<script src="app.js?v=41.0"></script>
+<script src="coronarie.js?v=41.0"></script>
 </body>
 </html>

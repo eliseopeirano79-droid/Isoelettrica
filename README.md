@@ -50,7 +50,27 @@ La suite comprende i controlli originali (`validatore.js`, `controllo-st.js`, `a
 
 L'app è uno strumento didattico: i modelli simulati e i test software non costituiscono validazione diagnostica dei contenuti o certificazione clinica.
 
-## PTB-XL facoltativo
+## Atlante PTB-XL completo (v41.0)
+
+La sezione **Atlante → PTB-XL** include tutti i **21.799 ECG** della versione 1.0.3, di cui **16.056** con `validated_by_human=true`. Ricerca per diagnosi/codice/ID, filtri combinati per validazione, artefatti segnalati e segnali già salvati, categorie multiple e pagine di 60 schede mantengono utilizzabile il catalogo completo.
+
+**Anima ECG** apre il tracciato originale nel monitor, con pausa, riavvio, rallentamento, guadagno, velocità della carta e compasso. Si conservano tutti i 5.000 campioni di ciascuna delle 12 derivazioni a 500 Hz e la calibrazione WFDB: nessuna quantizzazione aggiuntiva, filtro, normalizzazione o ricostruzione. La ripetizione del segmento di 10 secondi interrompe il tratto grafico al confine del file; non viene interpolato un battito tra fine e inizio. Le misure automatiche di FC rimangono stime dichiarate, senza inventare PR/QRS/QT o vettori 3D.
+
+Il catalogo locale occupa circa 1,4 MB. Referti dettagliati e segnali si caricano all'apertura: circa 120 kB di segnale per ECG. Il server PhysioNet non espone i file con CORS; `ptbxl.js` usa la copia pubblica `longisland3/ptb-xl` su Hugging Face, fissata al commit `34a5563a01793b150ac61fe0ec919a09fc0d044a`. **Ogni intestazione e segnale deve corrispondere allo SHA-256 ufficiale PhysioNet prima della visualizzazione**, anche dalla cache. Un errore di download, di integrità o di calibrazione impedisce l'apertura del caso e permette di riprovare. L'inventario del mirror comprende tutti i 43.598 file necessari.
+
+Una prima apertura richiede la rete. Segnale e referto vengono poi salvati nella cache `isoelettrica-ptbxl-1.0.3`, nei limiti di spazio e disponibilità del browser. La cache sopravvive agli aggiornamenti dell'app; il filtro «Solo salvati sul dispositivo» mostra le registrazioni complete presenti. Non sono previsti account o un database utenti. La disponibilità online dei casi ancora da scaricare dipende dal mirror pubblico; le copie già salvate rimangono utilizzabili offline.
+
+Per rigenerare il catalogo, scaricare `ptbxl_database.csv`, `scp_statements.csv`, `SHA256SUMS.txt` e `LICENSE.txt` dalla versione **1.0.3** ufficiale, poi eseguire:
+
+```sh
+python3 ptbxl_catalog.py --sorgente /percorso/ptb-xl/1.0.3 --out atlante-reale
+```
+
+Il generatore verifica le impronte dei metadati, conserva le etichette originali e i referti senza inferire diagnosi più specifiche, e maschera correttamente le età anonimizzate oltre 89 anni. Attribuzioni, modifiche e licenza sono visibili in `atlante-reale/fonti.html` e nelle schede del tracciato.
+
+### Importazione locale precedente
+
+`ptbxl.py` resta disponibile per importare sottoinsiemi autonomi nel vecchio formato:
 
 ```sh
 python3 ptbxl.py --sorgente /percorso/ptb-xl/1.0.3 --modo cartella --out atlante-reale
