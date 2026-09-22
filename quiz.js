@@ -46,7 +46,7 @@ function create(sc, seed) {
   const R = E.rng(seed), defaults = Object.fromEntries(sc.params.map(q => [q.k, q.def]));
   for (let n = 0; n < 25; n++) {
     const p = n === 24 ? defaults : params(sc, R), cfg = sc.build(p);
-    cfg.noise = 0.18;
+    cfg.noise = 0;
     // No hidden axis/rate/voltage variation after diagnostic validation.
     if (valid(sc, p, cfg, seed)) return { p, cfg, seed };
   }
