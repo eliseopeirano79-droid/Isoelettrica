@@ -1,6 +1,6 @@
 /* Isoelettrica: shell coerente per versione e archivio offline separato. */
 'use strict';
-const VERSION = '40';
+const VERSION = '40.1';
 const PREFIX = 'isoelettrica-', CACHE = PREFIX + 'v' + VERSION, ASSETS = PREFIX + 'assets-v1';
 const BASE = new URL('./', self.location.href);
 const Q = '?v=' + VERSION;

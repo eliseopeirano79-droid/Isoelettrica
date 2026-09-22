@@ -26,14 +26,14 @@ function worker(fetcher=async()=>new Response('ok')) {
 }
 test('Installazione completa: tutte le risorse richieste sono in cache',async()=>{
   const w=worker();await w.dispatch('install');
-  const c=await w.caches.open('isoelettrica-v40');
-  for(const f of ['index.html','quiz.js?v=40','engine.js?v=40','app.js?v=40','anatomia.html']) assert.ok(await c.match(base+f),f);
+  const c=await w.caches.open('isoelettrica-v40.1');
+  for(const f of ['index.html','quiz.js?v=40.1','engine.js?v=40.1','app.js?v=40.1','anatomia.html']) assert.ok(await c.match(base+f),f);
 });
 test('Un download essenziale fallito annulla lâ€™installazione e preserva la versione precedente',async()=>{
-  const w=worker(async req=>new Response('x',{status:String(req).endsWith('quiz.js?v=40')?503:200}));
+  const w=worker(async req=>new Response('x',{status:String(req).endsWith('quiz.js?v=40.1')?503:200}));
   await w.put('isoelettrica-v39','index.html','old');
   await assert.rejects(w.dispatch('install'),/indispensabile/);
-  assert.ok(w.maps.has('isoelettrica-v39'));assert.equal(w.maps.has('isoelettrica-v40'),false);
+  assert.ok(w.maps.has('isoelettrica-v39'));assert.equal(w.maps.has('isoelettrica-v40.1'),false);
 });
 test('Aggiornamento migra le immagini e non elimina cache di altre app',async()=>{
   const w=worker();await w.put('isoelettrica-v39','atlante/a.jpg','image');await w.put('another-app','x.js','foreign');
@@ -46,15 +46,15 @@ test('Quota esaurita durante la migrazione conserva la vecchia cache e attiva lâ
   await w.dispatch('activate');assert.ok(w.maps.has('isoelettrica-v39'));assert.equal(w.claimed,1);
 });
 test('Offline: pagina da cache, script assente mai sostituito da HTML',async()=>{
-  const w=worker(async()=>{throw Error('offline');});await w.put('isoelettrica-v40','index.html','<html>offline</html>');
+  const w=worker(async()=>{throw Error('offline');});await w.put('isoelettrica-v40.1','index.html','<html>offline</html>');
   const page=await w.dispatch('fetch',{request:{url:base,method:'GET',mode:'navigate'}});assert.equal(await page.text(),'<html>offline</html>');
   const script=await w.dispatch('fetch',{request:new Request(base+'missing.js')});assert.equal(script.type,'error');assert.equal(script.status,0);
 });
 test('HTTP 503 usa la copia disponibile e la shell non mescola versioni',async()=>{
-  const w=worker(async()=>new Response('unavailable',{status:503}));await w.put('isoelettrica-v40','aux.js','cached');
+  const w=worker(async()=>new Response('unavailable',{status:503}));await w.put('isoelettrica-v40.1','aux.js','cached');
   const response=await w.dispatch('fetch',{request:new Request(base+'aux.js')});assert.equal(await response.text(),'cached');
-  await w.put('isoelettrica-v40','app.js?v=40','version40');const calls=w.calls.length;
-  const core=await w.dispatch('fetch',{request:new Request(base+'app.js?v=40')});assert.equal(await core.text(),'version40');assert.equal(w.calls.length,calls);
+  await w.put('isoelettrica-v40.1','app.js?v=40.1','version40');const calls=w.calls.length;
+  const core=await w.dispatch('fetch',{request:new Request(base+'app.js?v=40.1')});assert.equal(await core.text(),'version40');assert.equal(w.calls.length,calls);
 });
 test('Archivio offline conta successi/errori e ignora risorse esterne',async()=>{
   const w=worker(async url=>new Response('image',{status:url.includes('bad.jpg')?404:200}));
@@ -63,6 +63,6 @@ test('Archivio offline conta successi/errori e ignora risorse esterne',async()=>
   w.replies.length=0;await w.dispatch('message',{data:{type:'offline-status',urls:['atlante/good.jpg']}});assert.equal(w.replies.at(-1).done,1);
 });
 test('Ripristino elimina solo le cache Isoelettrica e conferma dopo il completamento',async()=>{
-  const w=worker();await w.put('isoelettrica-v40','index.html','x');await w.put('isoelettrica-assets-v1','atlante/a.jpg','x');await w.put('foreign-cache','index.html','y');
+  const w=worker();await w.put('isoelettrica-v40.1','index.html','x');await w.put('isoelettrica-assets-v1','atlante/a.jpg','x');await w.put('foreign-cache','index.html','y');
   await w.dispatch('message',{data:{type:'purge'}});assert.deepEqual([...w.maps.keys()],['foreign-cache']);assert.equal(w.replies.at(-1).type,'purged');
 });

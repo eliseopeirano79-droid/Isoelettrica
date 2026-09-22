@@ -37,3 +37,7 @@ Confrontato il testo [ERC 2025 Adult Advanced Life Support](https://www.erc.edu/
 `npm test` esegue le verifiche degli scenari esistenti e le regressioni aggiunte. Include 1.260 casi generati, altri 1.000 ECG normali, tutti i 59 record digitalizzati, schemi PVC/PAC, trasformazioni delle derivazioni, passaggi fra viste e simulazione dei guasti offline. Le importazioni Python usano dati sintetici per controllare metadati e calibrazione.
 
 I test di interfaccia usano JSDOM con canvas simulato. Restano necessari il collaudo fisico su Safari/iOS e Android, la revisione clinica indipendente e la verifica immagine/segnale di ogni digitalizzazione. Le funzioni proposte nel rapporto come nuove evoluzioni — percorso di lettura guidata, ripetizione dilazionata, preferiti e link condivisibili — sono sviluppi successivi, separati dalla correzione dei difetti.
+
+### Aggiornamento 40.1
+
+Descrizione introduttiva del quiz allineata ai nuovi vincoli di generazione. Risorse e cache aggiornate insieme per distribuire il testo anche alle installazioni offline.

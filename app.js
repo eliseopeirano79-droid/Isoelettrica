@@ -1863,7 +1863,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v40 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v40.1 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {
