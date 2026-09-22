@@ -303,7 +303,11 @@
   function build(host) {
     sc = new THREE.Scene();
     cam = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    try { ren = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+    catch (error) {
+      const n = document.createElement('p'); n.className = 'scene-notice'; n.textContent = 'Vista 3D non disponibile. Puoi esplorare territori e spiegazioni con i selettori.'; host.appendChild(n);
+      ren = { domElement: document.createElement('canvas'), setPixelRatio() {}, setSize() {}, render() {} };
+    }
     ren.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
     host.appendChild(ren.domElement);
     sc.add(new THREE.AmbientLight(0xffffff, 0.75));
@@ -377,18 +381,19 @@
       '<p class="cortipo">' + esc(o.tipo) + '</p>' +
       (st.risp.length ? '<p class="coronda">Il morsetto è a valle dell\u2019origine di ' + esc(st.risp.map(siglaDi).join(', ')) +
         ': quel territorio resta perfuso e fuori dall\u2019area a rischio.</p>' : '') +
-      '<div class="corgrid"><div><span class="corlab">Area a rischio</span><b>' + st.rischio + '% del ventricolo sinistro</b></div>' +
-      '<div><span class="corlab">Necrosi a ' + fmtMin(minuti) + '</span><b>' + Math.round(f * 100) + '% dell\u2019area a rischio, cioè ' + perse + '% del ventricolo</b></div></div>' +
+      '<p class="note"><b>Modello illustrativo:</b> percentuali e tempi non sono una previsione individuale. Dominanza, collaterali e riperfusione modificano il danno.</p>' +
+      '<div class="corgrid"><div><span class="corlab">Area a rischio nel modello</span><b>' + st.rischio + '% del ventricolo sinistro</b></div>' +
+      '<div><span class="corlab">Necrosi illustrativa a ' + fmtMin(minuti) + '</span><b>' + Math.round(f * 100) + '% dell\u2019area a rischio, cioè ' + perse + '% del ventricolo</b></div></div>' +
       '<p class="coronda">' + esc(testoOnda(minuti)) + '</p>' +
       '<h4>ECG atteso</h4><p>' + esc(o.ecg) + '</p>' +
       '<h4>Immagini speculari</h4><p>' + esc(o.rec) + '</p>' +
       '<h4>Complicanze da attendersi</h4><p>' + esc(o.comp) + '</p>' +
       (segNomi.length ? '<h4>Segmenti colpiti</h4><p>' + esc(segNomi.join('; ')) + '</p>' : '') +
       (st.vd ? '<p class="note">Coinvolgimento del ventricolo destro: registra sempre V3R e V4R.</p>' : '') +
-      '<button class="btn" id="corApri">Apri il quadro ECG corrispondente</button>' +
+      '<button class="btn" id="corApri">Apri esempio ECG del territorio (fase acuta)</button>' +
       '<p class="src">Territori secondo il modello a 17 segmenti AHA; corrispondenze arteria-derivazioni da ESC 2023 e dalla quinta definizione universale di infarto; tempi di necrosi dagli studi sperimentali di Reimer e Jennings, indicativi e molto dipendenti dai circoli collaterali.</p>';
     const btn = document.getElementById('corApri');
-    if (btn) btn.addEventListener('click', () => { if (window.ISO_OPEN) window.ISO_OPEN(o.q); });
+    if (btn) btn.addEventListener('click', () => { if (window.ISO_OPEN) window.ISO_OPEN(o.q, { fase: '1' }); });
   }
   function fmtMin(m) { return m < 60 ? m + ' minuti' : (m % 60 === 0 ? (m / 60) + ' ore' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'); }
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -467,14 +472,20 @@
     const host = document.getElementById('corStage');
     if (!inited) {
       build(host);
-      let drag = null;
-      host.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY }; host.setPointerCapture(e.pointerId); });
-      host.addEventListener('pointermove', e => {
-        if (!drag) return;
-        rot.y -= (e.clientX - drag.x) * 0.008; rot.x = Math.max(-1.3, Math.min(1.3, rot.x + (e.clientY - drag.y) * 0.006));
-        drag = { x: e.clientX, y: e.clientY }; draw();
+      const pointers = new Map(); let pinch = null;
+      host.addEventListener('pointerdown', e => {
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); host.setPointerCapture(e.pointerId);
+        if (pointers.size === 2) { const a = [...pointers.values()]; pinch = { d: Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y) || 1, dist }; }
       });
-      host.addEventListener('pointerup', () => { drag = null; });
+      host.addEventListener('pointermove', e => {
+        const prev = pointers.get(e.pointerId); if (!prev) return;
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 1) { rot.y -= (e.clientX - prev.x) * 0.008; rot.x = Math.max(-1.3, Math.min(1.3, rot.x + (e.clientY - prev.y) * 0.006)); }
+        else if (pinch) { const a = [...pointers.values()]; dist = Math.max(2.2, Math.min(8, pinch.dist * pinch.d / (Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y) || 1))); }
+        draw();
+      });
+      const end = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; };
+      host.addEventListener('pointerup', end); host.addEventListener('pointercancel', end);
       host.addEventListener('wheel', e => { e.preventDefault(); dist = Math.max(2.2, Math.min(8, dist + e.deltaY * 0.004)); draw(); }, { passive: false });
       initSel();
       const sl = document.getElementById('corTempo');

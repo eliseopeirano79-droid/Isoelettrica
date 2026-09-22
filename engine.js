@@ -319,7 +319,7 @@ function* rhythm(cfg, R) {
     }
   }
 
-  let ta = t, beat = 0, wk = 0, sk = 0, lastV = t - baseRR;
+  let ta = t, beat = 0, wk = 0, sk = 0, lastV = t - baseRR, normalSinceEct = 0;
   const ect = S.ectopy || null; // {type:'pvc'|'pac', pattern:'isolate'|'bigeminismo'|'trigeminismo'|'coppie', prob}
   // fine della refrattarietà lasciata dall'ultima extrasistole: le P che
   // arriverebbero ai ventricoli prima di questo istante restano bloccate
@@ -361,11 +361,12 @@ function* rhythm(cfg, R) {
     // ectopia: decide se questo ciclo contiene un battito prematuro dopo il QRS
     let ectHere = false;
     if (ect) {
-      const k = beat + 1;
-      if (ect.pattern === 'bigeminismo') ectHere = k % 2 === 0;
-      else if (ect.pattern === 'trigeminismo') ectHere = k % 3 === 0;
-      else if (ect.pattern === 'quadrigeminismo') ectHere = k % 4 === 0;
-      else if (ect.pattern === 'coppie' || ect.pattern === 'triplette' || ect.pattern === 'salve') ectHere = k % 5 === 0;
+      // Count conducted beats, not sinus cycles (PVCs block intervening P waves).
+      const k = normalSinceEct + 1;
+      if (ect.pattern === 'bigeminismo') ectHere = k >= 1;
+      else if (ect.pattern === 'trigeminismo') ectHere = k >= 2;
+      else if (ect.pattern === 'quadrigeminismo') ectHere = k >= 3;
+      else if (ect.pattern === 'coppie' || ect.pattern === 'triplette' || ect.pattern === 'salve') ectHere = k >= 4;
       else ectHere = R() < (ect.prob || 0.14);
       if (beat < 2) ectHere = false;
     }
@@ -412,7 +413,9 @@ function* rhythm(cfg, R) {
       const tv = ta + pr;
       out.push(buildV(tv, qrs, tv - lastV, Object.assign({}, vOpt, { meta: { type: 'conducted', pr, via: S.via } })));
       lastV = tv;
+      normalSinceEct++;
       if (ectHere) {
+        normalSinceEct = 0;
         const coup = (ect.coupling || 0.52) * rr;
         const te = tv + coup;
         if (ect.type === 'pvc') {
@@ -436,11 +439,15 @@ function* rhythm(cfg, R) {
           refrUntil = tp + 0.55 * rr;
         } else {
           // PAC: P prematura, QRS condotto, ciclo sinusale reimpostato
-          const tp = tv - pr + 0.72 * rr;
-          out.push(buildA(tp, M.pLowAtrial(0.9), { type: 'pac' }));
-          const tvp = tp + pr + 10;
-          out.push(buildV(tvp, qrs, tvp - lastV, Object.assign({}, vOpt, { meta: { type: 'conducted', pac: true } })));
-          lastV = tvp;
+          let tp = tv - pr + 0.72 * rr;
+          const count = ect.pattern === 'coppie' ? 2 : ect.pattern === 'triplette' ? 3 : ect.pattern === 'salve' ? 6 : 1;
+          for (let z = 0; z < count; z++) {
+            if (z) tp += (ect.pattern === 'salve' ? 0.48 : 0.62) * rr;
+            out.push(buildA(tp, M.pLowAtrial(0.9), { type: 'pac' }));
+            const tvp = tp + pr + 10;
+            out.push(buildV(tvp, qrs, tvp - lastV, Object.assign({}, vOpt, { meta: { type: 'conducted', pac: true, pr: pr + 10 } })));
+            lastV = tvp;
+          }
           ta = tp + rr * 1.02; beat++; yield out; continue;
         }
       }
@@ -753,10 +760,7 @@ Stream.prototype.qrsAmplitudes = function (tRef) {
   const vec = [0, 0, 0], lv = new Array(12);
   const proj = tau => {
     this.vec(b.t + tau, vec);
-    for (let i = 0; i < 12; i++) {
-      const wv = LEADS[i].w;
-      lv[i] = (vec[0] * wv[0] + vec[1] * wv[1] + vec[2] * wv[2]) * this.amp;
-    }
+    this.leads(b.t + tau, vec, lv);
   };
   proj(-40); const base = lv.slice();                 // linea isoelettrica prima della q
   const R = {}, S = {};
@@ -874,10 +878,12 @@ function decodifica(b64) {
   return out;
 }
 function Sampled(rec, seed) {
+  if (!rec || !rec.d || !Number.isFinite(rec.fs) || rec.fs <= 0 || !Number.isInteger(rec.n) || rec.n < 2) throw new Error('Tracciato registrato non valido');
   this.cfg = { mode: 'sampled', titolo: rec.t, fonte: rec.f, quadro: rec.q };
   this.fs = rec.fs; this.n = rec.n;
   this.dur = rec.n / rec.fs * 1000;
   this.sig = LEADS.map(L => rec.d[L.id] ? decodifica(rec.d[L.id]) : null);
+  if (this.sig.some(s => s && s.length !== rec.n)) throw new Error('Numero di campioni non coerente con il tracciato');
   /* Delle dodici derivazioni solo otto portano informazione: DIII e le tre
      aumentate si ricavano da DI e DII con Einthoven e Goldberger. Salvando solo
      le otto indipendenti un tracciato registrato occupa un terzo in meno, e le
@@ -893,14 +899,24 @@ function Sampled(rec, seed) {
       this.sig[k] = o;
     });
   }
-  this.uni = this.sig.every(x => !x) ? decodifica(rec.d[Object.keys(rec.d)[0]]) : null;
+  this.uni = null;
+  this.availableLeads = LEADS.filter((L, i) => this.sig[i] && this.sig[i].length > 1).map(L => L.id);
+  if (!this.availableLeads.length) throw new Error('Nessuna derivazione riconosciuta nel tracciato');
   this.noise = 0; this.amp = 1; this.rot = 0; this.ev = []; this.tShift = 0;
   this.rilevaR();
 }
-Sampled.prototype.ensure = function () {};
+Sampled.prototype.hasLead = function (i) { return !!this.sig[typeof i === 'string' ? LEADS.findIndex(L => L.id === i) : i]; };
+Sampled.prototype.ensure = function (t) {
+  const from = Math.max(0, Math.floor((t - 60000) / this.dur)), to = Math.floor(t / this.dur) + 2;
+  if (this._from === from && this._to === to) return;
+  this._from = from; this._to = to; this.ev = [];
+  for (let g = from; g <= to; g++) (this.battiti || []).forEach(v => this.ev.push({
+    t: v + g * this.dur, kind: 'V', comps: [], span: [0, 0], meta: { type: 'conducted', estimated: true }
+  }));
+};
 Sampled.prototype.prune = function () {};
 Sampled.prototype.campiona = function (i, tau) {
-  const s = this.sig[i] || this.uni; if (!s) return 0;
+  const s = this.sig[i]; if (!s) return NaN;
   let x = (tau % this.dur) / 1000 * this.fs;
   if (x < 0) x += s.length;
   const a = Math.floor(x), f = x - a;
@@ -913,13 +929,9 @@ Sampled.prototype.leads = function (tau, vec, outArr) {
 };
 Sampled.prototype.eventsAround = function () { return { A: null, V: null }; };
 Sampled.prototype.qrsAmplitudes = function () {
-  const R = {}, S = {};
-  LEADS.forEach((L, i) => {
-    const s = this.sig[i]; R[L.id] = 0; S[L.id] = 0;
-    if (!s) return;
-    for (let k = 0; k < s.length; k++) { if (s[k] > R[L.id]) R[L.id] = s[k]; if (-s[k] > S[L.id]) S[L.id] = -s[k]; }
-  });
-  return { R, S, qrsMs: 0, t: 0, tipo: 'campionato' };
+  // No validated QRS delineation is available for recordings. A full-record
+  // extremum may be a T wave or baseline drift, and is not an R/S amplitude.
+  return null;
 };
 /* battiti riconosciuti sul segnale, così le misure di FC e RR restano vive */
 Sampled.prototype.rilevaR = function () {
@@ -936,12 +948,7 @@ Sampled.prototype.rilevaR = function () {
   }
   this.battiti = picchi.map(i => i / this.fs * 1000);
   // eventi finti su più giri, per il pannello delle misure
-  const ev = [];
-  for (let g = 0; g < 12; g++) this.battiti.forEach(t => ev.push({
-    t: t + g * this.dur, kind: 'V', comps: [], span: [0, 0],
-    meta: { type: 'conducted', w: 0, qt: 0 }
-  }));
-  this.ev = ev;
+  this.ensure(0);
 };
 
 const API = { LEADS, M, B, PL, LOC, dirAG, Stream, Sampled, rng, buildV, buildA, applyVariation };

@@ -1,0 +1,12 @@
+{
+  "name": "isoelettrica",
+  "version": "40.0.0",
+  "private": true,
+  "description": "Simulatore didattico ECG: verifiche del motore e dell'interfaccia",
+  "scripts": {
+    "test": "node validatore.js && node controllo-st.js && node audit.js && node --test tests/*.test.cjs && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test:regressions": "node --test tests/*.test.cjs && python3 -m unittest discover -s tests -p 'test_*.py'"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": { "jsdom": "26.1.0" }
+}
