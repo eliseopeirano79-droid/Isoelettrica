@@ -3007,8 +3007,48 @@ S.push({
 
 /* Immagini verificate per il quiz: nessuna risposta impressa né casi multipli.
    Il collegamento q serve allo studio e non costituisce approvazione del quiz. */
-const QUIZ_ATLAS = { lett051: true, ari026: true, ari114: true, ari121: true, ari099: true,
-  ari035: [0, 685, 1400, 180] };
+const QUIZ_ATLAS = {
+  /* Normale e varianti */
+  lett051: true, lett057: true, lett058: true,
+
+  /* Fibrillazione e flutter atriale */
+  ari026: true, ari027: true, ari028: [0, 0, 1400, 430], ari029: true,
+  ari030: true, ari031: true, ari032: true, ari071: true,
+  ari072: [0, 0, 1400, 390], ari078: [0, 0, 1400, 190], ari079: true,
+  ari033: true, ari034: [0, 0, 1400, 315], ari035: [0, 685, 1400, 180],
+  ari036: [0, 0, 1400, 520], ari077: true,
+
+  /* Sopraventricolari ed extrasistoli */
+  ari039: true, ari040: true, ari041: true, ari043: true,
+  ari044: [0, 100, 1400, 230], ari075: true, ari082: [0, 0, 1400, 220],
+
+  /* Tachicardie e fibrillazione ventricolare */
+  ari046: [0, 0, 1400, 540], ari047: [0, 0, 1400, 450],
+  ari048: true, ari049: true, ari081: [0, 0, 1400, 330],
+  ari050: [0, 0, 1400, 300], ari051: true, ari052: true,
+  ari053: true, ari054: true, ari084: [0, 600, 1400, 348],
+  ari085: true, ari087: true,
+
+  /* Blocchi AV */
+  ari094: true, ari095: true, ari099: true, ari100: true, ari101: true,
+  ari102: true, ari103: true, ari104: [0, 180, 1400, 870],
+  ari106: true, ari108: true, ari109: [0, 0, 1400, 250], ari110: true,
+
+  /* Blocchi di branca ed emiblocchi */
+  ari114: true, ari117: true, ari118: true,
+  ari121: true, ari122: true, ari123: true, ari124: true, ari125: true,
+  ari127: true, ari129: true, ari133: true, ari134: true, ari135: true,
+
+  /* Pre-eccitazione */
+  ari151: true, ari152: true, ari154: true, ari155: true,
+
+  /* Ischemia: quadri con localizzazione non ambigua nel tracciato mostrato */
+  cad092: true, cad093: true, cad098: true, cad099: true,
+  cad100: true, cad103: true, cad104: true, cad105: true,
+
+  /* Ipertrofia ventricolare sinistra: tracciati, non tavole dei criteri */
+  lett055: true, lett056: true
+};
 ATLAS.forEach(a => { a.quizApproved = !!QUIZ_ATLAS[a.id]; if (Array.isArray(QUIZ_ATLAS[a.id])) a.quizCrop = QUIZ_ATLAS[a.id]; });
 
 const CATS = ['Ritmo sinusale', 'Nodo del seno e scappamenti', 'Sopraventricolari', 'Blocchi AV', 'Conduzione intraventricolare', 'Ventricolari', 'Arresto cardiaco', 'Stimolazione', 'Ischemia', 'Ipertrofie', VALV, COMB, 'Elettroliti e altro', ART];
