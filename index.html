@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#0d151b">
-<link rel="manifest" href="manifest.webmanifest?v=43.0">
+<link rel="manifest" href="manifest.webmanifest?v=44.0">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -420,7 +420,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .pnota.fuori{opacity:1;color:#e8865f;font-weight:500}
 .scene-notice{position:absolute;inset:35% 20px auto;padding:16px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;z-index:5;text-align:center} :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 </style>
-<link rel="stylesheet" href="atlas-theme.css?v=43.0">
+<link rel="stylesheet" href="atlas-theme.css?v=44.0">
 </head>
 <body>
 <div class="app">
@@ -483,7 +483,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
           <div class="hud tr" id="hud3d">
             <button class="hudbtn on" data-cam="iso">3D</button>
             <button class="hudbtn" data-cam="front">Frontale</button>
-            <button class="hudbtn" data-cam="top">Orizzontale</button>
+            <button class="hudbtn" data-cam="top">Orizzontale</button><button class="hudbtn" data-cam="conduction">Dettaglio cuore</button>
             <button class="hudbtn on" data-tg="orb">Orbitali</button>
             <button class="hudbtn on" data-tg="heart">Cuore anatomico</button>
             <input id="hOpac" class="hudrange" type="range" min="12" max="100" step="1" value="60" aria-label="Trasparenza del cuore" title="Trasparenza del cuore">
@@ -545,7 +545,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
           <input id="corPos" type="range" min="0" max="1000" step="1" value="0" disabled></div>
         <div class="ctrl"><div class="lab"><span>Tempo dall’occlusione</span><output class="num" id="corTempoOut">0 minuti</output></div>
           <input id="corTempo" type="range" min="0" max="1440" step="10" value="0"></div>
-        <button class="btn" id="corReset">Azzera simulazione</button>
+        <div class="cor-visibility"><label for="corOpacity">Opacità del cuore <output id="corOpacityOut">100%</output></label><input id="corOpacity" type="range" min="0" max="100" step="1" value="100"><label><input id="corXray" type="checkbox"> Mostra anche le coronarie nascoste</label><p class="note">La trasparenza riguarda pareti, valvole e grandi vasi. Le coronarie restano visibili.</p></div><button class="btn" id="corReset">Azzera simulazione</button>
       </div>
 <div class="corout" id="corOut"></div></aside>
   </section>
@@ -640,20 +640,25 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=43.0"></script>
-<script src="cuore3d.js?v=43.0"></script>
-<script src="gltfloader.js?v=43.0"></script>
-<script src="atlas-geometry.js?v=43.0"></script>
-<script src="cardiac-clock.js?v=43.0"></script>
-<script src="heart-atlas.js?v=43.0"></script>
-<script src="anatomy-host.js?v=43.0"></script>
-<script src="engine.js?v=43.0"></script>
-<script src="ipertrofie.js?v=43.0"></script>
-<script src="data.js?v=43.0"></script>
-<script src="atlante-digitale.js?v=43.0"></script>
-<script src="ptbxl.js?v=43.0"></script>
-<script src="quiz.js?v=43.0"></script>
-<script src="app.js?v=43.0"></script>
-<script src="coronarie.js?v=43.0"></script>
+<script src="three.min.js?v=44.0"></script>
+<script src="cuore3d.js?v=44.0"></script>
+<script src="gltfloader.js?v=44.0"></script>
+<script src="vascular-cuffs.js?v=44.0"></script><script src="pulmonary-arteries.js?v=44.0"></script><script src="atlas-geometry.js?v=44.0"></script>
+<script src="cardiac-clock.js?v=44.0"></script>
+<script src="cardiac-mechanics.js?v=44.0"></script>
+<script src="cardiac-attachments.js?v=44.0"></script>
+<script src="anatomy-refinements.js?v=44.0"></script>
+<script src="heart-atlas.js?v=44.0"></script>
+<script src="anatomy-host.js?v=44.0"></script>
+<script src="engine.js?v=44.0"></script>
+<script src="ipertrofie.js?v=44.0"></script>
+<script src="data.js?v=44.0"></script>
+<script src="atlante-digitale.js?v=44.0"></script>
+<script src="ptbxl.js?v=44.0"></script>
+<script src="quiz.js?v=44.0"></script>
+<script src="conduction-model.js?v=44.0"></script>
+<script src="conduction-view.js?v=44.0"></script>
+<script src="app.js?v=44.0"></script>
+<script src="coronarie.js?v=44.0"></script>
 </body>
 </html>

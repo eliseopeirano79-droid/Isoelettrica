@@ -4,3 +4,54 @@ aside{padding:0 20px 25px;min-width:0;max-height:calc(100vh - 330px)}.lab-tabs{p
 /* Embedded in Anatomia; all controls and source attribution remain available. */
 .embedded>body>header{display:none}.embedded .viewer{height:calc(100vh - 254px)}.embedded aside{max-height:calc(100vh - 254px)}.embedded .fetal-main .viewer{height:calc(100vh - 46px)}.embedded .fetal-main aside{max-height:calc(100vh - 46px)}@media(max-width:900px){.embedded .viewer{height:610px}.embedded aside,.embedded .fetal-main aside{max-height:none}.embedded .fetal-main .viewer{height:760px}}@media(max-width:570px){.embedded .viewer{height:560px}.embedded .fetal-main .viewer{height:710px}}
 @media(min-width:901px){.embedded main:not(.fetal-main) .viewer{min-height:500px;height:max(500px,calc(100vh - 254px))}.embedded main:not(.fetal-main)>aside{min-height:500px;max-height:max(500px,calc(100vh - 254px))}}
+
+:root[data-theme="light"]{color-scheme:light;--bg:#f3f7f3;--panel:#fff;--ink:#192e2c;--dim:#506a62;--line:#cbdad2;--mint:#376b58;--gold:#81601a}
+:root[data-theme="light"] .viewer{background:#fff}
+:root[data-theme="light"] aside,:root[data-theme="light"] .rhythm,:root[data-theme="light"] .cycle-strip{background:var(--panel)}
+:root[data-theme="light"] button,:root[data-theme="light"] select,:root[data-theme="light"] input,:root[data-theme="light"] textarea{background:#f3f7f3;color:var(--ink);border-color:var(--line)}
+:root[data-theme="light"] .views{background:#fffffff0;border-color:var(--line)}
+:root[data-theme="light"] .views button[aria-pressed=true],:root[data-theme="light"] .lab-tabs button[aria-selected=true]{background:var(--mint);color:white}
+:root[data-theme="light"] .layers label,:root[data-theme="light"] .orientation button,:root[data-theme="light"] .lab-note,:root[data-theme="light"] .selection p,:root[data-theme="light"] .lab-card,:root[data-theme="light"] .source-card{color:var(--dim)}
+:root[data-theme="light"] .lab-card,:root[data-theme="light"] .source-card,:root[data-theme="light"] .lab-box,:root[data-theme="light"] .selection,:root[data-theme="light"] .metric{background:#f3f7f3;border-color:var(--line)}
+:root[data-theme="light"] .anatomy-label,:root[data-theme="light"] #fetal-labels>div{background:#fffffff0;color:var(--ink);border-color:var(--line)}
+.pathology-status{display:inline-block;padding:3px 8px;border:1px solid var(--line);border-radius:12px;color:var(--mint);font-size:10px;margin:8px 0}.pathology-search{width:100%;padding:9px;margin-bottom:10px}.pathology-detail p{font-size:12px}.pathology-detail h3{font:400 23px Georgia,serif}.pathology-detail select{width:100%}.pathology-detail label{display:block;margin-top:12px}.pathology-detail input[type=number]{width:85px;margin:8px;padding:5px}.pathology-detail a{font-size:11px}.pathology-detail button{margin-top:12px}.pathology-limit{font-size:11px;color:var(--dim)}
+
+:root[data-theme="light"] .lab-tabs{background:var(--panel)}
+:root[data-theme="light"] .control-label,:root[data-theme="light"] .param-row>label,:root[data-theme="light"] .pathology-detail>label,:root[data-theme="light"] [data-pane]>label{color:var(--dim)}
+:root[data-theme="light"] .lab-tabs button:hover,:root[data-theme="light"] button:hover{background:#deebe1;color:var(--ink)}
+
+:root[data-theme="light"] .fetal-main aside label,:root[data-theme="light"] .fetal-view-title p,:root[data-theme="light"] .fetal-help{color:var(--dim)}
+:root[data-theme="light"] .preset-note{color:#73551c}
+:root[data-theme="light"] #flow-table td{border-color:var(--line)}
+
+:root[data-theme="light"] summary{color:var(--ink)}
+
+/* Hierarchy and stable work areas: title, model and controls never overlap. */
+main:not(.fetal-main) .viewer-title{left:0;top:0;padding:20px 28px;width:100%;height:104px}
+main:not(.fetal-main) .viewer-title h1{font-size:32px;margin:8px 0}
+main:not(.fetal-main) #stage,main:not(.fetal-main) #label-overlay{inset:132px 0 114px}
+main:not(.fetal-main) .views{bottom:66px}
+main:not(.fetal-main) .views button{min-height:38px}
+main:not(.fetal-main) .orientation{bottom:29px}
+.lab-tabs button{min-height:36px;font-size:11px}
+aside select,aside button{min-height:36px}
+aside .param-row>label,aside .lab-note{font-size:12px}
+aside input[type=range]{min-height:28px}
+aside section>h2{margin-bottom:18px}
+.pathology-detail{padding-top:8px}.pathology-detail h3{line-height:1.2;margin:12px 0}
+.pathology-status{line-height:1.5;padding:5px 9px}.pathology-detail>label{padding:10px 0;border-top:1px solid var(--line)}
+@media(min-width:901px){
+ .embedded body:has(main:not(.fetal-main)){height:100dvh;overflow:hidden}
+ .embedded main:not(.fetal-main){height:100dvh;grid-template-rows:minmax(0,1fr) auto auto;grid-template-columns:minmax(0,1fr) 350px}
+ .embedded main:not(.fetal-main) .viewer{height:auto;min-height:0}
+ .embedded main:not(.fetal-main)>aside{height:auto;max-height:none;min-height:0}
+ .embedded main:not(.fetal-main) .rhythm{min-height:148px;padding:16px 28px;gap:28px}
+ .embedded main:not(.fetal-main) .cycle-strip{padding:10px 28px 8px}
+ .embedded body:has(main:not(.fetal-main))>footer{display:none}
+}
+@media(max-width:900px){main:not(.fetal-main) .viewer{height:610px}main:not(.fetal-main) .lab-tabs{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:570px){main:not(.fetal-main) .viewer{height:570px}main:not(.fetal-main) .viewer-title{padding:18px 20px}main:not(.fetal-main) .viewer-title p{max-width:100%;font-size:11px}main:not(.fetal-main) .lab-tabs{grid-template-columns:repeat(3,1fr)}.lab-tabs button{min-height:42px}.param-inputs{grid-template-columns:minmax(60px,1fr) 72px 30px}}
+
+.valve-views{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.valve-views button{font-size:11px;min-height:40px}
+@media(max-width:600px){#stage,#label-overlay{inset:150px 0 114px}.viewer-title p{max-width:100%}}
+.pathology-detail button{display:block;margin:12px 0}.pathology-detail>a{display:inline-block;margin:8px 0}

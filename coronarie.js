@@ -318,6 +318,9 @@
 
     const h = (window.HeartAtlas||ISO_CUORE).build({ opacity: 1, coronary: true });
     root.add(h.group);
+    const opacity=document.getElementById('corOpacity'),xray=document.getElementById('corXray');
+    const visibility=()=>{document.getElementById('corOpacityOut').textContent=opacity.value+'%';h.setTissueOpacity?.(+opacity.value/100,xray.checked);draw();};
+    opacity?.addEventListener('input',visibility);xray?.addEventListener('change',visibility);if(h.ready)h.ready.then(visibility).catch(()=>{});
     h.SEG.forEach(sg => { segMesh[sg.n] = h.seg[sg.n]; });
     segMesh.rv = h.rv; if(!window.HeartAtlas){h.rv.material.transparent = true; h.rv.material.opacity = 0.5; h.rv.material.depthWrite = false;}
     Object.keys(h.coro).forEach(id => { if (!ISO_CUORE.CORO[id].vena) ramiMesh[id] = h.coro[id]; });

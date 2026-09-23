@@ -24,3 +24,20 @@ button,input,select{accent-color:var(--accent)}button.btn,.toolsel{border-radius
 @media(max-width:860px){.logo span{display:inline}#themeBtn{margin-left:auto}.nav{margin-left:0;min-width:0;max-width:100%}.logo{font-size:18px}}
 
 .anatomic-credit{pointer-events:auto;color:#a6beb6;font-size:9px}.defbtn{color:var(--bg)}
+
+/* The 3D canvas is transparent: its stage follows the chosen app theme. */
+:root[data-theme="light"]{--stage:#fff;--stage-fg:#192e2c}
+:root[data-theme="light"] .stage,:root[data-theme="light"] #corStage{background:#fff}
+:root[data-theme="light"] .cor-title h2{color:var(--fg)}
+:root[data-theme="light"] .cor-title>span,:root[data-theme="light"] .cor-title p{color:var(--muted)}
+:root[data-theme="light"] .corhint,:root[data-theme="light"] .cor-attribution{background:var(--panel);color:var(--muted)}
+:root[data-theme="light"] .hudbtn,:root[data-theme="light"] .phase{background:#ffffffeb;color:var(--fg);border-color:var(--line)}
+:root[data-theme="light"] .hudbtn.on{background:var(--accent);color:white}
+:root[data-theme="light"] .anatomic-credit{color:var(--accent)}
+.conduction-note{font-size:11px;color:var(--muted);line-height:1.5}.conduction-key{display:flex;flex-wrap:wrap;gap:6px;font-size:10px}.conduction-key span{border-left:3px solid var(--key);padding:3px 7px;background:var(--chip)}
+.cor-visibility{grid-column:1/-1;border-top:1px solid var(--line);padding-top:12px}.cor-visibility label{display:block;margin:8px 0}.cor-visibility input[type=range]{width:100%}.cor-visibility output{float:right}
+
+:root[data-theme="light"] #hint3d{color:var(--muted)}
+:root[data-theme="light"] .cams button,:root[data-theme="light"] .legend button{background:#f5faf5ed;color:var(--stage-fg);border-color:var(--line)}
+:root[data-theme="light"] .cams button.on{background:#bbdbc8;border-color:#729b87}
+:root[data-theme="light"] .legend .hint{color:var(--muted)}

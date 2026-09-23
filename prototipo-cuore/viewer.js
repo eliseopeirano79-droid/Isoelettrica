@@ -31,28 +31,14 @@ const meshes=[],paths=[],nodes=[];
 const uniforms={uAmpA:{value:.06},uAmpV:{value:.10},uLong:{value:.04},uTwist:{value:.087},uAtr:{value:0},uVent:{value:0},uFibr:{value:0},uTime:{value:0}};
 // Shared displacement field keeps vessels attached to the contracting surface.
 // Illustrative motion, not a patient-specific mechanical model or valve rig.
-const deformGLSL=`
-uniform float uAmpA; uniform float uAmpV; uniform float uLong; uniform float uTwist; uniform float uRegion; uniform float uAtr; uniform float uVent; uniform float uFibr; uniform float uTime;
-vec3 cardiacMotion(vec3 p) {
- float a=uRegion>1.5?0.0:(uRegion>0.5?1.0:smoothstep(-0.05,0.65,p.y)); float base=1.0-smoothstep(0.55,1.15,p.y);
- float v=(1.0-a)*uVent*base; float at=a*uAtr*base;
- vec3 c=vec3(0.15,-0.32,0.2); vec3 d=p-c;
- float angle=v*uTwist; float cs=cos(angle);float sn=sin(angle);
- d.xz=mat2(cs,-sn,sn,cs)*d.xz;
- d.xz*=1.0-uAmpV*v-uAmpA*at; d.y*=1.0-uLong*v-0.025*at;
- p=c+d;
- p.x+=uFibr*0.009*base*sin(uTime*0.032+p.y*9.0);
- p.z+=uFibr*0.007*base*sin(uTime*0.047+p.x*11.0);
- return p;
-}`;
-function movingMaterial(mat,region=0){
- mat.onBeforeCompile=shader=>{Object.assign(shader.uniforms,uniforms,{uRegion:{value:region}});shader.vertexShader=deformGLSL+"\n"+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','vec3 transformed = cardiacMotion(position);');if(lab)lab.decorate(shader,mat);};
- mat.customProgramCacheKey=()=> 'iso-heart-lab-v2';return mat;
+function movingMaterial(mat){
+ mat.onBeforeCompile=shader=>{CardiacMechanics.shader(shader,uniforms);if(lab)lab.decorate(shader,mat);};
+ mat.customProgramCacheKey=()=> 'iso-coupled-mechanics-v1';return mat;
 }
 const cutPlane=new T.Plane(new T.Vector3(0,0,-1),.12);
 let view='surface',selected=null,loaded=false,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,slow=false,t=4500,lastTime=0,available=true;
-const orbit={theta:.10,phi:1.43,r:9.2,target:new T.Vector3(.12,.24,0)};
-function updateCamera(){const compact=document.documentElement.classList.contains("embedded")&&stage.clientWidth>600&&stage.clientHeight<600,target=orbit.target.clone(),r=orbit.r*(compact?1.12:1);if(compact)target.y-=.24;camera.position.set(target.x+r*Math.sin(orbit.phi)*Math.sin(orbit.theta),target.y+r*Math.cos(orbit.phi),target.z+r*Math.sin(orbit.phi)*Math.cos(orbit.theta));camera.lookAt(target);}
+const orbit={theta:.10,phi:1.43,r:7.2,target:new T.Vector3(.12,.62,0)};
+function updateCamera(){const target=orbit.target,r=orbit.r;camera.position.set(target.x+r*Math.sin(orbit.phi)*Math.sin(orbit.theta),target.y+r*Math.cos(orbit.phi),target.z+r*Math.sin(orbit.phi)*Math.cos(orbit.theta));camera.lookAt(target);camera.updateMatrixWorld();}
 const description={surface:'Camere, coronarie e vene: le strutture dell’atlante nello stesso spazio.',section:'Una sezione delle pareti rende visibili cavità, lembi e muscoli papillari.',valves:'Quattro apparati valvolari ricostruiti e animati; apertura e coaptazione modificabili.',conduction:'Vie elettriche illustrative aggiunte al modello: il tracciato guida l’animazione.'};
 function applyView(){
  for(const mesh of meshes){
@@ -60,9 +46,10 @@ function applyView(){
   mesh.visible=$(layer).checked;
   let opacity=1;
   if(layer==='wall' && view==='valves')opacity=.055;
-  if(layer==='wall' && view==='conduction')opacity=.11;
+  if(layer==='wall' && view==='conduction')opacity=.065;
+  if(layer==='valves' && view==='conduction')opacity=.15;
   if(layer==='vessels' && (view==='valves'||view==='conduction'))opacity=.10;
-  m.opacity=opacity;m.transparent=opacity<1;m.depthWrite=opacity===1;
+  m.opacity=opacity;m.transparent=opacity<1||layer==='conduction';m.depthWrite=opacity===1&&layer!=='conduction';
   m.clippingPlanes=layer==='wall'&&view==='section'?[cutPlane]:[];
   m.needsUpdate=true;
  }
@@ -90,51 +77,26 @@ function selectPart(mesh){
  $('selection').replaceChildren(b,p);if(lab)lab.selected(mesh);
 }
 new T.GLTFLoader().load('heart-z-anatomy.glb',gltf=>{
- gltf.scene.traverse(o=>{
-  if(!o.isMesh)return;
-  const name=o.userData.sourceName||o.name;
-  let layer=o.userData.layer;
-  if(layer==='heart')layer=/leaflet|papillary/i.test(name)?'valves':'wall';
-  let color={wall:'#a85c67',coronaries:'#ed8860',veins:'#527aac',valves:'#d8c4a0',vessels:'#b86d79'}[layer];
-  if(layer==='vessels'&&/cava|pulmonary artery|pulmonary trunk/i.test(name))color='#6084a2';
-  if(/papillary/.test(name))color='#b47a76';
-  o.material=movingMaterial(new T.MeshStandardMaterial({color,roughness:layer==='valves'?.56:.62,metalness:0,side:T.DoubleSide,emissiveIntensity:0}),/atrium/.test(name)?1:/ventricle/.test(name)&&layer==='wall'?2:0);
-  o.material.color.convertSRGBToLinear();
-  Object.assign(o.userData,{sourceName:name,layer,label:sourceLabels[name]||name});meshes.push(o);
- });
- anatomy.add(gltf.scene);
+ const source=HeartAtlasGeometry.sourceMeshes(gltf.scene);AnatomyRefinements.apply(source,HeartAtlasGeometry.material);
+ for(const o of source){const name=o.userData.sourceName;o.material=movingMaterial(o.material);o.userData.label=o.userData.label||sourceLabels[name]||name;anatomy.add(o);meshes.push(o);}
  if(window.HeartAtlasGeometry){const join=HeartAtlasGeometry.junctionMesh();join.material=movingMaterial(join.material);anatomy.add(join);meshes.push(join);}
  const sorted=[...meshes].sort((a,b)=>a.userData.label.localeCompare(b.userData.label,'it'));
  for(const m of sorted){const option=document.createElement('option');option.value=m.uuid;option.textContent=m.userData.label;$('part').appendChild(option);}
- loaded=true;$('load').hidden=true;if(lab)lab.loaded();applyView();
+ CardiacAttachments.seamNormals(meshes);
+ loaded=true;$('load').hidden=true;if(lab)lab.loaded();applyView();document.dispatchEvent(new Event('iso-atlas-loaded'));
 },undefined,error=>{$('load').textContent='Il modello non è stato caricato. Ricarica la pagina per riprovare.';console.error('Heart asset load failed',error);});
-// Approximate landmarks in the atlas coordinate frame. These are deliberately
-// labelled illustrative; the source atlas has no conduction geometry.
-const SA=[-.82,.79,-.12],AV=[-.29,-.12,.04],HIS=[.0,-.28,.27],RV=[.36,-.95,.73],LV=[.91,-1.04,.2];
-function addPath(kind,points){
- const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p)));
- const tube=new T.Mesh(new T.TubeGeometry(curve,48,.012,6,false),movingMaterial(new T.MeshBasicMaterial({color:'#c3a05d',transparent:true,opacity:.66,depthWrite:false,depthTest:false})));tube.renderOrder=5;circuit.add(tube);
- const spark=new T.Mesh(new T.SphereGeometry(.034,10,8),new T.MeshBasicMaterial({color:'#fff0b4',depthTest:false}));spark.renderOrder=6;circuit.add(spark);
- paths.push({kind,curve,spark,tube});
-}
-addPath('atr',[SA,[-.68,.40,.25],[-.48,.10,.20],AV]);
-addPath('atr',[SA,[-.21,.71,-.23],[.3,.48,-.48]]);
-addPath('his',[AV,[-.12,-.19,.16],HIS]);
-addPath('branch',[HIS,[.12,-.56,.48],RV]);
-addPath('branch',[HIS,[.35,-.48,.25],LV]);
-addPath('branch',[HIS,[.29,-.53,-.08],[.61,-.83,-.25]]);
-for(const [key,p] of [['Nodo senoatriale',SA],['Nodo AV',AV]]){
- const node=new T.Mesh(new T.SphereGeometry(.054,16,12),new T.MeshBasicMaterial({color:'#e8ce88',depthTest:false}));node.position.set(...p);node.renderOrder=7;circuit.add(node);nodes.push(node);
-}
+// One registered graph shared with the ECG view, in unscaled atlas coordinates.
+const electrical=IsoConductionView.create({material:m=>movingMaterial(m),deform:p=>lab&&lastMotion?lab.deformPoint(p):p});
+circuit.add(electrical.group);electrical.xray(true);
 const scenarios=Object.fromEntries(ISO_DATA.SCENARIOS.map(sc=>[sc.id,sc]));
-let stream,cfg;
-function resetRhythm(){const sc=scenarios[$('rhythm').value];const params=Object.fromEntries(sc.params.map(p=>[p.k,p.def]));cfg=sc.build(params);if(lab)cfg=lab.configure(cfg);stream=new ECG.Stream(cfg,17);t=4500;stream.ensure(t+1000);}
+let stream,cfg,clinicalCase=null,clinicalParams={},lastMotion=null;
+function resetRhythm(){const sc=scenarios[clinicalCase||$('rhythm').value];const params={...Object.fromEntries(sc.params.map(p=>[p.k,p.def])),...clinicalParams};cfg=IsoConduction.configure(sc.id,sc.build(params),params);if(clinicalCase)cfg.isoClinical=true;if(lab&&!clinicalCase)cfg=lab.configure(cfg);stream=new ECG.Stream(cfg,17);t=4500;stream.ensure(t+1000);if(lab)lab.resetMechanics();}
 resetRhythm();
 function animateHeart(){
  stream.ensure(t+500);stream.prune(t-6500);
  const clock=window.CardiacClock?CardiacClock.read(stream,t,cfg):null,ev=clock?clock.events:stream.eventsAround(t),motion=lab?lab.motion(ev,t,cfg):HeartPreviewMotion.sample(ev,t,cfg),{da,dv}=motion;
- uniforms.uAtr.value=motion.atr;uniforms.uVent.value=motion.vent;uniforms.uFibr.value=motion.fibr;uniforms.uTime.value=t;
- if(lab){lab.animate(t,ev,cfg,motion);return;}
+ lastMotion=motion;uniforms.uAtr.value=motion.atr;uniforms.uVent.value=motion.vent;uniforms.uFibr.value=motion.fibr;uniforms.uTime.value=t;
+ if(lab){lab.animate(t,ev,cfg,motion);const electric=electrical.update(clock,cfg);lab.updateLabels();if(view==='conduction'&&$('phase').textContent!==electric.phase)$('phase').textContent=electric.phase;return;}
  const isAsystole=$('rhythm').value==='asistolia';
  let phase=isAsystole?'Asistolia · nessuna contrazione':cfg.cont==='vf'?'FV · nessuna contrazione organizzata':uniforms.uVent.value>.05?'Sistole ventricolare':uniforms.uAtr.value>.05?'Contrazione atriale':'Diastole';
  if(cfg.av==='III')phase+=' · dissociazione AV';
@@ -154,9 +116,9 @@ const ecg=$('ecg'),ctx=ecg.getContext('2d'),vec=[0,0,0],leads=new Array(12);
 let ecgWidth=0,ecgHeight=84,lastTrace=0;
 function drawECG(){
  const w=ecgWidth,h=ecgHeight;if(!w)return;ctx.clearRect(0,0,w,h);
- ctx.strokeStyle='#203931';ctx.lineWidth=.5;ctx.beginPath();
+ const light=document.documentElement.dataset.theme==='light';ctx.strokeStyle=light?'#d6e2d9':'#203931';ctx.lineWidth=.5;ctx.beginPath();
  for(let x=0;x<w;x+=16){ctx.moveTo(x,0);ctx.lineTo(x,h);}for(let y=0;y<h;y+=16){ctx.moveTo(0,y);ctx.lineTo(w,y);}ctx.stroke();
- ctx.beginPath();ctx.strokeStyle='#b4dfc0';ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.strokeStyle=light?'#214a3a':'#b4dfc0';ctx.lineWidth=1.5;
  for(let x=0;x<=w;x+=2){const tau=t-4200+x/w*4200;stream.vec(tau,vec);stream.leads(tau,vec,leads);const y=h*.62-leads[1]*32;x?ctx.lineTo(x,y):ctx.moveTo(x,y);}
  ctx.stroke();
  ctx.strokeStyle='#e4c680';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(w-1,0);ctx.lineTo(w-1,h);ctx.stroke();
@@ -168,24 +130,24 @@ function resize(){
 new ResizeObserver(resize).observe(stage);new ResizeObserver(resize).observe(ecg);
 const pts=new Map();let moved=0,down=null,pinch=null;
 stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);down=[e.clientX,e.clientY];moved=0;if(pts.size===2){const a=[...pts.values()];pinch={d:Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]),r:orbit.r};}});
-stage.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const old=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);moved+=Math.abs(e.clientX-old[0])+Math.abs(e.clientY-old[1]);if(pts.size===1){orbit.theta-=(e.clientX-old[0])*.007;orbit.phi=Math.max(.15,Math.min(3,orbit.phi+(old[1]-e.clientY)*.007));}else if(pinch){const a=[...pts.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);orbit.r=Math.max(3,Math.min(13,pinch.r*pinch.d/Math.max(d,1)));}});
+stage.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const old=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);moved+=Math.abs(e.clientX-old[0])+Math.abs(e.clientY-old[1]);if(pts.size===1){orbit.theta-=(e.clientX-old[0])*.007;orbit.phi=Math.max(.15,Math.min(3,orbit.phi+(old[1]-e.clientY)*.007));}else if(pinch){const a=[...pts.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);orbit.r=Math.max(1.2,Math.min(13,pinch.r*pinch.d/Math.max(d,1)));}});
 function endPointer(e){
  if(e.type==='pointerup'&&pts.size===1&&moved<6&&down&&loaded){
   const rect=stage.getBoundingClientRect(),ray=new T.Raycaster();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
-  const hits=ray.intersectObjects(meshes.filter(m=>m.visible&&m.material.opacity>.3),false).filter(h=>!lab||lab.acceptHit(h));if(!lab||!lab.hit(hits[0]))selectPart(hits.length?hits[0].object:null);
+  const hits=CardiacAttachments.pick(ray,meshes,(p,m)=>lab?lab.deformPoint(p,m,false):p).filter(h=>!lab||lab.acceptHit(h));if(!lab||!lab.hit(hits[0]))selectPart(hits.length?hits[0].object:null);
  }
  pts.delete(e.pointerId);if(pts.size<2)pinch=null;down=null;
 }
 stage.addEventListener('pointerup',endPointer);stage.addEventListener('pointercancel',endPointer);
-stage.addEventListener('wheel',e=>{e.preventDefault();orbit.r=Math.max(3,Math.min(13,orbit.r*Math.exp(e.deltaY*.001)));},{passive:false});
-stage.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','=','Home'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')orbit.theta-=.1;if(e.key==='ArrowRight')orbit.theta+=.1;if(e.key==='ArrowUp')orbit.phi=Math.max(.15,orbit.phi-.1);if(e.key==='ArrowDown')orbit.phi=Math.min(3,orbit.phi+.1);if(e.key==='+'||e.key==='=')orbit.r=Math.max(3,orbit.r-.4);if(e.key==='-')orbit.r=Math.min(13,orbit.r+.4);if(e.key==='Home')resetCamera();});
-function resetCamera(){orbit.theta=.10;orbit.phi=1.43;orbit.r=9.2;}
+stage.addEventListener('wheel',e=>{e.preventDefault();orbit.r=Math.max(1.2,Math.min(13,orbit.r*Math.exp(e.deltaY*.001)));},{passive:false});
+stage.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','=','Home'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')orbit.theta-=.1;if(e.key==='ArrowRight')orbit.theta+=.1;if(e.key==='ArrowUp')orbit.phi=Math.max(.15,orbit.phi-.1);if(e.key==='ArrowDown')orbit.phi=Math.min(3,orbit.phi+.1);if(e.key==='+'||e.key==='=')orbit.r=Math.max(1.2,orbit.r-.4);if(e.key==='-')orbit.r=Math.min(13,orbit.r+.4);if(e.key==='Home')resetCamera();});
+function resetCamera(){orbit.theta=.10;orbit.phi=1.43;orbit.r=7.2;orbit.target.set(.12,.62,0);}
 $('reset').addEventListener('click',resetCamera);
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 Object.keys(layerLabels).forEach(k=>$(k).addEventListener('change',applyView));
 $('cut').addEventListener('input',()=>{cutPlane.constant=Number($('cut').value);});
 $('part').addEventListener('change',()=>{const m=meshes.find(o=>o.uuid===$('part').value);if(m){$(m.userData.layer).checked=true;applyView();}selectPart(m||null);});
-$('rhythm').addEventListener('change',()=>{resetRhythm();drawECG();});
+$('rhythm').addEventListener('change',()=>{clinicalCase=$('rhythm').value==='normale'?null:$('rhythm').value;clinicalParams={};resetRhythm();drawECG();});
 function updatePlayback(){$('play').setAttribute('aria-pressed',String(playing));$('play').textContent=playing?'Ⅱ Pausa':'▶ Riprendi';}
 $('play').addEventListener('click',()=>{playing=!playing;updatePlayback();});updatePlayback();
 $('slow').addEventListener('click',()=>{slow=!slow;$('slow').setAttribute('aria-pressed',String(slow));$('slow').textContent=slow?'¼× Attivo':'¼× Rallenta';});
@@ -195,16 +157,22 @@ function frame(now){
  requestAnimationFrame(frame);
  if(document.hidden||!available||window.IsoLabEmbedded?.active===false){lastTime=0;return;}
  if(lastTime&&playing)t+=Math.min(80,now-lastTime)*(slow?.25:1);lastTime=now;
- animateHeart();updateCamera();renderer.render(scene,camera);
+ updateCamera();animateHeart();renderer.render(scene,camera);
  if(now-lastTrace>33){drawECG();lastTrace=now;}
 }
-const api={T,scene,camera,stage,anatomy,circuit,meshes,paths,nodes,uniforms,sourceLabels,movingMaterial,selectPart,applyView,setView,
+const api={T,scene,camera,stage,anatomy,circuit,meshes,paths,nodes,electrical,uniforms,sourceLabels,movingMaterial,selectPart,applyView,setView,
  get clock(){return window.CardiacClock?CardiacClock.read(stream,t,cfg):null;},get view(){return view;},get selected(){return selected;},get time(){return t;},get stream(){return stream;},get config(){return cfg;},
+ focusStructure(d){if(d.center){$('section-enabled').checked=true;$('section-axis').value='x';$('section-flip').checked=false;$('cut').value=d.center[0]+.10;$('valves').checked=false;$('vessels').checked=false;$('coronaries').checked=false;$('veins').checked=false;applyView();}else if(d.membrane){for(const id of ['valves','vessels','coronaries','veins'])$(id).checked=false;applyView();}$('view-description').textContent=d.label+' · geometria illustrativa modificabile.';orbit.target.set(...(d.center||d.focus||[-.03,1.3,-.9]));orbit.r=d.center?2.4:(d.distance||3.8);const n=new T.Vector3(...(d.normal||d.direction||[1,.2,-1])).normalize();orbit.theta=Math.atan2(n.x,n.z);orbit.phi=Math.acos(n.y);updateCamera();},
+ focusDuct(){setView('surface');const d=AnatomyRefinements.ductGeometry(meshes,.02);orbit.target.copy(d.a).lerp(d.p,.5);orbit.r=3;orbit.theta=1.9;orbit.phi=1.25;d.geometry.dispose();updateCamera();},
+ focusValve(id){setView('valves');const d=AnatomyRefinements.valveRoots()[id],n=new T.Vector3(...d.normal).normalize();orbit.target.set(...d.center);orbit.r=1.6;orbit.theta=Math.atan2(n.x,n.z);orbit.phi=Math.acos(n.y);updateCamera();},
+ focusConduction(){orbit.r=3.8;orbit.theta=.1;orbit.phi=1.55;orbit.target.set(-.2,-.2,.1);updateCamera();},
+ setClinicalCase(id,params={}){clinicalCase=scenarios[id]?id:null;clinicalParams={...params};if(clinicalCase&&!Array.from($('rhythm').options).some(o=>o.value===id)){const o=document.createElement('option');o.value=id;o.textContent=scenarios[id].name;$('rhythm').append(o);}if(clinicalCase)$('rhythm').value=id;resetRhythm();},
+ clearClinicalCase(){clinicalCase=null;clinicalParams={};$('rhythm').value='normale';resetRhythm();},
  resetRhythm, pause(){playing=false;updatePlayback();},seek(value){t=value;animateHeart();drawECG();},
  addMesh(mesh,id,label,layer,origin='Ricostruzione didattica'){
   mesh.userData={...mesh.userData,sourceName:id,label,layer,origin};meshes.push(mesh);
   const op=document.createElement('option');op.value=mesh.uuid;op.textContent=label;$('part').appendChild(op);return mesh;
  }};
-lab=window.HeartLab.create(api);resetRhythm();
+lab=window.HeartLab.create(api);resetRhythm();window.IsoPathologyUI?.create(api,lab);
 resize();requestAnimationFrame(frame);
 })();

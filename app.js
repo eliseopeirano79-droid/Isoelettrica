@@ -311,7 +311,7 @@ class Scene3D {
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
     cv.addEventListener('wheel', e => { e.preventDefault(); o.r = clamp(o.r * Math.exp(e.deltaY * 0.0012), 2.5, 16); }, { passive: false });
   }
-  cam(id) { const C = { iso: { theta: 0.62, phi: 1.16, r: 7 }, front: { theta: 0, phi: Math.PI / 2, r: 6.8 }, top: { theta: 0, phi: 0.02, r: 6.8 } }[id]; const dth = (((C.theta - this.orbit.theta) / DEG + 540) % 360 - 180) * DEG; this.anim = { from: { theta: this.orbit.theta, phi: this.orbit.phi, r: this.orbit.r }, to: { theta: this.orbit.theta + dth, phi: C.phi, r: C.r }, t: 0 }; }
+  cam(id) { const C = { iso: { theta: 0.62, phi: 1.16, r: 7 }, front: { theta: 0, phi: Math.PI / 2, r: 6.8 }, top: { theta: 0, phi: 0.02, r: 6.8 }, conduction:{theta:0,phi:1.55,r:3.1} }[id]; const dth = (((C.theta - this.orbit.theta) / DEG + 540) % 360 - 180) * DEG; this.anim = { from: { theta: this.orbit.theta, phi: this.orbit.phi, r: this.orbit.r }, to: { theta: this.orbit.theta + dth, phi: C.phi, r: C.r }, t: 0 }; }
   buildLeads() {
     const G = this.G.leads; this.leadObj = {};
     LEADS.forEach(L => {
@@ -350,6 +350,12 @@ class Scene3D {
     tube([[-0.36, 0.12, -0.02], [-0.34, -0.4, -0.08], [-0.3, -0.95, -0.12]], 0.09, mVen);
   }
   buildConduction() {
+    if(window.IsoConductionView&&this.atlasHeart){
+      this.conduction=IsoConductionView.create({scale:HeartAtlas.SCALE,material:m=>this.atlasHeart.movingMaterial(m),deform:p=>this.atlasHeart.deformPoint(p)});
+      this.G.cond.add(this.conduction.group);this.conduction.xray(true);this.conductionLabels=[];
+      for(const [name,pos]of [['NSA',IsoConduction.anchors.sa],['NAV',IsoConduction.anchors.av],['His',IsoConduction.anchors.his]]){const label=makeLabel(name,{h:.085,color:'#785326',bg:'rgba(250,246,234,.9)',weight:600});label.position.set(pos[0]*HeartAtlas.SCALE-.09,pos[1]*HeartAtlas.SCALE+.055,pos[2]*HeartAtlas.SCALE);label.userData.rest=pos;this.conductionLabels.push(label);this.G.cond.add(label);}
+      return;
+    }
     const G = this.G.cond, FX = this.G.fx; this.paths = {};
     const base = new THREE.MeshBasicMaterial({ color: '#8a7446', transparent: true, opacity: 0.9 });
     this.blockMat = new THREE.MeshBasicMaterial({ color: '#ff4d6a', transparent: true, opacity: 0.95 });
@@ -418,6 +424,7 @@ class Scene3D {
   }
   setScenario(cfg) {
     this.cfg = cfg || {};
+    if(this.conduction){this.cfg={...cfg,isoScenario:cfg.isoScenario||S.sc};this.conduction.setScenario(this.cfg);return;}
     const via = cfg.via;
     const blocked = { rbbb: ['rb', 'pk-rb'], lbbb: ['laf', 'lpf', 'pk-laf', 'pk-lpf'], lafb: ['laf', 'pk-laf'], lpfb: ['lpf', 'pk-lpf'] }[via] || [];
     Object.keys(this.paths).forEach(k => this.paths[k].forEach(p => { p.bm.material = blocked.includes(k) ? this.blockMat : p.bm.material === this.blockMat ? this.paths.his[0].bm.material : p.bm.material; }));
@@ -470,6 +477,11 @@ class Scene3D {
       const pp = this.projLine.geometry.attributes.position; pp.setXYZ(0, vx, vy, vz); pp.setXYZ(1, foot.x, foot.y, foot.z); pp.needsUpdate = true; this.projLine.computeLineDistances();
       this.projSeg.visible = Math.abs(sp) > 0.01; this.projSeg.quaternion.setFromUnitVectors(V3(0, 1, 0), sp > 0 ? Ld : Ld.clone().negate()); this.projSeg.scale.set(1, Math.abs(sp) || 0.001, 1);
     }
+    if(this.conduction){
+      this.atlasHeart.update(t,st,this.cfg);
+      for(const label of this.conductionLabels){const p=this.atlasHeart.deformPoint(new THREE.Vector3(...label.userData.rest)).multiplyScalar(HeartAtlas.SCALE);label.position.copy(p).add(new THREE.Vector3(-.09,.055,0));}
+      const plan=this.conduction.update(CardiacClock.read(st,t,this.cfg),this.cfg);this.phase=plan.phase;
+    }else{
     // attivazioni
     const ev = st.eventsAround(t), A = ev.A, Vt = ev.V, cfg = this.cfg;
     ['atr', 'his', 'rb', 'laf', 'lpf', 'pk-rb', 'pk-laf', 'pk-lpf', 'kent'].forEach(k => this.lightPath(k, -1));
@@ -517,7 +529,8 @@ class Scene3D {
     this.mVent.emissive.setRGB(0.5 * ventGlow + 0.05 * tGlow, 0.05 * ventGlow + 0.2 * tGlow, 0.08 * ventGlow + 0.22 * tGlow);
     this.phase = phase || 'Diastole elettrica';
     if(this.atlasHeart)this.atlasHeart.update(t,st,cfg);
-    if(this.cuore?.update)this.cuore.update(t,st,cfg);
+    }
+    if(this.cuore?.update)this.cuore.update(t,st,this.cfg);
     this.renderer.render(this.scene, this.camera);
   }
 }
@@ -588,7 +601,7 @@ function aggiornaEctUI() {
 }
 function buildStream(sc, p, keepTime) {
   cancelCaseActions();
-  curCfg = sc.build(p); curCfg.noise = S.noise; curCfg.t0 = keepTime ? mon.t : 0;
+  curCfg = window.IsoConduction?IsoConduction.configure(sc.id,sc.build(p),p):sc.build(p); curCfg.noise = S.noise; curCfg.t0 = keepTime ? mon.t : 0;
   applicaEctopia(curCfg);
   devicePacing(sc, curCfg);
   stream = new Stream(curCfg, ++seed);
@@ -928,6 +941,15 @@ function renderParams(sc) {
   notePar[sc.id] = [];
   const p = paramsFor(sc); const box = $('#p-params'); box.innerHTML = '';
   renderDeviceParams(sc, box);
+  if(window.IsoConduction&&['wpw','avrt','avrtanti','fapreeccitata','avnrt','lgl'].includes(sc.id)){
+    const panel=document.createElement('div');panel.className='sec';panel.innerHTML='<h3>Vie e circuiti elettrici</h3>';
+    if(['wpw','avrt','avrtanti','fapreeccitata'].includes(sc.id)){
+      const label=document.createElement('label');label.textContent='Sede della via di Kent';const select=document.createElement('select');select.setAttribute('aria-label',label.textContent);
+      IsoConduction.sites.forEach(site=>{const o=document.createElement('option');o.value=site.id;o.textContent=site.label;select.append(o);});select.value=p.kentSite||'left-lateral';select.onchange=()=>setParam(sc,'kentSite',select.value);label.append(select);panel.append(label);
+    }
+    if(sc.id==='lgl'){const label=document.createElement('label');label.textContent='Meccanismo illustrativo del PR corto';const select=document.createElement('select');select.setAttribute('aria-label',label.textContent);select.innerHTML='<option value="nodal">Conduzione nodale accelerata</option><option value="james">Fibre di James · ipotesi atrionodale</option>';select.value=p.jamesModel||'nodal';select.onchange=()=>setParam(sc,'jamesModel',select.value);label.append(select);panel.append(label);}
+    const note=document.createElement('p');note.className='conduction-note';note.textContent=sc.id==='lgl'?'James è uno schema opzionale: un PR corto non dimostra una via accessoria. L’ECG resta stretto e senza delta.':'Rapida in azzurro, lenta in arancio, Kent in viola. I transiti seguono gli eventi ECG. Le varianti di sede illustrano la direzione della preeccitazione: non sono un algoritmo clinico di localizzazione.';panel.append(note);box.append(panel);
+  }
   const sec = document.createElement('div'); sec.className = 'sec'; sec.innerHTML = '<h3>' + esc(sc.name) + '</h3>';
   sc.params.forEach(q => {
     const d = document.createElement('div'); d.className = 'ctrl';
@@ -2019,7 +2041,8 @@ function loop(now) {
 window.ISO_OPEN = (id, params) => { if (!byId[id]) return; if (params) store.params[id] = Object.assign(defaultParams(byId[id]), params); showView('trace'); loadScenario(id, false); };
 renderLib('');
 setPlaying(S.playing);
-loadScenario(S.sc, false);
+const requestedCase=new URL(location.href).searchParams.get('scenario');
+loadScenario(requestedCase&&byId[requestedCase]?requestedCase:S.sc, false);
 showView('trace');
 requestAnimationFrame(loop);
 /* =====================================================================
@@ -2087,7 +2110,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(loc
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v43.0 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v44.0 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {

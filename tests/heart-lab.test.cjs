@@ -30,9 +30,9 @@ test('Complete AV block follows independent ECG events without inventing ventric
 test('Asystole and VF have no organized pumping or valve cycle',()=>{
  for(const id of ['asistolia','fv']){const {cfg,stream}=scenario(id),p=C.defaults();for(let t=5000;t<8000;t+=71){const m=C.sample(stream.eventsAround(t),t,cfg,p);assert.equal(m.vent,0);assert.equal(m.atr,0);assert.ok(Object.values(m.valves).every(v=>v===null));}}
 });
-test('Local damage changes contraction only inside the painted region',()=>{
+test('Local damage retains passive tethered motion and leaves distant tissue unchanged',()=>{
  const p=C.defaults(),m={vent:1,atr:0,fibr:0},q=[.7,-.55,.6],r={center:q,radius:.28,strength:1,type:'necrosis'};
- assert.notDeepEqual(C.deformPoint(q,m,p),q);assert.deepEqual(C.deformPoint(q,m,p,[r]),q);assert.deepEqual(C.deformPoint([-1,-1,0],m,p,[r]),C.deformPoint([-1,-1,0],m,p));
+ assert.notDeepEqual(C.deformPoint(q,m,p),q);const moved=C.deformPoint(q,m,p,[r]);assert.notDeepEqual(moved,q);assert.ok(Math.hypot(...moved.map((x,i)=>x-q[i]))<Math.hypot(...C.deformPoint(q,m,p).map((x,i)=>x-q[i])));assert.deepEqual(C.deformPoint([-1,-1,0],m,p,[r]),C.deformPoint([-1,-1,0],m,p));
 });
 test('Configuration import validates bounds, colors, finite numbers, and GPU capacity atomically',()=>{
  const s=C.fresh();s.regions.push({type:'ischemia',center:[0,0,0],radius:.28,strength:.8,color:'#aabbcc'});assert.deepEqual(C.parse(JSON.stringify(s)),s);
