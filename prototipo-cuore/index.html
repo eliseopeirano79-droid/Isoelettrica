@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cuore aperto · Isoelettrica</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><a class="brand" href="../">♡ <span>Isoelettrica</span></a><span class="edition">STUDIO DEL NUOVO CUORE 3D</span><span class="pill">Anteprima locale</span></header>
+<main>
+ <section class="viewer" aria-label="Modello anatomico interattivo">
+  <div class="viewer-title"><span class="eyebrow">ANATOMIA / 01</span><h1>Il cuore, da vicino.</h1><p id="view-description">Un’anatomia di riferimento da esplorare, struttura per struttura.</p></div>
+  <div id="stage" tabindex="0" aria-label="Cuore 3D. Trascina per ruotare, usa la rotella per ingrandire. Frecce per ruotare, più e meno per lo zoom."></div>
+  <div id="load" role="status">Caricamento delle strutture anatomiche…</div>
+  <nav class="views" aria-label="Vista anatomica"><button data-view="surface" aria-pressed="true">Superficie</button><button data-view="section" aria-pressed="false">Interno</button><button data-view="valves" aria-pressed="false">Valvole</button><button data-view="conduction" aria-pressed="false">Conduzione</button></nav>
+  <div class="orientation"><span>DX PAZIENTE</span><button id="reset" title="Ripristina la vista anteriore">↺ Vista anteriore</button><span>SX PAZIENTE</span></div>
+  <div class="viewer-hint">Trascina per ruotare · Scorri per ingrandire · Tocca una struttura</div>
+ </section>
+ <aside>
+  <div class="panel-title"><span class="eyebrow">ESPLORA</span><h2>Ogni parte ha un nome.</h2></div>
+  <div class="layers">
+   <label><span><i class="dot muscle"></i>Pareti e camere</span><input id="wall" type="checkbox" checked></label>
+   <label><span><i class="dot artery"></i>Coronarie</span><input id="coronaries" type="checkbox" checked></label>
+   <label><span><i class="dot vein"></i>Vene cardiache</span><input id="veins" type="checkbox" checked></label>
+   <label><span><i class="dot valve"></i>Valvole e muscoli papillari</span><input id="valves" type="checkbox" checked></label>
+   <label><span><i class="dot vessel"></i>Grandi vasi</span><input id="vessels" type="checkbox" checked></label>
+   <label><span><i class="dot impulse"></i>Schema di conduzione</span><input id="conduction" type="checkbox"></label>
+  </div>
+  <label class="control-label" for="part">Struttura da evidenziare</label><select id="part"><option value="">Nessuna selezione</option></select>
+  <div id="selection" class="selection"><b>32 strutture separate</b><p>Camere, rami coronarici, vene, lembi e muscoli papillari provengono dall’atlante Z-Anatomy.</p></div>
+  <div class="section-control" id="cut-control" hidden><label for="cut">Profondità della sezione</label><input type="range" id="cut" min="-0.7" max="1.1" step="0.01" value="0.12"></div>
+  <div class="source-card"><span class="eyebrow">IL MODELLO</span><p><b>Z-Anatomy / BodyParts3D</b><br>Geometrie aperte, con nomi anatomici conservati. Circa 3,7 MB.</p><a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Esplora la fonte ↗</a><details><summary>Cosa è completo e cosa manca</summary><p>Il file contiene quattro camere, sei gruppi arteriosi coronarici, cinque strutture venose, quattro grandi vasi, nove lembi e quattro muscoli papillari. La vena senza nome è stata esclusa.</p><p>Mancano il lembo anteriore mitralico, quello anteriore tricuspidale e la geometria del sistema di conduzione. Le valvole restano statiche. Le vie elettriche dorate sono uno schema aggiunto, con posizioni indicative da revisionare prima dell’integrazione nell’app.</p><p>La contrazione è illustrativa, legata agli eventi del motore ECG dell’app. Non è una simulazione biomeccanica. La sezione delle pareti non ricostruisce il tessuto sulla superficie di taglio.</p><a href="ATTRIBUZIONI.md">Attribuzioni e adattamenti</a></details></div>
+ </aside>
+ <section class="rhythm" aria-label="Animazione collegata al ritmo ECG">
+  <div class="rhythm-controls"><span class="eyebrow">ANIMAZIONE</span><label for="rhythm">Ritmo da osservare</label><select id="rhythm"><option value="normale">Ritmo sinusale</option><option value="bav3">BAV III · scappamento giunzionale</option><option value="fv">Fibrillazione ventricolare</option><option value="asistolia">Asistolia</option></select><div class="playback"><button id="play" aria-pressed="true">Ⅱ Pausa</button><button id="slow" aria-pressed="false">¼× Rallenta</button></div></div>
+  <div class="ecg-wrap"><div class="ecg-caption"><span>DII · motore ECG di Isoelettrica</span><span id="phase" role="status">Diastole</span></div><canvas id="ecg" aria-label="Striscia ECG della derivazione II"></canvas><p>Contrazione illustrativa sincronizzata agli eventi elettrici. I lembi valvolari non sono ancora animati.</p></div>
+ </section>
+</main>
+<footer><span>Prototipo per valutare il nuovo modello · L’app online resta invariata.</span><span>BodyParts3D · DBCLS · CC BY-SA 2.1 JP / Z-Anatomy · CC BY-SA 4.0</span></footer>
+<script src="../three.min.js"></script><script src="../gltfloader.js"></script><script src="../engine.js"></script><script src="../data.js"></script><script src="motion.js"></script><script src="viewer.js"></script>
+</body></html>
