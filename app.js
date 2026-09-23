@@ -1454,7 +1454,7 @@ if (!ATLAS.length) {
     caricaIndiceReale().then(r => { if (r && r.voci.length) { t.hidden = false; atlasFonte = 'reale'; } });
   }
 }
-const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null, mode: (store.qmode === 'atlas' && ATLAS.length) ? 'atlas' : 'gen' };
+const Q = { cat: 'Tutte', cur: null, done: false, playing: true, stream: null, mode: (store.qmode === 'atlas' && ATLAS.length) ? 'atlas' : 'gen', atlasDecks: {} };
 /* immagini dell'atlante utilizzabili come domanda: quelle con un quadro collegato */
 const QATL = ATLAS.filter(a => a.quizApproved && a.q && byId[a.q]);
 $('#qPause').addEventListener('click', () => {
@@ -1463,6 +1463,21 @@ $('#qPause').addEventListener('click', () => {
   $('#qPause').classList.toggle('on', !Q.playing);
 });
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+/* Mazzo del quiz Atlante: ogni immagine idonea compare una sola volta prima
+   che il gruppo venga rimescolato. I mazzi sono separati per categoria, così
+   cambiare filtro non azzera il giro già iniziato. */
+function nextAtlasCard(pool) {
+  const key = Q.cat || 'Tutte';
+  const signature = pool.map(a => a.id).join('|');
+  let deck = Q.atlasDecks[key];
+  if (!deck || deck.signature !== signature || !deck.items.length) {
+    const items = shuffle(pool.slice());
+    if (Q.cur && Q.cur.atl && items.length > 1 && items[0].id === Q.cur.atl.id) items.push(items.shift());
+    deck = Q.atlasDecks[key] = { signature, items, total: pool.length };
+  }
+  const a = deck.items.shift();
+  return { a, shown: deck.total - deck.items.length, total: deck.total };
+}
 function catDisponibili() {
   if (Q.mode !== 'atlas') return CATS.filter(c => SCENARIOS.some(s => s.cat === c && s.quiz));
   const set = {}; QATL.forEach(a => { set[byId[a.q].cat] = 1; });
@@ -1497,8 +1512,7 @@ function feedback(sc, ok, extra) {
 function newQuestionAtlas() {
   const pool = QATL.filter(a => Q.cat === 'Tutte' || byId[a.q].cat === Q.cat);
   if (!pool.length) { Q.mode = 'gen'; return newQuestion(); }
-  let a = pool[Math.floor(Math.random() * pool.length)];
-  if (Q.cur && Q.cur.atl && pool.length > 1 && a.id === Q.cur.atl.id) a = pool[(pool.indexOf(a) + 1) % pool.length];
+  const pick = nextAtlasCard(pool), a = pick.a;
   const sc = byId[a.q];
   $('#qEcgWrap').hidden = true; $('#qImg').hidden = false;
   const img = $('#qImgEl');
@@ -1516,7 +1530,7 @@ function newQuestionAtlas() {
     source.src = 'atlante/' + a.id + '.jpg';
   } else { img.hidden = false; img.src = 'atlante/' + a.id + '.jpg'; }
   $('#qImg').classList.remove('zoom'); $('#qImg').scrollTop = 0; $('#qImg').scrollLeft = 0;
-  $('#qMeasures').innerHTML = '<span>Tracciato reale dalle slide del corso — ' + esc(a.f) + '</span>';
+  $('#qMeasures').innerHTML = '<span>Tracciato reale dalle slide del corso — ' + esc(a.f) + ' · Giro ' + pick.shown + '/' + pick.total + '</span>';
   const opts = opzioni(sc);
   Q.cur = { sc, atl: a, opts }; Q.done = false;
   const r = $('#qRight');
