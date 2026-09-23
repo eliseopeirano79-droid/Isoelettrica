@@ -178,7 +178,7 @@
 
   /* ---------- scena ---------- */
   let sc, cam, ren, root, segMesh = {}, ramiMesh = {}, lbl = [], raf = 0, inited = false;
-  let rot = { x: -0.22, y: 0.7 }, dist = 3.25, occl = null, minuti = 0;
+  let rot = { x: -0.22, y: 0.7 }, dist = 4.6, occl = null, minuti = 0;
   let asse = null, pos = 0, disco = null;   // percorso corrente, posizione del piano di sezione, mesh
 
   /* ---------- piano di sezione scorrevole lungo il vaso ----------
@@ -310,21 +310,28 @@
     }
     ren.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
     host.appendChild(ren.domElement);
-    sc.add(new THREE.AmbientLight(0xffffff, 0.75));
-    const d1 = new THREE.DirectionalLight(0xffffff, 0.7); d1.position.set(2, 3, 4); sc.add(d1);
-    const d2 = new THREE.DirectionalLight(0xffd9c9, 0.35); d2.position.set(-3, -1, -2); sc.add(d2);
+    if(window.HeartAtlasGeometry){HeartAtlasGeometry.setupRenderer(ren);HeartAtlasGeometry.lighting(sc);}
+    else sc.add(new THREE.AmbientLight(0xffffff, 0.75));
+    const d1 = new THREE.DirectionalLight(0xffffff, window.HeartAtlasGeometry?0:0.7); d1.position.set(2, 3, 4); sc.add(d1);
+    const d2 = new THREE.DirectionalLight(0xffd9c9, window.HeartAtlasGeometry?0:0.35); d2.position.set(-3, -1, -2); sc.add(d2);
     root = new THREE.Group(); sc.add(root);
 
-    const h = ISO_CUORE.build({ opacity: 1 });
+    const h = (window.HeartAtlas||ISO_CUORE).build({ opacity: 1, coronary: true });
     root.add(h.group);
     h.SEG.forEach(sg => { segMesh[sg.n] = h.seg[sg.n]; });
-    segMesh.rv = h.rv; h.rv.material.transparent = true; h.rv.material.opacity = 0.5; h.rv.material.depthWrite = false;
+    segMesh.rv = h.rv; if(!window.HeartAtlas){h.rv.material.transparent = true; h.rv.material.opacity = 0.5; h.rv.material.depthWrite = false;}
     Object.keys(h.coro).forEach(id => { if (!ISO_CUORE.CORO[id].vena) ramiMesh[id] = h.coro[id]; });
-    [['LAD', 'lad2'], ['LCx', 'cx1'], ['RCA', 'rca2'], ['PDA', 'pda'], ['D1', 'd1'], ['OM1', 'om1'], ['LM', 'lm']].forEach(([t, id]) => {
+    const addLabels=()=>{[['LAD', 'lad2'], ['LCx', 'cx1'], ['RCA', 'rca2'], ['PDA', 'pda'], ['D1', 'd1'], ['OM1', 'om1'], ['LM', 'lm']].forEach(([t, id]) => {
       const via = ISO_CUORE.CORO[id].via, v = via[Math.floor(via.length / 2)];
       const p = v.length === 4 ? new THREE.Vector3(v[0], v[1], v[2] + 0.14) : ISO_CUORE.P(v[0], v[1], v[2] + 0.12);
       const sp = makeLabel(t); sp.position.copy(p); root.add(sp); lbl.push(sp);
     });
+    };
+    if(h.ready){
+      const status=document.createElement('p');status.className='atlas-loading';status.setAttribute('role','status');status.textContent='Caricamento delle strutture anatomiche…';host.appendChild(status);
+      const controls=['corArt','corVaso','corSede','corPos'];controls.forEach(id=>document.getElementById(id).disabled=true);
+      h.ready.then(()=>{status.hidden=true;document.getElementById('corArt').disabled=false;addLabels();if(occl)setOccl(occl);else aggiorna();}).catch(()=>{status.textContent='Modello non caricato. Ricarica per riprovare.';});
+    }else addLabels();
     inited = true;
   }
 
@@ -335,7 +342,7 @@
   }
   function draw() {
     cam.position.set(Math.sin(rot.y) * Math.cos(rot.x), Math.sin(rot.x), Math.cos(rot.y) * Math.cos(rot.x)).multiplyScalar(dist);
-    cam.lookAt(0, -0.3, 0);
+    cam.lookAt(0, window.HeartAtlas?.12:-.3, 0);
     lbl.forEach(s => s.material.opacity = 0.95);
     ren.render(sc, cam);
   }
@@ -347,7 +354,8 @@
     Object.keys(ramiMesh).forEach(id => {
       const m = ramiMesh[id];
       const closed = chiusi.indexOf(id) >= 0;
-      m.material.color.setHex(closed ? 0x5d6675 : 0xd3283c);
+      m.material.color.setHex(closed ? 0x5d6675 : window.HeartAtlas?0xed8860:0xd3283c);
+      if(window.HeartAtlas)m.material.color.convertSRGBToLinear();
       m.material.opacity = closed ? 0.85 : 1; m.material.transparent = true;
     });
     mostraDisco(st);
@@ -356,14 +364,14 @@
     ISO_CUORE.SEG.forEach(sg => {
       const m = segMesh[sg.n];
       const colpito = st && st.seg.indexOf(sg.n) >= 0;
-      if (!colpito) { m.material.color.setHex(0xd98f92); m.material.emissive && m.material.emissive.setHex(0x000000); return; }
+      if (!colpito) { m.material.color.setHex(window.HeartAtlas?0xa85c67:0xd98f92); if(window.HeartAtlas)m.material.color.convertSRGBToLinear(); m.material.emissive && m.material.emissive.setHex(0x000000); return; }
       // giallo: area a rischio ancora viva; grigio-blu: necrosi
       const vivo = new THREE.Color(0xf2c14e), morto = new THREE.Color(0x4a5568);
-      m.material.color.copy(vivo.clone().lerp(morto, f));
+      m.material.color.copy(vivo.clone().lerp(morto, f));if(window.HeartAtlas)m.material.color.convertSRGBToLinear();
     });
     if (segMesh.rv) {
       const q = st ? st.vd : 0;
-      segMesh.rv.material.color.copy(new THREE.Color(0xc98a8e).lerp(new THREE.Color(0xf2c14e).lerp(new THREE.Color(0x4a5568), f), q));
+      segMesh.rv.material.color.copy(new THREE.Color(window.HeartAtlas?0xa85c67:0xc98a8e).lerp(new THREE.Color(0xf2c14e).lerp(new THREE.Color(0x4a5568), f), q));if(window.HeartAtlas)segMesh.rv.material.color.convertSRGBToLinear();
     }
     pannello(st, f);
     draw();

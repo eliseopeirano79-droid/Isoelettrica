@@ -281,7 +281,7 @@ const FOCI = { rvot: V3(0.1, 0.12, 0.42), lvLat: V3(0.7, -0.3, 0), lvInf: V3(0.4
 class Scene3D {
   constructor(el) {
     this.el = el;
-    const r = this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    const r = this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.available = true;
     r.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); this.available = false; sceneNotice(el, 'Vista 3D temporaneamente non disponibile. Il tracciato resta utilizzabile.'); });
     r.domElement.addEventListener('webglcontextrestored', () => { this.available = true; sceneNotice(el, ''); });
@@ -289,9 +289,10 @@ class Scene3D {
     el.insertBefore(r.domElement, el.firstChild);
     const sc = this.scene = new THREE.Scene(); sc.background = new THREE.Color(css.stage || '#121926');
     this.camera = new THREE.PerspectiveCamera(38, 1, 0.05, 100);
-    sc.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const l1 = new THREE.DirectionalLight(0xffffff, 0.75); l1.position.set(2, 3, 4); sc.add(l1);
-    const l2 = new THREE.DirectionalLight(0x9fb4ff, 0.3); l2.position.set(-3, -1, -3); sc.add(l2);
+    if(window.HeartAtlasGeometry){HeartAtlasGeometry.setupRenderer(r);HeartAtlasGeometry.lighting(sc);sc.background=null;}
+    else sc.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const l1 = new THREE.DirectionalLight(0xffffff, window.HeartAtlasGeometry?0:0.75); l1.position.set(2, 3, 4); sc.add(l1);
+    const l2 = new THREE.DirectionalLight(0x9fb4ff, window.HeartAtlasGeometry?0:0.3); l2.position.set(-3, -1, -3); sc.add(l2);
     this.orbit = { theta: 0.62, phi: 1.16, r: 7.0, target: V3(0.15, -0.15, 0) }; this.anim = null;
     this.initControls();
     this.G = {}; ['leads', 'heart', 'anat', 'cond', 'fx', 'orb', 'dyn', 'proj'].forEach(k => { this.G[k] = new THREE.Group(); sc.add(this.G[k]); });
@@ -331,6 +332,11 @@ class Scene3D {
     const G = this.G.heart; this.hm = [];
     const hmat = (c, op) => { const m = new THREE.MeshPhongMaterial({ color: c, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide, shininess: 35, emissive: new THREE.Color(0, 0, 0) }); this.hm.push(m); return m; };
     this.mVent = hmat('#c64d58', 0.22); this.mAtr = hmat('#d8766a', 0.2); const mAo = hmat('#d0605a', 0.18), mVen = hmat('#5f7fcc', 0.18);
+    if(window.HeartAtlas){
+      this.atlasHeart=HeartAtlas.build({opacity:1});G.add(this.atlasHeart.group);
+      const status=document.createElement('p');status.className='atlas-loading';status.setAttribute('role','status');status.textContent='Caricamento del cuore anatomico…';this.el.appendChild(status);
+      this.atlasHeart.ready.then(()=>{status.hidden=true;}).catch(()=>{status.textContent='Cuore anatomico non caricato. Ricarica per riprovare; ECG e vettori restano disponibili.';});return;
+    }
     const apex = V3(0.52, -0.66, 0.54).normalize();
     const vg = new THREE.SphereGeometry(1, 48, 32); const p = vg.attributes.position;
     for (let i = 0; i < p.count; i++) { const y = p.getY(i); const tp = 1 - 0.42 * Math.pow((y + 1) / 2, 1.3); p.setXYZ(i, p.getX(i) * tp * 0.52, y * 0.78, p.getZ(i) * tp * 0.5); }
@@ -428,12 +434,14 @@ class Scene3D {
   loadAnat() {
     if (this._anatReq) return; this._anatReq = true;
     if (!window.ISO_CUORE) return;
-    this.cuore = ISO_CUORE.build({ opacity: this._anatOp == null ? 0.6 : this._anatOp });
+    this.cuore = (window.HeartAtlas||ISO_CUORE).build({ opacity: this._anatOp == null ? 0.6 : this._anatOp });
     this.anatMats = []; this.cuore.group.traverse(o => { if (o.isMesh) this.anatMats.push(o.material); });
     this.G.anat.add(this.cuore.group);
+    if(this.cuore.ready)this.cuore.ready.catch(()=>{this._anatReq=false;});
   }
   setHeartOpacity(v) {
     this._anatOp = v;
+    if(this.atlasHeart){this.atlasHeart.setOpacity(v);if(this.cuore?.setOpacity)this.cuore.setOpacity(v);return;}
     (this.anatMats || []).forEach(m => { m.opacity = v; m.needsUpdate = true; });
     this.G.heart.traverse(o => { if (o.isMesh && o.material && o.material.transparent && o.material.userData.op0 !== false) { if (o.material.userData.base == null) o.material.userData.base = o.material.opacity; o.material.opacity = o.material.userData.base * (0.3 + 1.2 * v); } });
   }
@@ -508,6 +516,8 @@ class Scene3D {
     this.mAtr.emissive.setRGB(0.55 * atrGlow, 0.32 * atrGlow, 0.05 * atrGlow);
     this.mVent.emissive.setRGB(0.5 * ventGlow + 0.05 * tGlow, 0.05 * ventGlow + 0.2 * tGlow, 0.08 * ventGlow + 0.22 * tGlow);
     this.phase = phase || 'Diastole elettrica';
+    if(this.atlasHeart)this.atlasHeart.update(t,st,cfg);
+    if(this.cuore?.update)this.cuore.update(t,st,cfg);
     this.renderer.render(this.scene, this.camera);
   }
 }
@@ -521,7 +531,7 @@ const S = {
   mode: store.mode || 'print', speed: store.speed || 25, gain: store.gain || 10, slow: 1,
   playing: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   sel: null, noise: store.noise == null ? 0 : store.noise, sesso: store.sesso === 'F' ? 'F' : 'M',
-  ectTipo: store.ectTipo === 'pac' ? 'pac' : 'pvc', ectPat: store.ectPat || 'off', view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 0.6 : store.opac
+  ectTipo: store.ectTipo === 'pac' ? 'pac' : 'pvc', ectPat: store.ectPat || 'off', view: 'trace', tgl: Object.assign({ orb: true, heart: true, leads: true, anat: false }, store.tgl || {}), opac: store.opac == null ? 1 : store.opac
 };
 let stream = null, curCfg = null, seed = 1;
 const mon = new Monitor($('#ecg'), $('#ecgOv'), { onSelect: id => { S.sel = S.sel === id ? null : id; mon.setSelected(S.sel); scene.selectLead(S.sel); $$('#p-card .chip').forEach(c => c.classList.toggle('on', c.dataset.l === S.sel)); } });
@@ -542,6 +552,8 @@ function createScene(el) {
   }
 }
 const scene = createScene($('#stage'));
+// Both older heart display preferences now use the shared anatomical asset.
+if(window.HeartAtlas && S.tgl.anat){S.tgl.heart=true;S.tgl.anat=false;}
 if (S.tgl.anat && S.tgl.heart) S.tgl.anat = false;
 Object.keys(S.tgl).forEach(k => { scene.toggle(k, S.tgl[k]); const b = $('#hud3d [data-tg="' + k + '"]'); if (b) b.classList.toggle('on', S.tgl[k]); });
 
@@ -1965,6 +1977,7 @@ function showView(v) {
       else f.setAttribute('src', 'anatomia.html');
     }
   }
+  if(window.IsoAnatomyHost)IsoAnatomyHost.show(v);
   if (v === 'quiz') { renderQFilter(); requestAnimationFrame(() => { qmon.layout(); if (!Q.cur) newQuestion(); }); }
 }
 $$('#nav button').forEach(b => b.addEventListener('click', () => showView(b.dataset.v)));
@@ -1972,7 +1985,7 @@ $('#themeBtn').addEventListener('click', () => {
   const r = document.documentElement; const dark = getComputedStyle(r).getPropertyValue('color-scheme').trim() === 'dark';
   r.setAttribute('data-theme', dark ? 'light' : 'dark'); store.theme = dark ? 'light' : 'dark'; save(); onTheme();
 });
-function onTheme() { readVars(); scene.scene.background.set(css.stage); if (S.view === 'trace') mon.layout(); if (S.view === 'quiz') qmon.layout(); if (S.view === 'theory') renderTheory(); if (CMP.ready) ['A', 'B'].forEach(s => CMP[s].mon.layout()); }
+function onTheme() { readVars(); if(scene.scene.background)scene.scene.background.set(css.stage); if (S.view === 'trace') mon.layout(); if (S.view === 'quiz') qmon.layout(); if (S.view === 'theory') renderTheory(); if (CMP.ready) ['A', 'B'].forEach(s => CMP[s].mon.layout()); }
 if (window.matchMedia) { const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', onTheme); }
 
 let lastW = 0;
@@ -2036,7 +2049,7 @@ function controllaAggiornamenti(forza) {
   if (!swReg) return Promise.resolve('unavailable');
   return swReg.update().then(() => swReg.waiting ? 'ready' : swReg.installing ? 'installing' : 'checked').catch(() => 'offline');
 }
-if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview'))) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (ricaricando) return; ricaricando = true; location.reload();
   });
@@ -2074,7 +2087,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v42.0 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v43.0 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {

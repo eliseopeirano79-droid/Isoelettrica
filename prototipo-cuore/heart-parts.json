@@ -1,0 +1,240 @@
+{
+  "source": "https://github.com/Z-Anatomy/Models-of-human-anatomy",
+  "revision": "2b652413b1116c9119e616eabc1e63af3cc6267d",
+  "parts": [
+    {
+      "name": "Right atrium",
+      "layer": "heart",
+      "vertices": 11458,
+      "faces": 11341
+    },
+    {
+      "name": "Right ventricle",
+      "layer": "heart",
+      "vertices": 11328,
+      "faces": 11161
+    },
+    {
+      "name": "Left atrium",
+      "layer": "heart",
+      "vertices": 2609,
+      "faces": 2610
+    },
+    {
+      "name": "Left ventricle",
+      "layer": "heart",
+      "vertices": 11306,
+      "faces": 11126
+    },
+    {
+      "name": "Inferior papillary muscle of right ventricle",
+      "layer": "heart",
+      "vertices": 547,
+      "faces": 1090
+    },
+    {
+      "name": "Anterior papillary muscle of right ventricle",
+      "layer": "heart",
+      "vertices": 774,
+      "faces": 1544
+    },
+    {
+      "name": "Septal papillary muscle of right ventricle",
+      "layer": "heart",
+      "vertices": 424,
+      "faces": 844
+    },
+    {
+      "name": "Inferior papillary muscle of left ventricle",
+      "layer": "heart",
+      "vertices": 782,
+      "faces": 1560
+    },
+    {
+      "name": "Inferior leaflet of right atrioventricular valve",
+      "layer": "heart",
+      "vertices": 4912,
+      "faces": 9852
+    },
+    {
+      "name": "Septal leaflet of right atrioventricular valve",
+      "layer": "heart",
+      "vertices": 4506,
+      "faces": 9040
+    },
+    {
+      "name": "Posterior leaflet of left atrioventricular valve",
+      "layer": "heart",
+      "vertices": 3798,
+      "faces": 7640
+    },
+    {
+      "name": "Left coronary leaflet",
+      "layer": "heart",
+      "vertices": 459,
+      "faces": 914
+    },
+    {
+      "name": "Non-coronary leaflet",
+      "layer": "heart",
+      "vertices": 160,
+      "faces": 316
+    },
+    {
+      "name": "Right coronary leaflet",
+      "layer": "heart",
+      "vertices": 461,
+      "faces": 918
+    },
+    {
+      "name": "Anterior semilunar leaflet of pulmonary valve",
+      "layer": "heart",
+      "vertices": 1275,
+      "faces": 2531
+    },
+    {
+      "name": "Left semilunar leaflet of pulmonary valve",
+      "layer": "heart",
+      "vertices": 998,
+      "faces": 1992
+    },
+    {
+      "name": "Right semilunar leaflet of pulmonary valve",
+      "layer": "heart",
+      "vertices": 1372,
+      "faces": 2735
+    },
+    {
+      "name": "Right coronary artery",
+      "layer": "coronaries",
+      "vertices": 5780,
+      "faces": 5640
+    },
+    {
+      "name": "Circumflex artery of heart",
+      "layer": "coronaries",
+      "vertices": 3480,
+      "faces": 3420
+    },
+    {
+      "name": "Anterior interventricular artery",
+      "layer": "coronaries",
+      "vertices": 2460,
+      "faces": 2400
+    },
+    {
+      "name": "Left coronary artery",
+      "layer": "coronaries",
+      "vertices": 130,
+      "faces": 120
+    },
+    {
+      "name": "Right inferolateral branch of right coronary artery",
+      "layer": "coronaries",
+      "vertices": 3920,
+      "faces": 3840
+    },
+    {
+      "name": "Septal branches of anterior interventricular artery",
+      "layer": "coronaries",
+      "vertices": 1500,
+      "faces": 1440
+    },
+    {
+      "name": "Great cardiac vein",
+      "layer": "veins",
+      "vertices": 3140,
+      "faces": 3060
+    },
+    {
+      "name": "Middle cardiac vein",
+      "layer": "veins",
+      "vertices": 6790,
+      "faces": 6660
+    },
+    {
+      "name": "Inferior vein of left ventricle (//Posterior '')",
+      "layer": "veins",
+      "vertices": 4700,
+      "faces": 4620
+    },
+    {
+      "name": "Coronary sinus",
+      "layer": "veins",
+      "vertices": 310,
+      "faces": 300
+    },
+    {
+      "name": "Inferior vein of left ventricle",
+      "layer": "veins",
+      "vertices": 2500,
+      "faces": 2460
+    },
+    {
+      "name": "Ascending aorta",
+      "layer": "vessels",
+      "vertices": 130,
+      "faces": 120
+    },
+    {
+      "name": "Aortic arch",
+      "layer": "vessels",
+      "vertices": 130,
+      "faces": 120
+    },
+    {
+      "name": "Pulmonary trunk",
+      "layer": "vessels",
+      "vertices": 138,
+      "faces": 115
+    },
+    {
+      "name": "Superior vena cava",
+      "layer": "vessels",
+      "vertices": 70,
+      "faces": 60
+    },
+    {
+      "name": "Inferior vena cava (thoracic part)",
+      "layer": "vessels",
+      "vertices": 140,
+      "faces": 130
+    },
+    {
+      "name": "Left pulmonary artery",
+      "layer": "vessels",
+      "vertices": 430,
+      "faces": 420
+    },
+    {
+      "name": "Right pulmonary artery",
+      "layer": "vessels",
+      "vertices": 130,
+      "faces": 120
+    },
+    {
+      "name": "Left superior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 210,
+      "faces": 180
+    },
+    {
+      "name": "Left inferior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 200,
+      "faces": 180
+    },
+    {
+      "name": "Right superior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 370,
+      "faces": 360
+    },
+    {
+      "name": "Right inferior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 140,
+      "faces": 120
+    }
+  ]
+}

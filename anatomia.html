@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbitali ECG: atlante vettoriale 3D</title>
+<title>Fisiologia · Orbitali ECG e assi animati</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -160,6 +160,7 @@ dd{margin:0;color:var(--muted)}
 .madeby{font-size:11px;opacity:.6;margin-left:10px;white-space:nowrap}
 @media (max-width:860px){.madeby{display:none}}
 </style>
+<link rel="stylesheet" href="atlas-theme.css?v=43.0"><script src="lab-embed.js?v=43.0"></script>
 </head>
 <body>
 <div class="app">
@@ -948,7 +949,7 @@ function frame(){
   renderer.render(scene,camera);
 }
 let last=performance.now();
-function loop(now){const dt=Math.min(64,now-last);last=now;if(playing)T=(T+dt*speed)%CYCLE;frame();requestAnimationFrame(loop);}
+function loop(now){if(window.IsoLabEmbedded?.active===false){last=now;requestAnimationFrame(loop);return;}const dt=Math.min(64,now-last);last=now;if(playing)T=(T+dt*speed)%CYCLE;frame();requestAnimationFrame(loop);}
 
 function resize(){const w=view.clientWidth,h=view.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?50:38;camera.updateProjectionMatrix();}
 if(window.ResizeObserver){new ResizeObserver(resize).observe(view);new ResizeObserver(sizeCells).observe(ecgEl);}

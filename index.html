@@ -9,8 +9,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
-<meta name="theme-color" content="#121926">
-<link rel="manifest" href="manifest.webmanifest?v=42.2">
+<meta name="theme-color" content="#0d151b">
+<link rel="manifest" href="manifest.webmanifest?v=43.0">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -420,6 +420,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .pnota.fuori{opacity:1;color:#e8865f;font-weight:500}
 .scene-notice{position:absolute;inset:35% 20px auto;padding:16px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;z-index:5;text-align:center} :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 </style>
+<link rel="stylesheet" href="atlas-theme.css?v=43.0">
 </head>
 <body>
 <div class="app">
@@ -434,7 +435,8 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
       <button data-v="atlas">Atlante</button>
       <button data-v="cmp">Confronta</button>
       <button data-v="cor">Coronarie</button>
-      <button data-v="anat">Anatomia</button>
+      <button data-v="anat">Fisiologia</button>
+      <button data-v="heart">Anatomia</button>
       <button data-v="quiz">Quiz</button>
     </nav>
     <div class="spacer"></div>
@@ -483,12 +485,11 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
             <button class="hudbtn" data-cam="front">Frontale</button>
             <button class="hudbtn" data-cam="top">Orizzontale</button>
             <button class="hudbtn on" data-tg="orb">Orbitali</button>
-            <button class="hudbtn on" data-tg="heart">Cuore schematico</button>
-            <button class="hudbtn" data-tg="anat">Cuore anatomico</button>
+            <button class="hudbtn on" data-tg="heart">Cuore anatomico</button>
             <input id="hOpac" class="hudrange" type="range" min="12" max="100" step="1" value="60" aria-label="Trasparenza del cuore" title="Trasparenza del cuore">
             <button class="hudbtn on" data-tg="leads">Derivazioni</button>
           </div>
-          <div class="hud bl" id="hint3d">Tocca una derivazione nel tracciato per vederne la proiezione</div>
+          <div class="hud bl" id="hint3d">Tocca una derivazione nel tracciato per vederne la proiezione<br><a class="anatomic-credit" href="prototipo-cuore/ATTRIBUZIONI.md" target="_blank" rel="noopener">Z-Anatomy / BodyParts3D · Fonti del cuore anatomico</a></div>
         </div>
         <div class="card">
           <div class="tabs" id="cardTabs"><button data-p="card" class="on">Scheda</button><button data-p="params">Parametri</button><button data-p="volt">Voltaggi</button><button class="tabfull" id="cardFull" title="Leggi a schermo intero" aria-pressed="false">⤢</button></div>
@@ -528,6 +529,11 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
   <!-- CORONARIE -->
   <section class="view" id="v-cor">
     <div class="corleft">
+      <div class="corstage" id="corStage"><div class="cor-title"><span>CORONARIE / TERRITORI</span><h2>L’albero del cuore.</h2><p>Segui un ramo. Esplora il territorio che nutre.</p></div></div>
+      <p class="corhint">Trascina per ruotare, pizzica o rotella per lo zoom. Rosso: arteria pervia. Grigio: tratto chiuso. Giallo: miocardio a rischio ancora vivo. Grigio-blu: necrosi.</p>
+      <p class="cor-attribution">Z-Anatomy / BodyParts3D · <a href="prototipo-cuore/ATTRIBUZIONI.md" target="_blank" rel="noopener">Fonti e ricostruzioni</a> · Mappatura regionale illustrativa</p>
+    </div>
+    <aside class="cor-panel">
       <div class="corctrl">
         <label class="corlab" for="corArt">Arteria</label>
         <select id="corArt"><option value="">— nessuna occlusione —</option><option value="lca">Coronaria sinistra (LCA)</option><option value="rca">Coronaria destra (RCA)</option></select>
@@ -541,14 +547,11 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
           <input id="corTempo" type="range" min="0" max="1440" step="10" value="0"></div>
         <button class="btn" id="corReset">Azzera simulazione</button>
       </div>
-      <div class="corstage" id="corStage"></div>
-      <p class="corhint">Trascina per ruotare, pizzica o rotella per lo zoom. Rosso: arteria pervia. Grigio: tratto chiuso. Giallo: miocardio a rischio ancora vivo. Grigio-blu: necrosi.</p>
-    </div>
-    <div class="corout" id="corOut"></div>
+<div class="corout" id="corOut"></div></aside>
   </section>
 
   <!-- ANATOMIA: Orbitali ECG -->
-  <section class="view" id="v-anat"><p class="note">Laboratorio autonomo: i vettori qui sono indipendenti dal caso nel Tracciato.</p><iframe id="anatFrame" title="Orbitali ECG" loading="lazy"></iframe></section>
+  <section class="view" id="v-anat"><p class="note">Laboratorio autonomo: i vettori qui sono indipendenti dal caso nel Tracciato.</p><iframe id="anatFrame" title="Fisiologia · assi e vettori ECG" loading="lazy"></iframe></section>
 
   <!-- ATLANTE -->
   <section class="view" id="v-atlas">
@@ -605,6 +608,11 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
     <div class="lcap"><p id="lbNote"></p><p class="src" id="lbSrc"></p><p class="src">Isoelettrica — App made by Eliseo Peirano · 2026</p></div>
   </div>
 
+  <section class="view" id="v-heart" aria-label="Anatomia">
+    <nav class="anatomy-nav" aria-label="Laboratori anatomici"><button data-heart-page="adult" aria-pressed="true">Cuore adulto</button><button data-heart-page="fetal" aria-pressed="false">Circolazione fetale</button><span>ESPLORA · SEZIONA · ANIMA</span></nav>
+    <iframe id="heartFrame" title="Anatomia cardiaca interattiva" loading="lazy" allow="fullscreen"></iframe>
+  </section>
+
   <!-- QUIZ -->
   <section class="view" id="v-quiz">
     <div class="qhead">
@@ -632,15 +640,20 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=42.2"></script>
-<script src="cuore3d.js?v=42.2"></script>
-<script src="engine.js?v=42.2"></script>
-<script src="ipertrofie.js?v=42.2"></script>
-<script src="data.js?v=42.2"></script>
-<script src="atlante-digitale.js?v=42.2"></script>
-<script src="ptbxl.js?v=42.2"></script>
-<script src="quiz.js?v=42.2"></script>
-<script src="app.js?v=42.2"></script>
-<script src="coronarie.js?v=42.2"></script>
+<script src="three.min.js?v=43.0"></script>
+<script src="cuore3d.js?v=43.0"></script>
+<script src="gltfloader.js?v=43.0"></script>
+<script src="atlas-geometry.js?v=43.0"></script>
+<script src="cardiac-clock.js?v=43.0"></script>
+<script src="heart-atlas.js?v=43.0"></script>
+<script src="anatomy-host.js?v=43.0"></script>
+<script src="engine.js?v=43.0"></script>
+<script src="ipertrofie.js?v=43.0"></script>
+<script src="data.js?v=43.0"></script>
+<script src="atlante-digitale.js?v=43.0"></script>
+<script src="ptbxl.js?v=43.0"></script>
+<script src="quiz.js?v=43.0"></script>
+<script src="app.js?v=43.0"></script>
+<script src="coronarie.js?v=43.0"></script>
 </body>
 </html>

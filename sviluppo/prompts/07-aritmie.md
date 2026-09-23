@@ -1,0 +1,46 @@
+# PROMPT 7 — Aritmie: attivazione e movimento realistici di tutti i ritmi
+
+Vale il brief permanente (`AGENTS.md`). Richiede i Prompt 1, 2 e 4 completati.
+
+## Obiettivo
+
+Ogni aritmia del motore ECG (e ogni aritmia mancante, aggiunta come preset dati) ha un'attivazione spaziale corretta per meccanismo, e la meccanica che ne consegue è diversa perché diversa è l'attivazione: un atrio che fibrilla non può muoversi come un atrio che contrae.
+
+## Motore a due livelli in ActivationModel
+
+- **A) Mappe deterministiche** sul grafo di conduzione + regioni, per ritmi a circuito noto: sinusale, ectopici, rientri anatomici (AVNRT, AVRT, flutter, TV cicatriziale, rientro di branca), blocchi, ritmi stimolati. Ogni circuito dichiara sede, verso, gap eccitabile, sito di uscita.
+- **B) Mezzo eccitabile sulla superficie** (automa cellulare o Aliev-Panfilov su mesh ridotto di 10–20k celle, in texture GPU o WASM) con stati riposo / eccitato / refrattario assoluto / refrattario relativo, velocità e durata del potenziale d'azione per regione con restituzione, per fibrillazione, torsione di punta, tachicardie polimorfe e ogni rientro emergente. L'uscita di B (tempi di attivazione) alimenta lo stesso MechanicsLayer di A.
+- **Regola di sincronia (invariante)**: gli eventi del motore ECG dettano la macro-temporizzazione (serie RR, rapporto P-QRS); il modello spaziale riempie il dettaglio in modo coerente. Per i ritmi caotici il mezzo eccitabile è vincolato: il filtro nodale lascia passare impulsi esattamente agli RR emessi dal motore.
+
+## Catalogo
+
+Per ognuno: meccanismo, geometria del circuito o del focus, pattern di attivazione, conseguenza meccanica, segno ECG di riferimento.
+
+- **Seno e atri**: tachicardia, bradicardia, aritmia sinusale respiratoria, arresto sinusale, blocco seno-atriale (anche tipo Wenckebach), pacemaker migrante, ritmo atriale ectopico (basso: P negative in II-III-aVF; sinistro: P negativa in I-aVL, attivazione da sinistra a destra); extrasistoli atriali condotte, aberranti, bloccate, con reset del seno; tachicardia atriale focale (crista terminalis, anello tricuspidale, ostio del seno coronarico, ostii polmonari, auricole, anello mitralico) con diffusione centrifuga; multifocale (≥3 morfologie di P); flutter tipico antiorario (macrorientro attorno all'anello tricuspidale attraverso l'istmo cavo-tricuspidale, su per il setto, giù per la parete laterale lungo la crista, 250–350/min, dente di sega negativo in II-III-aVF e positivo in V1), tipico inverso orario, atipici (dipendenti dal tetto, perimitralici, da cicatrice); fibrillazione atriale (trigger dalle vene polmonari + onde multiple e rotori; 350–600/min; onde f; RR irregolarmente irregolari) nelle varianti a risposta rapida, lenta, con preeccitazione, con blocco AV completo regolarizzato; standstill atriale da iperpotassiemia (ventricoli conducono, atri fermi).
+- **Giunzione**: scappamento giunzionale 40–60, giunzionale accelerato, tachicardia giunzionale automatica; AVNRT tipica lenta-rapida (anterograda sulla via lenta postero-inferiore, retrograda sulla via rapida antero-superiore: atri e ventricoli quasi simultanei, pseudo-r' in V1, onde "a" cannone a ogni battito), atipica rapida-lenta; AVRT ortodromica (anterograda nel nodo, retrograda nella via accessoria, attivazione atriale eccentrica dalla sede della via) e antidromica; WPW manifesto (vie laterale sinistra 50–60%, posterosettale 20–30%, parete libera destra, anterosettale: la regione preeccitata contrae in anticipo, onda delta), PJRT, Mahaim atriofascicolare, fibrillazione preeccitata; via accessoria occulta.
+- **Blocchi AV**: I grado; II grado Mobitz 1 (Wenckebach nodale, raggruppamento dei battiti, ritardo AV meccanico progressivo con rigurgito mitralico diastolico), Mobitz 2 (infra-hisiano, PR fisso e battito perso), 2:1, avanzato; III grado (dissociazione: atri a frequenza sinusale, ventricoli in scappamento giunzionale stretto 40–60 o ventricolare largo 20–40; onde "a" cannone intermittenti, S1 di intensità variabile, gittata grande e pressione differenziale ampia); blocco parossistico; blocco vagale.
+- **Intraventricolare**: blocco di branca destra (VD attivato dal VS attraverso il setto, parete libera del VD in ritardo, sdoppiamento ampio di S2), blocco di branca sinistra (VS attivato dal VD con breakthrough settale: flash settale, oscillazione apicale, parete posterolaterale in ritardo, sdoppiamento paradosso di S2), blocchi incompleti, emiblocco anteriore (regione anterosuperiore attivata per ultima) e posteriore, bifascicolare, trifascicolare, ritardo aspecifico, aberranza frequenza-dipendente (fenomeno di Ashman: ciclo lungo-corto), conduzione occulta.
+- **Ventricoli**: extrasistoli (efflusso destro: morfologia da branca sinistra ad asse inferiore; efflusso sinistro e cuspidi; fascicolari; papillari; da cicatrice) con pausa compensatoria, interpolate, di fusione, bigeminismo, trigeminismo, coppie, R su T, potenziamento post-extrasistolico del battito seguente; ritmo idioventricolare accelerato 60–100 (riperfusione, dissociazione con catture e fusioni); scappamento ventricolare; TV monomorfa da cicatrice (rientro a figura di 8 con istmo protetto nella zona di bordo, sito di uscita che determina la morfologia, dissociazione AV con atri che continuano il loro ritmo sinusale e catture/fusioni quando il tempo lo permette, conduzione ventricolo-atriale 1:1 in una variante); TV idiopatiche (efflusso destro da attività innescata, fascicolare sensibile al verapamil con rientro nel Purkinje posteriore); rientro di branca (anterograda destra, retrograda sinistra, morfologia da BBS, nella dilatativa); TV polimorfa ischemica; torsione di punta (QT lungo, post-depolarizzazioni precoci, sequenza corto-lungo-corto, onda spirale che deriva → asse del QRS che ruota in 5–10 battiti); TV bidirezionale (CPVT, digitale: uscite fascicolari alternate); flutter ventricolare; fibrillazione ventricolare (onde multiple e rotori, da grossolana a fine nel tempo, nessuna eiezione, semilunari mai aperte, pressione aortica che crolla); asistolia; attività elettrica senza polso (l'ECG del motore mostra QRS, HemoModel non genera pressione: il 3D resta praticamente fermo in tamponamento, embolia massiva, ipovolemia).
+- **Canalopatie e cause metaboliche come preset elettrici**: QT lungo 1-2-3 con morfologie di T e trigger, Brugada (ritardo epicardico dell'efflusso destro, rientro in fase 2), CPVT, ripolarizzazione precoce, QT corto; iper/ipopotassiemia (T appuntite, QRS largo, sinusoide; onde U), iper/ipocalcemia, ipotermia (onde J di Osborn, tutto lento), digitale (TA con blocco, TV bidirezionale, FA regolarizzata), bloccanti del sodio; ischemia acuta come accorciamento locale del potenziale d'azione nel mezzo eccitabile (corrente di lesione → ST).
+- **Dispositivi**: AAI, VVI (con conduzione VA retrograda → sindrome da pacemaker: atri contro valvole chiuse), DDD con ritardo AV, stimolazione apicale destra (dissincronia tipo BBS) contro hisiana e di branca sinistra (attivazione normale), CRT biventricolare (il flash settale scompare), tachicardia mediata dal pacemaker, mancata cattura/sensing/uscita, terapie ICD del Prompt 6, stimolazione transcutanea.
+
+## Regole meccanica ← attivazione (le "motion diverse")
+
+- Attivazione organizzata → contrazione coordinata, ampiezza proporzionale alla massa attivata e alla sincronia.
+- Attivazione lenta o eccentrica (extrasistoli, TV, blocchi di branca, stimolazione) → contrazione regione per regione con ritardo visibile e gittata ridotta (indice di dissincronia che abbassa l'Emax efficace in HemoModel).
+- Fibrillazione → spostamento per cella ad alta frequenza (atri 6–10 Hz, ventricoli 4–7 Hz), bassa ampiezza, scorrelato, volume della camera quasi costante, nessuna onda "a", stasi nell'auricola.
+- Flutter → contrazioni atriali piccole, regolari, ~300/min, con un'increspatura che gira attorno all'anello.
+- Dissociazione AV → atri e ventricoli animati ciascuno dal proprio orologio; contrazione atriale su valvola chiusa → onda "a" cannone nel pannello giugulare e nessun contributo al riempimento.
+- Pausa → battito successivo più forte; in fibrillazione atriale alcuni battiti non aprono l'aortica (deficit di polso).
+- Ventricolo attivato in ritardo (BBS) → setto che scatta in anticipo e parete laterale in ritardo; con CRT torna sincrono.
+
+## Accettazione (una riga per ritmo; qui gli esempi vincolanti)
+
+- Fibrillazione atriale → mai una contrazione atriale coordinata; volume dell'AS che varia < 5%; particelle in auricola < 20 cm/s; RR identici a quelli del motore; QRS stretto a ogni battito; niente onda A mitralica.
+- Flutter tipico → rotazione antioraria vista da LAO; 300/min; 2:1 → 150 ventricolari.
+- AVNRT → atri e ventricoli entro 70 ms; onda "a" cannone a ogni battito.
+- BBS → flash settale nei primi 80 ms; picco della parete laterale ≥ 100 ms dopo il setto; gittata −10–15%; CRT che annulla il ritardo.
+- Blocco AV completo → atri 70, ventricoli 35; PR che marcia; cannone intermittenti; S1 variabile.
+- TV cicatriziale → istmo e sito di uscita visibili; atri dissociati; catture/fusioni quando possibile.
+- Torsione di punta → spirale che deriva nel mezzo eccitabile; asse che ruota; esordio dopo corto-lungo-corto.
+- Il motore ECG resta invariato.
