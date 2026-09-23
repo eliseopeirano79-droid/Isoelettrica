@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#0d151b">
-<link rel="manifest" href="manifest.webmanifest?v=44.0">
+<link rel="manifest" href="manifest.webmanifest?v=45.0">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -420,7 +420,9 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .pnota.fuori{opacity:1;color:#e8865f;font-weight:500}
 .scene-notice{position:absolute;inset:35% 20px auto;padding:16px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;z-index:5;text-align:center} :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 </style>
-<link rel="stylesheet" href="atlas-theme.css?v=44.0">
+<link rel="stylesheet" href="atlas-theme.css?v=45.0">
+<link rel="stylesheet" href="ui-surface.css?v=45.0">
+<script src="ui-surface.js?v=45.0" defer></script>
 </head>
 <body>
 <div class="app">
@@ -551,7 +553,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
   </section>
 
   <!-- ANATOMIA: Orbitali ECG -->
-  <section class="view" id="v-anat"><p class="note">Laboratorio autonomo: i vettori qui sono indipendenti dal caso nel Tracciato.</p><iframe id="anatFrame" title="Fisiologia · assi e vettori ECG" loading="lazy"></iframe></section>
+  <section class="view" id="v-anat"><p class="note">Laboratorio autonomo: i vettori qui sono indipendenti dal caso nel Tracciato.</p><iframe id="anatFrame" allow="fullscreen" title="Fisiologia · assi e vettori ECG" loading="lazy"></iframe></section>
 
   <!-- ATLANTE -->
   <section class="view" id="v-atlas">
@@ -640,25 +642,25 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=44.0"></script>
-<script src="cuore3d.js?v=44.0"></script>
-<script src="gltfloader.js?v=44.0"></script>
-<script src="vascular-cuffs.js?v=44.0"></script><script src="pulmonary-arteries.js?v=44.0"></script><script src="atlas-geometry.js?v=44.0"></script>
-<script src="cardiac-clock.js?v=44.0"></script>
-<script src="cardiac-mechanics.js?v=44.0"></script>
-<script src="cardiac-attachments.js?v=44.0"></script>
-<script src="anatomy-refinements.js?v=44.0"></script>
-<script src="heart-atlas.js?v=44.0"></script>
-<script src="anatomy-host.js?v=44.0"></script>
-<script src="engine.js?v=44.0"></script>
-<script src="ipertrofie.js?v=44.0"></script>
-<script src="data.js?v=44.0"></script>
-<script src="atlante-digitale.js?v=44.0"></script>
-<script src="ptbxl.js?v=44.0"></script>
-<script src="quiz.js?v=44.0"></script>
-<script src="conduction-model.js?v=44.0"></script>
-<script src="conduction-view.js?v=44.0"></script>
-<script src="app.js?v=44.0"></script>
-<script src="coronarie.js?v=44.0"></script>
+<script src="three.min.js?v=45.0"></script>
+<script src="cuore3d.js?v=45.0"></script>
+<script src="gltfloader.js?v=45.0"></script>
+<script src="vascular-cuffs.js?v=45.0"></script><script src="pulmonary-arteries.js?v=45.0"></script><script src="atlas-geometry.js?v=45.0"></script>
+<script src="cardiac-clock.js?v=45.0"></script>
+<script src="cardiac-mechanics.js?v=45.0"></script>
+<script src="cardiac-attachments.js?v=45.0"></script>
+<script src="anatomy-refinements.js?v=45.0"></script>
+<script src="heart-atlas.js?v=45.0"></script>
+<script src="anatomy-host.js?v=45.0"></script>
+<script src="engine.js?v=45.0"></script>
+<script src="ipertrofie.js?v=45.0"></script>
+<script src="data.js?v=45.0"></script>
+<script src="atlante-digitale.js?v=45.0"></script>
+<script src="ptbxl.js?v=45.0"></script>
+<script src="quiz.js?v=45.0"></script>
+<script src="conduction-model.js?v=45.0"></script>
+<script src="conduction-view.js?v=45.0"></script>
+<script src="app.js?v=45.0"></script>
+<script src="coronarie.js?v=45.0"></script>
 </body>
 </html>

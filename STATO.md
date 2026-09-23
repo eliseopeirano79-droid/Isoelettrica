@@ -35,6 +35,7 @@ Una riga per sessione, la più recente in alto.
 
 | Data | Prompt (e parte) | Ramo | Commit finale | Esito |
 |------|------------------|------|---------------|-------|
+| 2026-09-23 | Interfaccia adattiva, tema e schermo intero · v45 | feat/interfaccia-adattiva-v45 | commit che contiene il report | 145 test Node + 5 Python; menu ricercabili; verifica visiva desktop, tablet e telefono nel browser; nessuna modifica clinica |
 | 2026-09-23 | Rilascio ufficiale v44.0 autorizzato | feat/conduzione-patologia-v44 → main · PR #7 | commit che contiene il report di rilascio | Autorizzazione esplicita alla pubblicazione; revisione applicativa 992bf4e; 140 test Node + 5 Python; distribuzione tramite GitHub Pages |
 | 2026-09-23 | Osti venosi/cavali, infundibolo e tronco polmonare · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 140 test Node + 5 Python; raccordi interno/esterno e biforcazione continua; anteprima desktop verificata; non pubblicata |
 | 2026-09-23 | Raccordi vascolari, semilunari, congenite e Fisiologia · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 135 test Node + 5 Python; anteprima desktop/mobile; riferimento di Fisiologia invariato; non pubblicata |
@@ -63,3 +64,5 @@ La richiesta successiva sulle vie accessorie, Patologia, trasparenza e tema è s
 L’ulteriore richiesta di fisica è trattata nella stessa proposta v44, con vincoli geometrici e dinamica elastica semplificata. Non completa i prompt 02–03 né introduce pressioni calibrate, interazione fluido–struttura o collisioni complete. Dettagli nel report `reports/2026-09-23-meccanica-coerente-v44.md`.
 
 La revisione di osti, Botallo, arco e semilunari è documentata in `reports/2026-09-23-raccordi-anatomici-v44.md`. Anteprima aggiornata senza cache: `http://127.0.0.1:8002/?preview=1`.
+
+La revisione v45 riguarda soltanto l’interfaccia: Teoria adattiva, sfondo coerente in fullscreen, cuore a schermo intero, controlli condivisi e menu desktop ricercabili. Non completa i prompt clinici del kit. Dettagli in `reports/2026-09-23-interfaccia-adattiva-v45.md`.

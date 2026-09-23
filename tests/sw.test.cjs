@@ -28,7 +28,7 @@ function worker(fetcher=async()=>new Response('ok')) {
 test('Installazione completa: tutte le risorse richieste sono in cache',async()=>{
   const w=worker();await w.dispatch('install');
   const c=await w.caches.open(cacheName);
-  for(const f of ['index.html','quiz.js?v='+version,'engine.js?v='+version,'app.js?v='+version,'anatomia.html']) assert.ok(await c.match(base+f),f);
+  for(const f of ['index.html','quiz.js?v='+version,'engine.js?v='+version,'app.js?v='+version,'ui-surface.css?v='+version,'ui-surface.js?v='+version,'lab-ui.js?v='+version,'anatomia.html']) assert.ok(await c.match(base+f),f);
 });
 test('Un download essenziale fallito annulla l’installazione e preserva la versione precedente',async()=>{
   const w=worker(async req=>new Response('x',{status:String(req).endsWith('quiz.js?v='+version)?503:200}));
