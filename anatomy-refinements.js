@@ -2,16 +2,16 @@
  * atlas units, not patient measurements. Original GLB is never modified.
  * Standard branching: brachiocephalic, left common carotid, left subclavian.
  */
-(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./three.min.js'),require('./atlas-geometry.js'));else root.AnatomyRefinements=factory(root.THREE,root.HeartAtlasGeometry);})(typeof window!=='undefined'?window:globalThis,function(T,G){
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./three.min.js'),require('./atlas-geometry.js'),require('./vascular-cuffs.js'));else root.AnatomyRefinements=factory(root.THREE,root.HeartAtlasGeometry,root.VascularCuffs);})(typeof window!=='undefined'?window:globalThis,function(T,G,C){
 'use strict';
 const V=a=>new T.Vector3(...a),lerp=(a,b,t)=>a+(b-a)*t;
 const names={brachiocephalic:['Truncus brachiocephalicus','Tronco brachiocefalico'],carotid:['Arteria carotis communis sinistra','Arteria carotide comune sinistra'],subclavian:['Arteria subclavia sinistra','Arteria succlavia sinistra'],descending:['Aorta thoracica descendens','Aorta toracica discendente']};
 const aorticPoints=[[-.049,.328,-.174],[-.23,.53,-.06],[-.32,.84,.026],[-.323,1.204,.011],[-.22,1.55,-.19],[-.085,1.7,-.57],[-.039,1.56,-.98],[-.055,1.208,-1.226],[-.045,.85,-1.28],[-.02,.43,-1.3],[.01,.03,-1.29]];
 const pulmonaryVeins=[
- {name:'Left superior pulmonary vein',points:[[.366,.335,-.786],[.48,.40,-1.08],[.94,.52,-1.30]],radius:.10},
- {name:'Left inferior pulmonary vein',points:[[.327,-.109,-1.028],[.44,-.12,-1.28],[.91,-.22,-1.53]],radius:.095},
- {name:'Right superior pulmonary vein',points:[[-.731,.202,-.778],[-.90,.28,-1.07],[-1.30,.48,-1.35]],radius:.105},
- {name:'Right inferior pulmonary vein',points:[[-.503,-.089,-.977],[-.66,-.14,-1.24],[-1.18,-.24,-1.48]],radius:.095}
+ {name:'Left superior pulmonary vein',cut:[.462,.377,-.768],normal:[.94,.33,-.05],points:[[.72,.47,-.79],[1.08,.57,-.88]],radius:.125,inner:.10},
+ {name:'Left inferior pulmonary vein',cut:[.455,-.12,-1.02],normal:[1,-.15,-.30],points:[[.76,-.18,-1.11],[1.12,-.26,-1.25]],radius:.12,inner:.095},
+ {name:'Right superior pulmonary vein',cut:[-.83,.25,-.79],normal:[-1,.1,0],points:[[-1.12,.30,-.80],[-1.47,.43,-.92]],radius:.14,inner:.115},
+ {name:'Right inferior pulmonary vein',cut:[-.83,-.1,-1.07],normal:[-1,0,-.1],points:[[-1.12,-.12,-1.12],[-1.46,-.20,-1.23]],radius:.125,inner:.10}
 ];
 function geometry(points,indices){const used=new Map(),pos=[],ix=indices.map(i=>{const key=points[i].toArray().map(x=>Math.round(x*1e6)).join(',');if(!used.has(key)){used.set(key,pos.length/3);pos.push(...points[i].toArray());}return used.get(key);});const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();g.computeBoundingSphere();return g;}
 function sweep(points,radius,segments=48,sides=32){
@@ -22,16 +22,6 @@ function sweep(points,radius,segments=48,sides=32){
 function indicesFor(s,skip=()=>false,start=0,end=s.segments){const ix=[];for(let i=start;i<end;i++)for(let j=0;j<s.sides;j++){if(skip(i,j))continue;const a=s.rows[i][j],b=s.rows[i+1][j],c=s.rows[i][(j+1)%s.sides],d=s.rows[i+1][(j+1)%s.sides];ix.push(a,c,b,c,d,b);}return ix;}
 function vessel(points,radius,segments=48){const s=sweep(points,t=>radius*(1-.12*t),segments);return geometry(s.positions,indicesFor(s));}
 function nearestSurface(mesh,point){const p=mesh.geometry.attributes.position,ix=mesh.geometry.index,tri=new T.Triangle(),q=new T.Vector3();let distance=Infinity,best=point.clone();for(let i=0;i<(ix?ix.count:p.count);i+=3){tri.set(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,ix?ix.getX(i+j):i+j)));tri.closestPointToPoint(point,q);if(q.distanceToSquared(point)<distance){distance=q.distanceToSquared(point);best.copy(q);}}return best;}
-function smoothOstialBeds(source){
- // Remove the folded, closed ostial cuffs embedded in the atlas atrial surface
- // before forming shared open venous rims. Keep the AV boundaries pinned.
- const p=source.attributes.position,ix=source.index,points=Array.from({length:p.count},(_,i)=>new T.Vector3().fromBufferAttribute(p,i)),ids=ix?Array.from(ix.array):points.map((_,i)=>i),g=geometry(points,ids),pos=g.attributes.position,faces=g.index.array,rows=Array.from({length:pos.count},(_,i)=>new T.Vector3().fromBufferAttribute(pos,i)),neighbors=rows.map(()=>new Set()),edges=new Map();
- for(let i=0;i<faces.length;i+=3)for(let j=0;j<3;j++){const a=faces[i+j],b=faces[i+(j+1)%3],key=[Math.min(a,b),Math.max(a,b)].join(':');neighbors[a].add(b);neighbors[b].add(a);edges.set(key,(edges.get(key)||0)+1);}
- const pinned=new Set();for(const [key,count]of edges)if(count===1)key.split(':').forEach(x=>pinned.add(+x));
- const weights=rows.map((p,i)=>pinned.has(i)?0:Math.max(...pulmonaryVeins.map(d=>Math.max(0,1-p.distanceTo(V(d.points[0]))/.40)**2)));
- for(let k=0;k<16;k++){const prev=rows.map(p=>p.clone());rows.forEach((p,i)=>{if(!weights[i]||!neighbors[i].size)return;const avg=new T.Vector3();neighbors[i].forEach(j=>avg.add(prev[j]));p.lerp(avg.divideScalar(neighbors[i].size),.72*weights[i]);});}
- rows.forEach((p,i)=>pos.setXYZ(i,...p.toArray()));g.computeVertexNormals();g.computeBoundingSphere();return g;
-}
 function openOstium(source,center,normal,radius,depth=.42){
  const pos=source.attributes.position,ix=source.index,points=[],indices=[],cuts=[],normalUnit=normal.clone().normalize();
  const f=p=>{const d=p.clone().sub(center),a=d.dot(normalUnit);return Math.max(d.addScaledVector(normalUnit,-a).length()-radius,Math.abs(a)-depth);};
@@ -89,9 +79,15 @@ function ductGeometry(meshes,radius){
 function apply(meshes,material){
  if(meshes.some(m=>m.userData.refined))return meshes;
  const ao=aorta();for(const [name,g]of [['Ascending aorta',ao.ascending],['Aortic arch',ao.arch]]){const m=meshes.find(m=>m.userData.sourceName===name);if(!m){g.dispose();continue;}m.geometry.dispose();m.geometry=g;m.userData.refined=true;m.userData.origin='Superficie ricostruita sui riferimenti Z-Anatomy';}
- for(const [name,index,targets,r]of [['Left pulmonary artery',1,[[.37,.93,-.97],[.75,.92,-1.08],[1.18,.90,-1.16]],.21],['Right pulmonary artery',2,[[-.52,.84,-.59],[-.85,.79,-.64],[-1.12,.76,-.66]],.18]]){const m=meshes.find(m=>m.userData.sourceName===name);if(!m)continue;m.geometry.dispose();m.geometry=loft(G.pulmonaryRings[index].map(V),targets,r);m.userData.refined=true;m.userData.origin='Tratto ilare ricostruito sul margine della biforcazione';}
- const atrium=meshes.find(m=>m.userData.sourceName==='Left atrium');if(atrium){const bed=smoothOstialBeds(atrium.geometry);atrium.geometry.dispose();atrium.geometry=bed;}
-for(const d of pulmonaryVeins){const m=meshes.find(m=>m.userData.sourceName===d.name);if(!m||!atrium)continue;const center=nearestSurface(atrium,V(d.points[0])),normal=V(d.points[1]).sub(center).normalize(),cut=openOstium(atrium.geometry,center,normal,d.radius*1.2,.20);if(!cut.ring){cut.geometry.dispose();continue;}atrium.geometry.dispose();atrium.geometry=cut.geometry;atrium.userData.refined=true;atrium.userData.origin='Atlante con raccordi degli osti polmonari ricostruiti';m.geometry.dispose();m.geometry=loft(cut.ring,d.points.slice(1),d.radius);m.userData.ostium=cut.ring.map(p=>p.toArray());m.userData.refined=true;m.userData.origin='Vena raccordata al margine atriale ricostruito';}
+ const pa=G.pulmonaryAssembly();for(const [name,key]of[['Pulmonary trunk','trunk'],['Left pulmonary artery','left'],['Right pulmonary artery','right']]){const m=meshes.find(m=>m.userData.sourceName===name);if(!m)continue;m.geometry.dispose();m.geometry=pa[key].clone();m.userData.refined=true;m.userData.origin='Parete tubulare continua con biforcazione e lume aperto';}
+ const rv=meshes.find(m=>m.userData.sourceName==='Right ventricle');if(rv){const cut=C.trim(rv.geometry,V([.147,.491,.385]),V([.226,.974,0])),a=C.transition(cut.outer,pa.roots.outer,cut.normal,12),b=C.reverse(C.transition(cut.inner,pa.roots.inner,cut.normal,12)),joined=C.merge([cut.geometry,a,b]);for(const g of[rv.geometry,cut.geometry,a,b])g.dispose();rv.geometry=C.smoothCollar(joined,cut,.095);joined.dispose();rv.userData.refined=true;rv.userData.origin='Infundibolo muscolare raccordato alla radice polmonare';meshes.find(m=>m.userData.sourceName==='Pulmonary trunk').userData.ostium=[...pa.roots.outer,...pa.roots.inner].map(p=>p.toArray());}
+ const attach=(chamber,name,cut,normal,points,radius,inner,collar=.10)=>{
+  const wall=meshes.find(m=>m.userData.sourceName===chamber),m=meshes.find(m=>m.userData.sourceName===name);if(!wall||!m)return;
+  const section=C.trim(wall.geometry,V(cut),V(normal)),join=C.extend(section,points,radius,inner,collar);section.geometry.dispose();wall.geometry.dispose();wall.geometry=join.wall;wall.userData.refined=true;wall.userData.origin='Atlante con continuità della parete e del lume vascolare';
+  m.geometry.dispose();m.geometry=join.vessel;m.userData.ostium=[...join.outer,...join.inner].map(p=>p.toArray());m.userData.sourceCuff={outer:join.sourceOuter.map(p=>p.toArray()),inner:join.sourceInner.map(p=>p.toArray()),cut,normal};m.userData.refined=true;m.userData.origin='Vaso raccordato alle due superfici del manicotto muscolare';
+ };
+ for(const d of pulmonaryVeins)attach('Left atrium',d.name,d.cut,d.normal,d.points,d.radius,d.inner,.14);
+ attach('Right atrium','Inferior vena cava (thoracic part)',[-.741,-1.02,-.21],[0,-1,0],[[-.70,-1.42,-.26],[-.64,-1.85,-.33]],.265,.235,.06);
  for(const [id,g]of [['descending',ao.descending],...ao.ports.map(p=>[p.id,p.geometry])]){const [name,label]=names[id],m=new T.Mesh(g,material(name,'vessels'));m.name=name;m.userData={sourceName:name,label,layer:'vessels',reconstruction:true,refined:true,origin:'Ricostruzione didattica · anatomia standard'};meshes.push(m);}
  const duct=ductGeometry(meshes,.018);if(duct){const m=new T.Mesh(duct.geometry,material('Legamento arterioso','vessels'));m.material.color.set('#b9aa91').convertSRGBToLinear();m.name='botallo';m.userData={sourceName:'botallo',label:'Legamento arterioso (Botallo)',layer:'vessels',reconstruction:true,refined:true,origin:'Ricostruzione didattica · inserzioni sui vasi'};meshes.push(m);}
  return meshes;

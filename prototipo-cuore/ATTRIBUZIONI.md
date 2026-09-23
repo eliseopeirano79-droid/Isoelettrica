@@ -43,7 +43,7 @@ I riferimenti orientano topologia e fasi; non validano il simulatore né fornisc
 
 ## Integrazione nell’app — 23 settembre 2026
 
-Il GLB è identico al file approvato. `atlas-geometry.js` aggiunge una parete di raccordo tra il margine distale del tronco e i margini prossimali delle due arterie polmonari. La superficie ha tre aperture, non tappa il lume, e conserva i margini originali. Forma interpolata, da revisionare anatomicamente; non proviene dalla segmentazione sorgente.
+Il GLB è identico al file approvato. Il raccordo polmonare iniziale è stato sostituito nella revisione v44 da `pulmonary-arteries.js`: tronco e due rami hanno una superficie tubulare comune, parete interna, tre lumi e margini distali con spessore. La radice si raccorda all’infundibolo del ventricolo destro. Sono superfici ricostruite di visualizzazione, non una nuova segmentazione clinica della fonte.
 
 `atlas-coronary-map.json` deriva dalle curve e dalle superfici sopra citate, con la stessa licenza CC BY-SA 4.0. Lo strumento `tools/build-atlas-map.cjs` rende riproducibile la mappatura per la sezione Coronarie. Le superfici originali sono suddivise per la sola colorazione; i rami minuti sono attribuiti per prossimità ai percorsi. Ramo del nodo del seno, ramo del nodo AV, PDA, ramo intermedio e due settali posteriori hanno percorsi ricostruiti e indicativi. La fonte non identifica singolarmente ogni ramo del laboratorio clinico preesistente. Non è una mappatura anatomica o perfusionale validata.
 
@@ -52,6 +52,8 @@ Il ventricolo sinistro è ripartito geometricamente in 17 territori per mantener
 
 ## Raccordi e ricostruzioni anatomiche — revisione v44
 
-`anatomy-refinements.js` sostituisce in memoria le superfici di aorta ascendente/arco e dei tratti polmonari, aggiunge aorta discendente e tre tronchi epiaortici. Gli osti atriali polmonari vengono levigati localmente e aperti; le vene condividono gli stessi vertici sul bordo. Il Botallo si raccorda alle superfici dell’istmo aortico e della polmonare sinistra prossimale. Sono correzioni di visualizzazione, con unità dell’atlante non calibrate clinicamente. Il GLB originale resta identico.
+`anatomy-refinements.js` sostituisce in memoria le superfici di aorta ascendente/arco e dei tratti polmonari, aggiunge aorta discendente e tre tronchi epiaortici. `vascular-cuffs.js` seziona i veri manicotti presenti nell’atrio sinistro, elimina soltanto il loro tratto distale e continua entrambe le superfici della parete nelle quattro vene. La cava inferiore usa lo stesso raccordo con l’ostio atriale destro. I bordi esterno e interno condividono i vertici e la deformazione. La revisione sostituisce le precedenti aperture accanto ai manicotti, che lasciavano strutture duplicate. Il Botallo si raccorda alle superfici dell’istmo aortico e della polmonare sinistra prossimale. Sono correzioni di visualizzazione, con unità dell’atlante non calibrate clinicamente. Il GLB originale resta identico.
 
 Le cuspidi semilunari sono ricostruzioni a tasca con inserzioni festonate, lunule e noduli illustrativi. `congenital-morphology.js` aggiunge sette morfologie semplificate reversibili, senza simulazione emodinamica. Le geometrie derivate seguono la licenza CC BY-SA 4.0 e le attribuzioni sopra riportate. Limiti e fonti anatomiche: `../reports/2026-09-23-raccordi-anatomici-v44.md`.
+
+Dettagli della correzione di osti, infundibolo e biforcazione: `../reports/2026-09-23-osti-e-tronco-polmonare-v44.md`. Calibri, lunghezze e spessori sono unità grafiche dell’atlante, non misure del paziente.

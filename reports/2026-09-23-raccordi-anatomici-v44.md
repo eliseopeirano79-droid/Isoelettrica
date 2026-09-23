@@ -1,5 +1,7 @@
 # Isoelettrica v44 — raccordi anatomici e prime morfologie congenite
 
+> Revisione successiva: le immagini dell’utente delle 20:14–20:16 hanno evidenziato raccordi venosi ancora disallineati e pieghe polmonari non rilevate dai controlli qui descritti. La correzione e i nuovi controlli sono nel [report su osti e tronco polmonare](2026-09-23-osti-e-tronco-polmonare-v44.md).
+
 ## Risultato
 
 La sporgenza beige segnalata dall’utente è stata identificata selezionandola nel modello: **inserzione della cuspide destra della valvola polmonare**. La ricostruzione usava un asse non coincidente con quello dell’orifizio prossimale; una parte della cuspide attraversava la parete. Ora piano, orientamento e quota delle semilunari sono riferiti alle aperture vascolari. Il controllo visivo anteriore non mostra più quella sporgenza.

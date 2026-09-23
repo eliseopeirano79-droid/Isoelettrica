@@ -35,6 +35,7 @@ Una riga per sessione, la più recente in alto.
 
 | Data | Prompt (e parte) | Ramo | Commit finale | Esito |
 |------|------------------|------|---------------|-------|
+| 2026-09-23 | Osti venosi/cavali, infundibolo e tronco polmonare · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 140 test Node + 5 Python; raccordi interno/esterno e biforcazione continua; anteprima desktop verificata; non pubblicata |
 | 2026-09-23 | Raccordi vascolari, semilunari, congenite e Fisiologia · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 135 test Node + 5 Python; anteprima desktop/mobile; riferimento di Fisiologia invariato; non pubblicata |
 | 2026-09-23 | Meccanica coerente richiesta dall’utente · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 125 test Node + 5 Python; elasticità e vincoli geometrici; anteprima verificata; non pubblicata |
 | 2026-09-23 | Correzioni richieste dall’utente · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 114 test Node + 5 Python; anteprima verificata; pubblicazione da autorizzare |
