@@ -37,8 +37,8 @@ function movingMaterial(mat){
 }
 const cutPlane=new T.Plane(new T.Vector3(0,0,-1),.12);
 let view='surface',selected=null,loaded=false,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,slow=false,t=4500,lastTime=0,available=true;
-const orbit={theta:.10,phi:1.43,r:9.2,target:new T.Vector3(.12,.24,0)};
-function updateCamera(){const compact=document.documentElement.classList.contains("embedded")&&stage.clientWidth>600&&stage.clientHeight<600,target=orbit.target.clone(),r=orbit.r*(compact?1.12:1);if(compact)target.y-=.24;camera.position.set(target.x+r*Math.sin(orbit.phi)*Math.sin(orbit.theta),target.y+r*Math.cos(orbit.phi),target.z+r*Math.sin(orbit.phi)*Math.cos(orbit.theta));camera.lookAt(target);camera.updateMatrixWorld();}
+const orbit={theta:.10,phi:1.43,r:7.2,target:new T.Vector3(.12,.62,0)};
+function updateCamera(){const target=orbit.target,r=orbit.r;camera.position.set(target.x+r*Math.sin(orbit.phi)*Math.sin(orbit.theta),target.y+r*Math.cos(orbit.phi),target.z+r*Math.sin(orbit.phi)*Math.cos(orbit.theta));camera.lookAt(target);camera.updateMatrixWorld();}
 const description={surface:'Camere, coronarie e vene: le strutture dell’atlante nello stesso spazio.',section:'Una sezione delle pareti rende visibili cavità, lembi e muscoli papillari.',valves:'Quattro apparati valvolari ricostruiti e animati; apertura e coaptazione modificabili.',conduction:'Vie elettriche illustrative aggiunte al modello: il tracciato guida l’animazione.'};
 function applyView(){
  for(const mesh of meshes){
@@ -77,19 +77,8 @@ function selectPart(mesh){
  $('selection').replaceChildren(b,p);if(lab)lab.selected(mesh);
 }
 new T.GLTFLoader().load('heart-z-anatomy.glb',gltf=>{
- gltf.scene.traverse(o=>{
-  if(!o.isMesh)return;
-  const name=o.userData.sourceName||o.name;
-  let layer=o.userData.layer;
-  if(layer==='heart')layer=/leaflet|papillary/i.test(name)?'valves':'wall';
-  let color={wall:'#a85c67',coronaries:'#ed8860',veins:'#527aac',valves:'#d8c4a0',vessels:'#b86d79'}[layer];
-  if(layer==='vessels'&&/cava|pulmonary artery|pulmonary trunk/i.test(name))color='#6084a2';
-  if(/papillary/.test(name))color='#b47a76';
-  o.material=movingMaterial(new T.MeshStandardMaterial({color,roughness:layer==='valves'?.56:.62,metalness:0,side:T.DoubleSide,emissiveIntensity:0}),/atrium/.test(name)?1:/ventricle/.test(name)&&layer==='wall'?2:0);
-  o.material.color.convertSRGBToLinear();
-  Object.assign(o.userData,{sourceName:name,layer,label:sourceLabels[name]||name});meshes.push(o);
- });
- anatomy.add(gltf.scene);
+ const source=HeartAtlasGeometry.sourceMeshes(gltf.scene);AnatomyRefinements.apply(source,HeartAtlasGeometry.material);
+ for(const o of source){const name=o.userData.sourceName;o.material=movingMaterial(o.material);o.userData.label=o.userData.label||sourceLabels[name]||name;anatomy.add(o);meshes.push(o);}
  if(window.HeartAtlasGeometry){const join=HeartAtlasGeometry.junctionMesh();join.material=movingMaterial(join.material);anatomy.add(join);meshes.push(join);}
  const sorted=[...meshes].sort((a,b)=>a.userData.label.localeCompare(b.userData.label,'it'));
  for(const m of sorted){const option=document.createElement('option');option.value=m.uuid;option.textContent=m.userData.label;$('part').appendChild(option);}
@@ -141,7 +130,7 @@ function resize(){
 new ResizeObserver(resize).observe(stage);new ResizeObserver(resize).observe(ecg);
 const pts=new Map();let moved=0,down=null,pinch=null;
 stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);down=[e.clientX,e.clientY];moved=0;if(pts.size===2){const a=[...pts.values()];pinch={d:Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]),r:orbit.r};}});
-stage.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const old=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);moved+=Math.abs(e.clientX-old[0])+Math.abs(e.clientY-old[1]);if(pts.size===1){orbit.theta-=(e.clientX-old[0])*.007;orbit.phi=Math.max(.15,Math.min(3,orbit.phi+(old[1]-e.clientY)*.007));}else if(pinch){const a=[...pts.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);orbit.r=Math.max(3,Math.min(13,pinch.r*pinch.d/Math.max(d,1)));}});
+stage.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const old=pts.get(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);moved+=Math.abs(e.clientX-old[0])+Math.abs(e.clientY-old[1]);if(pts.size===1){orbit.theta-=(e.clientX-old[0])*.007;orbit.phi=Math.max(.15,Math.min(3,orbit.phi+(old[1]-e.clientY)*.007));}else if(pinch){const a=[...pts.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);orbit.r=Math.max(1.2,Math.min(13,pinch.r*pinch.d/Math.max(d,1)));}});
 function endPointer(e){
  if(e.type==='pointerup'&&pts.size===1&&moved<6&&down&&loaded){
   const rect=stage.getBoundingClientRect(),ray=new T.Raycaster();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
@@ -150,9 +139,9 @@ function endPointer(e){
  pts.delete(e.pointerId);if(pts.size<2)pinch=null;down=null;
 }
 stage.addEventListener('pointerup',endPointer);stage.addEventListener('pointercancel',endPointer);
-stage.addEventListener('wheel',e=>{e.preventDefault();orbit.r=Math.max(3,Math.min(13,orbit.r*Math.exp(e.deltaY*.001)));},{passive:false});
-stage.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','=','Home'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')orbit.theta-=.1;if(e.key==='ArrowRight')orbit.theta+=.1;if(e.key==='ArrowUp')orbit.phi=Math.max(.15,orbit.phi-.1);if(e.key==='ArrowDown')orbit.phi=Math.min(3,orbit.phi+.1);if(e.key==='+'||e.key==='=')orbit.r=Math.max(3,orbit.r-.4);if(e.key==='-')orbit.r=Math.min(13,orbit.r+.4);if(e.key==='Home')resetCamera();});
-function resetCamera(){orbit.theta=.10;orbit.phi=1.43;orbit.r=9.2;orbit.target.set(.12,.24,0);}
+stage.addEventListener('wheel',e=>{e.preventDefault();orbit.r=Math.max(1.2,Math.min(13,orbit.r*Math.exp(e.deltaY*.001)));},{passive:false});
+stage.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','=','Home'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')orbit.theta-=.1;if(e.key==='ArrowRight')orbit.theta+=.1;if(e.key==='ArrowUp')orbit.phi=Math.max(.15,orbit.phi-.1);if(e.key==='ArrowDown')orbit.phi=Math.min(3,orbit.phi+.1);if(e.key==='+'||e.key==='=')orbit.r=Math.max(1.2,orbit.r-.4);if(e.key==='-')orbit.r=Math.min(13,orbit.r+.4);if(e.key==='Home')resetCamera();});
+function resetCamera(){orbit.theta=.10;orbit.phi=1.43;orbit.r=7.2;orbit.target.set(.12,.62,0);}
 $('reset').addEventListener('click',resetCamera);
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 Object.keys(layerLabels).forEach(k=>$(k).addEventListener('change',applyView));
@@ -173,6 +162,9 @@ function frame(now){
 }
 const api={T,scene,camera,stage,anatomy,circuit,meshes,paths,nodes,electrical,uniforms,sourceLabels,movingMaterial,selectPart,applyView,setView,
  get clock(){return window.CardiacClock?CardiacClock.read(stream,t,cfg):null;},get view(){return view;},get selected(){return selected;},get time(){return t;},get stream(){return stream;},get config(){return cfg;},
+ focusStructure(d){if(d.center){$('section-enabled').checked=true;$('section-axis').value='x';$('section-flip').checked=false;$('cut').value=d.center[0]+.10;$('valves').checked=false;$('vessels').checked=false;$('coronaries').checked=false;$('veins').checked=false;applyView();}else if(d.membrane){for(const id of ['valves','vessels','coronaries','veins'])$(id).checked=false;applyView();}$('view-description').textContent=d.label+' · geometria illustrativa modificabile.';orbit.target.set(...(d.center||d.focus||[-.03,1.3,-.9]));orbit.r=d.center?2.4:(d.distance||3.8);const n=new T.Vector3(...(d.normal||d.direction||[1,.2,-1])).normalize();orbit.theta=Math.atan2(n.x,n.z);orbit.phi=Math.acos(n.y);updateCamera();},
+ focusDuct(){setView('surface');const d=AnatomyRefinements.ductGeometry(meshes,.02);orbit.target.copy(d.a).lerp(d.p,.5);orbit.r=3;orbit.theta=1.9;orbit.phi=1.25;d.geometry.dispose();updateCamera();},
+ focusValve(id){setView('valves');const d=AnatomyRefinements.valveRoots()[id],n=new T.Vector3(...d.normal).normalize();orbit.target.set(...d.center);orbit.r=1.6;orbit.theta=Math.atan2(n.x,n.z);orbit.phi=Math.acos(n.y);updateCamera();},
  focusConduction(){orbit.r=3.8;orbit.theta=.1;orbit.phi=1.55;orbit.target.set(-.2,-.2,.1);updateCamera();},
  setClinicalCase(id,params={}){clinicalCase=scenarios[id]?id:null;clinicalParams={...params};if(clinicalCase&&!Array.from($('rhythm').options).some(o=>o.value===id)){const o=document.createElement('option');o.value=id;o.textContent=scenarios[id].name;$('rhythm').append(o);}if(clinicalCase)$('rhythm').value=id;resetRhythm();},
  clearClinicalCase(){clinicalCase=null;clinicalParams={};$('rhythm').value='normale';resetRhythm();},

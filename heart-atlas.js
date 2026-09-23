@@ -36,7 +36,7 @@ function build(options={}){
  }};
 
  out.ready=load().then(([gltf,map])=>{
-  const source=G.sourceMeshes(gltf.scene);for(const mesh of source){const name=mesh.userData.sourceName;
+  const source=G.sourceMeshes(gltf.scene);window.AnatomyRefinements?.apply(source,G.material);for(const mesh of source){const name=mesh.userData.sourceName;
    if(options.coronary&&name==='Left ventricle'){for(const [n,geometry]of split(mesh,segment)){seg[n].geometry=geometry;seg[n].name=name;seg[n].userData={...mesh.userData,seg:n};add(seg[n]);}continue;}
    if(options.coronary&&name==='Right ventricle'){rv.geometry=mesh.geometry;rv.name=name;rv.userData=mesh.userData;add(rv);continue;}
    if(options.coronary&&map.faces[name]){for(const [index,geometry]of split(mesh,map.faces[name])){const id=map.keys[index],target=coro[id];const part=new T.Mesh(geometry,target.material);part.name=id;part.userData={...mesh.userData,branch:id};add(part);}continue;}

@@ -73,7 +73,8 @@ for(const [key,label,target]of [['mitral','mitralica','mitral'],['aortic','aorti
  rows.push([key+'-stenosis','Valvulopatie','Stenosi '+label,'annulus-'+target,'Riduzione dell’apertura valvolare. Qui si osserva una restrizione illustrativa dei lembi; gradienti e area efficace non sono calcolati.','valve-stenosis',key]);
  rows.push([key+'-regurgitation','Valvulopatie','Insufficienza '+label,'annulus-'+target,'Coaptazione incompleta dei lembi. L’apertura residua è illustrativa; non calcola volume o frazione rigurgitante.','valve-regurgitation',key]);
 }
-const structural=rows.map(([id,family,name,target,description,preview='localization',valve])=>({id:'anomaly-'+id,family,name,target,description,preview,valve,source:family==='Miocardio'?refs.muscle:family==='Valvulopatie'?refs.valves:family.startsWith('Congenite')?refs.congenital:null}));
+const modeled=['asd2','vsdperi','vsdmuscle','coarct','iaa','bicuspid','cortriat'];
+const structural=rows.map(([id,family,name,target,description,preview='localization',valve])=>({id:'anomaly-'+id,family,name,target,description,preview:modeled.includes(id)?'structural':preview,morphology:modeled.includes(id)?id:null,valve,source:family==='Miocardio'?refs.muscle:family==='Valvulopatie'?refs.valves:family.startsWith('Congenite')?refs.congenital:null}));
 function catalog(scenarios){return [...scenarios.filter(s=>s.id!=='normale').map(s=>({id:'ecg-'+s.id,scenario:s.id,family:'ECG · '+s.cat,name:s.name,description:s.card?.def||'Quadro presente nella libreria ECG.',preview:'ecg',source:null})),...structural];}
 return {structural,catalog,refs};
 });

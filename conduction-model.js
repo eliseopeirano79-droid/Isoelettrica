@@ -18,9 +18,11 @@ const sites=[
  ['anteroseptal','Superoparasettale (anterosettale)',[-.42,.02,.18],[-.16,-.21,.39]],
  ['midseptal','Mesosettale',[-.45,-.22,.1],[-.15,-.41,.25]]
 ].map(([id,label,atrial,ventricular])=>Object.freeze({id,label,atrial,ventricular}));
-const names={atr:'Vie atriali preferenziali',bachmann:'Fascio di Bachmann',fast:'Ingresso nodale rapido',slow:'Ingresso nodale lento',his:'Fascio di His · tratto penetrante',rb:'Branca destra · setto e banda moderatrice',laf:'Fascicolo anteriore sinistro',lpf:'Fascicolo posteriore sinistro',lsf:'Fascicolo settale sinistro',kent:'Via atrioventricolare di Kent',james:'Fibre di James · ipotesi atrionodale',flutter:'Istmo cavo-tricuspidale · circuito di flutter','ventricular-return':'Collegamento miocardico ventricolare del rientro'};
+const names={atr:'Via internodale anteriore',middle:'Via internodale media · Wenckebach',posterior:'Via internodale posteriore · Thorel',bachmann:'Fascio interatriale di Bachmann',fast:'Ingresso nodale rapido',slow:'Ingresso nodale lento',his:'Fascio di His · tratto penetrante',rb:'Branca destra · setto e banda moderatrice',laf:'Fascicolo anteriore sinistro',lpf:'Fascicolo posteriore sinistro',lsf:'Fascicolo settale sinistro',kent:'Via atrioventricolare di Kent',james:'Fibre di James · ipotesi atrionodale',flutter:'Istmo cavo-tricuspidale · circuito di flutter','ventricular-return':'Collegamento miocardico ventricolare del rientro'};
 const paths=[
- {id:'atr',points:[A.sa,[-.91,.36,-.12],[-.66,.03,-.15],A.upper]},
+ {id:'atr',points:[A.sa,[-.64,.62,.10],[-.48,.24,.07],A.upper]},
+ {id:'middle',points:[A.sa,[-.76,.66,-.46],[-.52,.33,-.48],[-.37,.12,-.34],A.upper]},
+ {id:'posterior',points:[A.sa,[-1.00,.45,-.22],[-1.02,.03,-.28],[-.82,-.42,-.32],[-.49,-.44,-.24],A.av]},
  {id:'bachmann',points:[A.sa,[-.48,.67,-.38],[.12,.58,-.68],[.51,.27,-.7]]},
  {id:'fast',points:[A.upper,[-.3,-.06,-.16],[-.24,-.14,-.1],A.av]},
  {id:'slow',points:[A.upper,[-.56,-.25,-.3],[-.49,-.44,-.24],[-.35,-.4,-.14],A.av]},
@@ -55,7 +57,7 @@ function plan(clock,cfg){
   }
  }else if(a&&['sinus','pac','atrial'].includes(a.meta.type)){
   const pr=cfg.pr||160,atr=Math.min(90,pr*.55),linked=e=>e?.meta.type==='conducted'&&Math.abs(e.t-a.t-(e.meta.pr||pr))<5,target=linked(n)?n:linked(v)?v:null;
-  put('atr',da/atr);put('bachmann',da/atr);if(da<atr)phase='Onda P · attivazione atriale dal nodo del seno';
+  put('atr',da/atr);put('middle',da/atr);put('posterior',da/atr);put('bachmann',da/atr);if(da<atr)phase='Onda P · attivazione atriale dal nodo del seno';
   if(a.meta.blocked){nodeBlocked=da>=atr&&da<Math.min(pr+160,450);if(nodeBlocked){put('fast',(da-atr)/Math.max(1,pr-atr));phase='P non condotta · '+(cfg.avBlockSite||'blocco AV');}}
   else if(target){const lead=target.t-a.t,hv=Math.min(45,lead*.3),start=atr,end=lead-hv;
    put(kind==='james'?'james':'fast',(da-start)/Math.max(1,end-start));

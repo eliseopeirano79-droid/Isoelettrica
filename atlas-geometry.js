@@ -50,5 +50,5 @@ function sourceMeshes(scene){scene.updateMatrixWorld(true);const meshes=[];scene
 function junctionMesh(){const m=new T.Mesh(pulmonaryJunction(),material('Bifurcatio trunci pulmonalis','vessels'));m.name='Bifurcatio trunci pulmonalis';m.userData={sourceName:m.name,layer:'vessels',label:'Biforcazione del tronco polmonare',origin:'Raccordo didattico ricostruito sui margini dell’atlante',reconstruction:true};return m;}
 function setupRenderer(r){r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=.94;}
 function lighting(scene){scene.add(new T.HemisphereLight(0xd3e5ed,0x52323b,.85));for(const [col,p,x,y,z]of[[0xffe5d9,1.55,-3,4,5],[0xa7cde9,.85,4,1,-3],[0xffb7a5,.45,-4,-1,-2]]){const l=new T.DirectionalLight(col,p);l.position.set(x,y,z);scene.add(l);}}
-return {pulmonaryJunction,junctionMesh,sourceMeshes,material,setupRenderer,lighting};
+return {pulmonaryRings:RINGS,pulmonaryJunction,junctionMesh,sourceMeshes,material,setupRenderer,lighting};
 });

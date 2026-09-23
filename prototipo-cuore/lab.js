@@ -2,18 +2,18 @@
 (function(root){'use strict';
 root.HeartLab={create(api){
  const C=HeartLabCore,T=api.T,$=id=>document.getElementById(id),V=a=>new T.Vector3(...a);
- let clinicalBaseline=null,lastMotion=null,lastMechanicalTime=0;const dynamics=root.CardiacMechanics.createDynamics();
+ let clinicalBaseline=null,lastMotion=null,lastMechanicalTime=0;const dynamics=root.CardiacMechanics.createDynamics(),congenital=root.CongenitalAnatomy.create(api);
  let state=C.fresh(),ready=false,mode='',selectedRegion=-1,arteries=[],valveRigs=[],botallo=null,lastPhase=-1,selectedMesh=null;
  try{const saved=localStorage.getItem('iso-heart-lab-v1');if(saved)state=C.parse(saved);}catch(e){$('data-status').textContent='Configurazione salvata non valida: caricati i valori iniziali.';}
  const inputs=[],labelNodes=new Map(),flowObjects=[],occlusionMarkers=[];
  const labelOverlay=document.createElement('div');labelOverlay.id='label-overlay';api.stage.after(labelOverlay);
  const modeNote=document.createElement('div');modeNote.id='lab-mode';labelOverlay.after(modeNote);
  const clips=[new T.Plane(),new T.Plane()];let cutActive=false,coronaryTree=new Map();
- const shared={uRCount:{value:0},uRPos:{value:Array.from({length:32},()=>new T.Vector4())},uRColor:{value:Array.from({length:32},()=>new T.Vector4())},uRDamage:{value:new Float32Array(32)},uOCount:{value:0},uOPos:{value:Array.from({length:16},()=>new T.Vector4())},uOTan:{value:Array.from({length:16},()=>new T.Vector4())},uOVessel:{value:new Float32Array(16)}};
+ const shared={uDuctRadius:{value:0},uDuctA:{value:new T.Vector3()},uDuctP:{value:new T.Vector3()},uDuctAxis:{value:new T.Vector3()},uRCount:{value:0},uRPos:{value:Array.from({length:32},()=>new T.Vector4())},uRColor:{value:Array.from({length:32},()=>new T.Vector4())},uRDamage:{value:new Float32Array(32)},uOCount:{value:0},uOPos:{value:Array.from({length:16},()=>new T.Vector4())},uOTan:{value:Array.from({length:16},()=>new T.Vector4())},uOVessel:{value:new Float32Array(16)}};
  function status(text){$('data-status').textContent=text;}
  function serialize(){return JSON.stringify(state,null,2);}
  function saveDraft(){try{localStorage.setItem('iso-heart-lab-v1',clinicalBaseline?JSON.stringify(clinicalBaseline):serialize());}catch(e){status('Salvataggio locale non disponibile. Usa “Salva configurazione”.');}$('config-json').value=serialize();}
- function panel(name){document.querySelectorAll('[data-pane]').forEach(e=>e.hidden=e.dataset.pane!==name);document.querySelectorAll('[data-panel]').forEach(e=>e.setAttribute('aria-selected',String(e.dataset.panel===name)));}
+ function panel(name){document.querySelector('aside').scrollTop=0;document.querySelectorAll('[data-pane]').forEach(e=>e.hidden=e.dataset.pane!==name);document.querySelectorAll('[data-panel]').forEach(e=>e.setAttribute('aria-selected',String(e.dataset.panel===name)));}
  document.querySelectorAll('[data-panel]').forEach(e=>e.onclick=()=>{panel(e.dataset.panel);if(e.dataset.panel==='electric')api.setView('conduction');});
  function setMode(next){mode=mode===next?'':next;$('place-occlusion').setAttribute('aria-pressed',String(mode==='occlusion'));$('paint-region').setAttribute('aria-pressed',String(mode==='paint'));modeNote.textContent=mode==='paint'?'Tocca il miocardio per aggiungere una regione.':mode==='occlusion'?'Tocca una coronaria per posizionare l’ostruzione.':'';api.stage.style.cursor=mode?'crosshair':'';}
  function row(parent,label,value,min,max,step,unit,onChange){
@@ -34,10 +34,11 @@ root.HeartLab={create(api){
  $('parameter-search').oninput=()=>{const q=$('parameter-search').value.toLocaleLowerCase('it');for(const c of inputs)if(c.div.parentElement===$('all-parameters'))c.div.hidden=!C.schema[c.key].label.toLocaleLowerCase('it').includes(q)&&!c.key.includes(q);};
  C.phases.forEach(([id,label],i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+label;b.title=label;b.dataset.phase=id;b.onclick=()=>seekPhase(C.phases.slice(0,i).reduce((s,[k])=>s+state.params['phase.'+k],0)+1);$('phase-timeline').appendChild(b);});
  function seekPhase(offset){api.pause();const p=state.params,ev=api.stream.eventsAround(api.time);let v=ev.V||api.stream.ev.find(e=>e.kind==='V');if(!v||api.config.mode)return;const total=C.total(p);if(!api.config.av&&api.time-v.t>=total-p['phase.atrial'])v=api.stream.ev.find(e=>e.kind==='V'&&e.t>v.t)||v;api.seek(Math.max(0,v.t-p['phase.atrial']+Number(offset)));}
+ $('focus-aortic').onclick=()=>api.focusValve('aortic');$('focus-pulmonary').onclick=()=>api.focusValve('pulmonary');
  $('cycle-seek').oninput=()=>seekPhase($('cycle-seek').value);
  function decorate(shader,mat){
-  Object.assign(shader.uniforms,shared,{uWall:{value:mat.userData.wall?1:0},uVessel:{value:mat.userData.vessel??-1}});
-  const decl=`uniform int uRCount;uniform vec4 uRPos[32];uniform vec4 uRColor[32];uniform float uRDamage[32];uniform float uWall;varying vec3 vLocalHeart;\n`;
+  Object.assign(shader.uniforms,shared,{uWall:{value:mat.userData.wall?1:0},uVessel:{value:mat.userData.vessel??-1},uDuctTarget:{value:mat.userData.anatomyName==='Aortic arch'?1:mat.userData.anatomyName==='Left pulmonary artery'?2:0}});
+  const decl=`uniform float uDuctRadius,uDuctTarget;uniform vec3 uDuctA,uDuctP,uDuctAxis;uniform int uRCount;uniform vec4 uRPos[32];uniform vec4 uRColor[32];uniform float uRDamage[32];uniform float uWall;varying vec3 vLocalHeart;\n`;
   const vertex=`uniform int uOCount;uniform vec4 uOPos[16];uniform vec4 uOTan[16];uniform float uOVessel[16];uniform float uVessel;
 float localFactor(vec3 p){float sum=0.0,weight=0.0;for(int i=0;i<32;i++){if(i>=uRCount)break;float w=1.0-smoothstep(0.0,1.0,distance(p,uRPos[i].xyz)/max(1.4,uRPos[i].w)),a=w*w*uRColor[i].w*uRDamage[i];sum+=a*a*a*a;weight+=a*a*a;}return 1.0/(1.0+1.5*sum/max(.00000001,weight));}
 vec3 coronaryNarrow(vec3 p){for(int i=0;i<16;i++){if(i>=uOCount)break;if(abs(uVessel-uOVessel[i])<0.1){vec3 d=p-uOPos[i].xyz;float axial=dot(d,uOTan[i].xyz);vec3 radial=d-axial*uOTan[i].xyz;float window=1.0-smoothstep(0.0,uOPos[i].w,abs(axial));if(length(radial)<0.09)p-=radial*window*uOTan[i].w;}}return p;}\n`;
@@ -49,6 +50,9 @@ vec3 coronaryNarrow(vec3 p){for(int i=0;i<16;i++){if(i>=uOCount)break;if(abs(uVe
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
 if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(0.72,1.0,distance(vLocalHeart,uRPos[i].xyz)/uRPos[i].w))*uRColor[i].w;diffuseColor.rgb=mix(diffuseColor.rgb,uRColor[i].rgb,a);}}
 `);
+  shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>
+if(uDuctRadius>0.0&&uDuctTarget>.5){vec3 d=vLocalHeart-(uDuctTarget<1.5?uDuctA:uDuctP);float h=dot(d,uDuctAxis);if(abs(h)<.12&&length(d-h*uDuctAxis)<uDuctRadius)discard;}`);
+  congenital.decorate(shader,mat);
  }
  function refresh(){
   const p=state.params;api.uniforms.uAmpA.value=p['muscle.atrial'];api.uniforms.uAmpV.value=p['muscle.vent'];api.uniforms.uLong.value=p['muscle.long'];api.uniforms.uTwist.value=p['muscle.twist']*Math.PI/180;
@@ -70,14 +74,14 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
   $('cut-control').hidden=false;
  }
  for(const id of ['section-enabled','section-axis','section-target','section-flip','section-slab','section-thickness','cut'])$(id).addEventListener('input',()=>{api.applyView();});
- function acceptHit(hit){const planes=hit.object.material.clippingPlanes||[];return planes.every(p=>p.distanceToPoint(hit.point)>=0);}
+ function acceptHit(hit){const planes=hit.object.material.clippingPlanes||[];return planes.every(p=>p.distanceToPoint(hit.point)>=0)&&congenital.acceptHit(hit);}
  function material(color,layer){const m=api.movingMaterial(new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness:.65,side:T.DoubleSide}));m.userData.wall=layer==='wall';return m;}
  function tube(id,label,points,r,color,layer='vessels',group=api.anatomy){const curve=new T.CatmullRomCurve3(points.map(V));const mesh=new T.Mesh(new T.TubeGeometry(curve,40,r,8,false),material(color,layer));group.add(mesh);api.addMesh(mesh,id,label,layer);return mesh;}
  const valveDefs=[
   {id:'mitral',label:'Mitrale',center:[.35,-.07,-.28],normal:[.08,.95,-.32],radius:.31,count:2,leaf:['anteriore','posteriore'],pap:[[.65,-.73,-.04],[.72,-.77,.33]]},
   {id:'tricuspid',label:'Tricuspide',center:[-.28,-.05,.15],normal:[-.3,.94,.12],radius:.34,count:3,leaf:['anteriore','inferiore','settale'],pap:[[.31,-.89,.71],[.01,-.81,.43],[.16,-.4,.25]]},
-  {id:'aortic',label:'Aortica',center:[-.12,.41,-.04],normal:[-.12,.98,.15],radius:.18,count:3,leaf:['coronarico destro','coronarico sinistro','non coronarico']},
-  {id:'pulmonary',label:'Polmonare',center:[.11,.5,.39],normal:[.2,.95,-.2],radius:.18,count:3,leaf:['anteriore','sinistro','destro']}
+  {id:'aortic',label:'Aortica',...root.AnatomyRefinements.valveRoots().aortic,count:3,leaf:['coronarico destro','coronarico sinistro','non coronarico']},
+  {id:'pulmonary',label:'Polmonare',...root.AnatomyRefinements.valveRoots().pulmonary,count:3,leaf:['anteriore','sinistro','destro']}
  ];
  function buildValves(){
   for(const d of valveDefs){
@@ -87,13 +91,16 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
    const pap=d.pap?.map((point,i)=>{const mesh=api.meshes.find(m=>m.userData.sourceName===papNames[i]);return mesh?root.CardiacAttachments.nearestPoint(mesh,V(point)).toArray():point;});
    const rig={...d,pap,center,n,axis,side,leaves:[],last:-1};
    for(let leaf=0;leaf<d.count;leaf++){
-    const N=12,R=8,pos=new Float32Array((N+1)*(R+1)*3),idx=[];
+    const N=rig.pap?12:24,R=rig.pap?8:14,pos=new Float32Array((N+1)*(R+1)*3),idx=[];
     for(let v=0;v<R;v++)for(let u=0;u<N;u++){const a=v*(N+1)+u,b=a+N+1;idx.push(a,b,a+1,b,b+1,a+1);}
     const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));g.setIndex(idx);
     const mesh=new T.Mesh(g,new T.MeshStandardMaterial({color:new T.Color('#ead8b4').convertSRGBToLinear(),roughness:.65,side:T.DoubleSide}));mesh.userData.worldDeformed=true;mesh.frustumCulled=false;api.anatomy.add(mesh);api.addMesh(mesh,'rig-'+d.id+'-'+leaf,d.label+' · lembo '+d.leaf[leaf]+' (animato)','valves');
     const chords=[];
     if(rig.pap){for(let j=0;j<3;j++){const geo=new T.BufferGeometry().setFromPoints([V(rig.pap[leaf%rig.pap.length]),center]);const line=new T.Line(geo,new T.LineBasicMaterial({color:new T.Color('#d0c2a1').convertSRGBToLinear()}));line.userData.worldDeformed=true;line.frustumCulled=false;api.anatomy.add(line);api.addMesh(line,'chord-'+d.id+'-'+leaf+'-'+j,'Corda '+(j+1)+' · '+d.label.toLowerCase()+' · '+d.leaf[leaf],'valves');chords.push(line);}}
-    rig.leaves.push({mesh,N,R,leaf,chords});
+    const edges=[];let nodule=null;
+    if(!rig.pap){for(const [edgeId,label,v]of [['hinge','Inserzione semilunare',0],['lunule','Lunula · margine di coaptazione',1]]){const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(new Float32Array((N+1)*3),3));const line=new T.Line(g,new T.LineBasicMaterial({color:edgeId==='hinge'?'#b69e75':'#fff0cf'}));line.userData.worldDeformed=true;line.frustumCulled=false;api.anatomy.add(line);api.addMesh(line,edgeId+'-'+d.id+'-'+leaf,label+' · '+d.label+' · '+d.leaf[leaf],'valves');edges.push({line,v});}
+     nodule=new T.Mesh(new T.SphereGeometry(.012,10,8),new T.MeshStandardMaterial({color:'#ead4a4',roughness:.7}));nodule.userData.worldDeformed=true;api.anatomy.add(nodule);api.addMesh(nodule,'nodule-'+d.id+'-'+leaf,(d.id==='aortic'?'Nodulo di Aranzio':'Nodulo di Morgagni')+' · '+d.leaf[leaf],'valves');}
+    rig.leaves.push({mesh,N,R,leaf,chords,edges,nodule});
    }
    valveRigs.push(rig);moveValve(rig,0);
   }
@@ -101,20 +108,24 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
  function moveValve(rig,open,m=lastMotion||{atr:0,vent:0},t=lastMechanicalTime){
   // No GPU deformation on these meshes: the constraint solver has already
   // mapped each attachment into the same deformed space as the surrounding wall.
-  const stamp=[open,m.atr,m.vent,m.fibr,t].join('|');if(rig.last===stamp)return;rig.last=stamp;
+  rig.count=congenital.valveCount(rig.id)||rig.leaves.length;
+  const stamp=[rig.count,open,m.atr,m.vent,m.fibr,t].join('|');if(rig.last===stamp)return;rig.last=stamp;
   const deform=q=>V(root.CardiacMechanics.deform(q.toArray(),m,state.params,state.regions,t));
-  for(const part of rig.leaves){const a=part.mesh.geometry.attributes.position,anchor=rig.pap?deform(V(rig.pap[part.leaf%rig.pap.length])):null;
+  for(const part of rig.leaves){if(part.leaf>=rig.count){part.mesh.visible=false;part.edges.forEach(e=>e.line.visible=false);if(part.nodule)part.nodule.visible=false;continue;}const a=part.mesh.geometry.attributes.position,anchor=rig.pap?deform(V(rig.pap[part.leaf%rig.pap.length])):null;
    const point=(u,v)=>root.CardiacAttachments.constrainedLeaf(rig,part.leaf,u,v,open,deform,root.CardiacMechanics.tether);
    for(let v=0;v<=part.R;v++)for(let u=0;u<=part.N;u++){const q=point(u/part.N,v/part.R);a.setXYZ(v*(part.N+1)+u,q.x,q.y,q.z);}a.needsUpdate=true;part.mesh.geometry.computeVertexNormals();part.mesh.geometry.computeBoundingSphere();
+   for(const edge of part.edges){const a=edge.line.geometry.attributes.position;for(let u=0;u<=part.N;u++){const q=point(u/part.N,edge.v);a.setXYZ(u,q.x,q.y,q.z);}a.needsUpdate=true;edge.line.geometry.computeBoundingSphere();}
+   if(part.nodule)part.nodule.position.copy(point(.5,1));
    part.chords.forEach((l,i)=>{const q=point((i+1)/4,1),a=l.geometry.attributes.position;a.setXYZ(0,anchor.x,anchor.y,anchor.z);a.setXYZ(1,q.x,q.y,q.z);a.needsUpdate=true;});
   }
  }
- function updateBotallo(){if(!botallo)return;const patent=state.params['botallo.patent']>0,diam=state.params['botallo.diameter'];botallo.scale.setScalar(1); // Geometry remains centered in the same anatomical frame.
-  const r=patent?diam*.01:.024;if(botallo.userData.radius!==r){botallo.geometry.dispose();botallo.geometry=new T.TubeGeometry(botallo.userData.curve,32,r,10,false);botallo.userData.radius=r;}
-  botallo.userData.label=patent?'Dotto arterioso di Botallo pervio':'Legamento arterioso (Botallo)';botallo.material.color.set(patent?'#d692ad':'#b9aa91').convertSRGBToLinear();const op=[...$('part').options].find(o=>o.value===botallo.uuid);if(op)op.textContent=botallo.userData.label;if(api.selected===botallo)$('selection').querySelector('b').textContent=botallo.userData.label;
+ function updateBotallo(){if(!botallo)return;const patent=state.params['botallo.patent']>0,diam=state.params['botallo.diameter'],r=patent?diam*.01:.018;
+  const ao=api.meshes.find(m=>m.userData.sourceName==='Aortic arch'),pa=api.meshes.find(m=>m.userData.sourceName==='Left pulmonary artery'),stamp=[r,ao?.geometry.uuid,pa?.geometry.uuid].join('|');
+  if(botallo.userData.attachmentStamp!==stamp){const duct=root.AnatomyRefinements.ductGeometry(api.meshes,r);if(duct){botallo.geometry.dispose();botallo.geometry=duct.geometry;shared.uDuctA.value.copy(duct.a);shared.uDuctP.value.copy(duct.p);shared.uDuctAxis.value.copy(duct.axis);botallo.userData.attachmentStamp=stamp;}}
+  shared.uDuctRadius.value=patent?r:0;botallo.userData.label=patent?'Dotto arterioso di Botallo pervio':'Legamento arterioso (Botallo)';botallo.material.color.set(patent?'#d692ad':'#b9aa91').convertSRGBToLinear();const op=[...$('part').options].find(o=>o.value===botallo.uuid);if(op)op.textContent=botallo.userData.label;if(api.selected===botallo)$('selection').querySelector('b').textContent=botallo.userData.label;
  }
  function anatomicalAdditions(){
-  botallo=tube('botallo','Legamento arterioso (Botallo)',[[.52,1.1,-.85],[.47,1.02,-.72],[.36,.86,-.52]],.024,'#b9aa91');botallo.userData.curve=new T.CatmullRomCurve3([[.52,1.1,-.85],[.47,1.02,-.72],[.36,.86,-.52]].map(V));
+  botallo=api.meshes.find(m=>m.userData.sourceName==='botallo');
   const markers=[['septum-atrial','Setto interatriale',[-.29,.2,-.32]],['fossa-ovalis','Fossa ovale',[-.30,.23,-.25]],['septum-vent','Setto interventricolare',[.14,-.42,.24]],['apex','Apice cardiaco',[.91,-1.19,.62]],['endocardium','Endocardio · parete interna VS',[.7,-.54,.10]]];
   for(const [id,label,p] of markers){const geometry=new T.SphereGeometry(.023,10,8).translate(...p),mesh=new T.Mesh(geometry,api.movingMaterial(new T.MeshBasicMaterial({color:'#b9cfbd',transparent:true,opacity:.8})));api.anatomy.add(mesh);api.addMesh(mesh,id,label+' · riferimento','wall','Punto di riferimento indicativo');mesh.userData.landmark=true;}
  }
@@ -124,7 +135,7 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
  }
  function loaded(){
   ready=true;
-  for(const m of api.meshes){m.userData.origin='Geometria Z-Anatomy';m.userData.originalValve=/leaflet/.test(m.userData.sourceName);m.material.userData.wall=m.userData.layer==='wall';m.userData.baseColor='#'+m.material.color.clone().convertLinearToSRGB().getHexString();}
+  for(const m of api.meshes){m.userData.origin=m.userData.origin||'Geometria Z-Anatomy';m.userData.originalValve=/leaflet/.test(m.userData.sourceName);m.material.userData.wall=m.userData.layer==='wall';m.material.userData.anatomyName=m.userData.sourceName;m.userData.baseColor='#'+m.material.color.clone().convertLinearToSRGB().getHexString();}
   buildValves();anatomicalAdditions();conductionAdditions();
   for(const m of api.meshes){m.userData.basePosition=m.position.clone();m.userData.baseColor=m.userData.baseColor||'#'+m.material.color.clone().convertLinearToSRGB().getHexString();}
   for(const option of [...$('part').options])if(api.meshes.some(m=>m.userData.originalValve&&m.uuid===option.value))option.remove();
@@ -207,6 +218,6 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
  regionList();occlusionList();syncParams();saveDraft();
  function clinicalOverlay(params){if(!clinicalBaseline)clinicalBaseline=JSON.parse(serialize());state=C.parse(clinicalBaseline);for(const [key,value]of Object.entries(params||{}))if(C.schema[key])C.set(state.params,key,value);syncParams();refresh();}
  function clearClinicalOverlay(){if(clinicalBaseline){state=C.parse(clinicalBaseline);clinicalBaseline=null;syncParams();refresh();}}
- return {get parameters(){return state.params;},deformPoint,updateLabels:labelFrame,resetMechanics(){dynamics.reset();},clinicalOverlay,clearClinicalOverlay,decorate,configure:cfg=>C.configure(cfg,state.params,ECG),motion:(ev,t,cfg)=>dynamics.sample(t,at=>C.sample(api.stream.eventsAround(at),at,cfg,state.params),state.params,cfg.isoScenario||'laboratory'),animate,selected,hit,applyVisibility,acceptHit,loaded(){loaded();if(pendingArteries){pendingArteries();pendingArteries=null;}}};
+ return {get parameters(){return state.params;},setCongenital(id,value){congenital.set(id,value);refresh();},deformPoint,updateLabels:labelFrame,resetMechanics(){dynamics.reset();},clinicalOverlay,clearClinicalOverlay,decorate,configure:cfg=>C.configure(cfg,state.params,ECG),motion:(ev,t,cfg)=>dynamics.sample(t,at=>C.sample(api.stream.eventsAround(at),at,cfg,state.params),state.params,cfg.isoScenario||'laboratory'),animate,selected,hit,applyVisibility,acceptHit,loaded(){loaded();if(pendingArteries){pendingArteries();pendingArteries=null;}}};
 }};
 })(window);
