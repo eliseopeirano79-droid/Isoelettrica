@@ -35,6 +35,7 @@ Una riga per sessione, la più recente in alto.
 
 | Data | Prompt (e parte) | Ramo | Commit finale | Esito |
 |------|------------------|------|---------------|-------|
+| 2026-09-23 | Rilascio ufficiale v44.0 autorizzato | feat/conduzione-patologia-v44 → main · PR #7 | commit che contiene il report di rilascio | Autorizzazione esplicita alla pubblicazione; revisione applicativa 992bf4e; 140 test Node + 5 Python; distribuzione tramite GitHub Pages |
 | 2026-09-23 | Osti venosi/cavali, infundibolo e tronco polmonare · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 140 test Node + 5 Python; raccordi interno/esterno e biforcazione continua; anteprima desktop verificata; non pubblicata |
 | 2026-09-23 | Raccordi vascolari, semilunari, congenite e Fisiologia · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 135 test Node + 5 Python; anteprima desktop/mobile; riferimento di Fisiologia invariato; non pubblicata |
 | 2026-09-23 | Meccanica coerente richiesta dall’utente · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 125 test Node + 5 Python; elasticità e vincoli geometrici; anteprima verificata; non pubblicata |
@@ -53,7 +54,7 @@ Copia sincronizzata con la scheda "Cosa è completo e cosa manca" del prototipo.
 
 ## Priorità confermate dall’utente il 23 settembre
 
-La richiesta attuale supera il vincolo originario «solo prototipo»: integrare nell’app preservando la grafica approvata, chiamare **Fisiologia** il laboratorio preesistente degli assi e **Anatomia** quello nuovo. Nessun’altra sezione viene eliminata o rinominata. v43 pubblicata e verificata. v44 preparata separatamente; pubblicazione non ancora eseguita.
+La richiesta attuale supera il vincolo originario «solo prototipo»: integrare nell’app preservando la grafica approvata, chiamare **Fisiologia** il laboratorio preesistente degli assi e **Anatomia** quello nuovo. Nessun’altra sezione viene eliminata o rinominata. v43 pubblicata e verificata. Pubblicazione ufficiale v44.0 autorizzata esplicitamente dall’utente, tramite PR #7 e GitHub Pages. Registro di rilascio: `reports/2026-09-23-rilascio-v44.md`.
 
 Tutti i prompt originali restano in `sviluppo/prompts/`; non si considerano completati dalla presenza delle animazioni illustrative precedenti. La parte 01 A non soddisfa ancora l’intera accettazione del prompt 01. I prompt 03 e 05 sono avviati soltanto nelle parti richieste; gli altri moduli restano aperti secondo la tabella.
 
