@@ -1417,7 +1417,7 @@ function renderTheory() {
   if ($('#w-asse')) widgetAxis($('#w-asse'));
 }
 function setZen(on) {
-  document.body.classList.toggle('zen', on);
+  document.body.classList.toggle('theory-focus', on);
   const b = $('#thFull');
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
   b.lastChild.textContent = on ? 'Esci' : 'Schermo intero';
@@ -1427,9 +1427,9 @@ function setZen(on) {
     else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
   } catch (err) {}
 }
-$('#thFull').addEventListener('click', () => setZen(!document.body.classList.contains('zen')));
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('zen')) setZen(false); });
-document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('zen')) setZen(false); });
+$('#thFull').addEventListener('click', () => setZen(!document.body.classList.contains('theory-focus')));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('theory-focus')) setZen(false); });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('theory-focus')) setZen(false); });
 
 function widgetFC(el) {
   el.innerHTML = '<div class="wrow"><div class="ctrl"><div class="lab"><span>Distanza tra due R</span><output class="num"></output></div><input type="range" min="8" max="75" step="1" value="20"></div><div><div class="big num" id="fcOut"></div><div class="note" id="fcNote"></div></div></div><canvas height="120"></canvas>';
@@ -2110,7 +2110,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(loc
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v44.0 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v45.0 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento();
   });
   if (cr) cr.addEventListener('dblclick', () => {

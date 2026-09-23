@@ -1,0 +1,78 @@
+/* Shared surfaces, controls and responsive reading. Clinical colours stay local. */
+:root{--ui-text:#e8eee9;--ui-muted:#9aafaa;--ui-panel:#142029;--ui-control:#203039;--ui-border:#354950;--ui-accent:#bbdbc8;--ui-on-accent:#172f28;--ui-canvas:#101c23;--ui-glass:#17272ef2;--ui-shadow:0 12px 40px #0003,0 2px 8px #0002;--ui-radius:12px}
+:root[data-theme="light"]{--ui-text:#192e2c;--ui-muted:#546e68;--ui-panel:#f8fbf7;--ui-control:#edf3ef;--ui-border:#cbdad2;--ui-accent:#376b58;--ui-on-accent:#fff;--ui-canvas:#fff;--ui-glass:#f8fbf7f5;--ui-shadow:0 12px 40px #18362c18,0 2px 8px #18362c12}
+button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--ui-accent);outline-offset:3px}
+select:not([multiple]){appearance:none;-webkit-appearance:none;background-color:var(--ui-control);color:var(--ui-text);border:1px solid var(--ui-border);border-radius:10px;min-height:40px;padding:9px 34px 9px 12px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m5 6 3-3 3 3M5 10l3 3 3-3' fill='none' stroke='%23788d83' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;max-width:100%;text-overflow:ellipsis}
+select:disabled,button:disabled{opacity:.48;cursor:default}
+.ui-select{display:inline-grid;position:relative;min-width:0;max-width:100%;vertical-align:middle;width:100%}
+.ui-select>select.ui-native{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;opacity:0;pointer-events:none;clip-path:inset(50%)}
+.ui-select-button{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;width:100%;min-width:0;min-height:40px;border:1px solid var(--ui-border);border-radius:10px;padding:9px 12px;background:var(--ui-control);color:var(--ui-text);font-size:13px;line-height:1.4;box-shadow:0 1px 2px #00000006}
+.ui-select-button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ui-select-button::after{content:'⌃\a⌄';white-space:pre;line-height:.55;font-size:13px;opacity:.6;flex:none}
+.ui-select-button[aria-expanded=true]{border-color:var(--ui-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--ui-accent) 15%,transparent)}
+.ui-menu{position:fixed;inset:auto;margin:0;padding:6px;border:1px solid var(--ui-border);border-radius:14px;background:var(--ui-glass);color:var(--ui-text);box-shadow:var(--ui-shadow);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:1000;box-sizing:border-box;max-width:calc(100vw - 16px);overflow:hidden}
+.ui-menu[hidden]{display:none!important}.ui-menu-search{width:100%;box-sizing:border-box;border:1px solid var(--ui-border);background:var(--ui-control);color:var(--ui-text);border-radius:9px;padding:9px 11px;margin:0 0 6px;font-size:13px;min-height:40px}
+.ui-menu-list{overflow:auto;overscroll-behavior:contain;max-height:inherit;scrollbar-width:thin}
+.ui-menu-option{display:flex!important;align-items:center;gap:9px;width:100%;border:0!important;border-radius:8px!important;background:transparent;color:var(--ui-text);padding:9px 10px!important;min-height:38px!important;text-align:left;font-size:13px!important;line-height:1.35;white-space:normal;cursor:pointer}
+.ui-menu-option::before{content:'✓';opacity:0;flex:none;width:14px}.ui-menu-option[aria-selected=true]::before{opacity:1}.ui-menu-option[aria-selected=true]{font-weight:600}.ui-menu-option:hover,.ui-menu-option:focus-visible{background:var(--ui-accent);color:var(--ui-on-accent);outline:0}.ui-menu-option:disabled{opacity:.4;background:none;color:var(--ui-muted)}.ui-menu-empty{padding:12px;color:var(--ui-muted);font-size:13px}
+/* One reading measure for headings, prose, lists, tables and interactives. */
+#v-theory{background:var(--ui-panel);color:var(--ui-text)}
+#v-theory.on{grid-template-columns:clamp(220px,18vw,300px) minmax(0,1fr)}
+#v-theory .article{padding:clamp(64px,5vw,88px) clamp(20px,4vw,76px) 64px;font-size:clamp(16px,.95vw,19px);line-height:1.7;scrollbar-gutter:stable;min-width:0}
+#v-theory .article>*{width:100%;max-width:1100px;box-sizing:border-box;margin-inline:auto}
+#v-theory .article :is(p,ul,ol){max-width:1100px;font-size:inherit;line-height:inherit}
+#v-theory .article h1{font:400 clamp(28px,2.1vw,40px)/1.2 Georgia,serif;letter-spacing:-.025em;margin-bottom:28px}
+#v-theory .article h4{font-size:1.08em;margin-top:30px;margin-bottom:8px}
+#v-theory .article .ttab{display:block;overflow:auto;max-width:1100px;font-size:.88em}
+#v-theory .article .widget{max-width:1100px}.article .foot{font-size:12px!important}
+#v-theory .toc{padding:12px 10px}.toc button{border:0;border-radius:10px;margin:3px 0;line-height:1.45;padding:12px}.toc button.on{background:var(--accent-soft);color:var(--ui-accent)}
+#v-theory .thfull{height:auto;width:auto;display:flex;gap:7px;min-height:40px;padding:8px 13px;border-radius:11px;top:12px;right:20px;background:var(--ui-control);color:var(--ui-text)}
+body.theory-focus .top,body.theory-focus #v-theory .toc{display:none}body.theory-focus #v-theory.on{grid-template-columns:minmax(0,1fr)}
+#v-theory:fullscreen,#v-theory:-webkit-full-screen{width:100%;height:100%;background:var(--ui-panel);color:var(--ui-text)}
+#v-theory::backdrop{background:var(--ui-panel)}
+@media(max-width:860px){#v-theory.on{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}#v-theory .toc{display:flex;overflow:auto;border-right:0;border-bottom:1px solid var(--ui-border);gap:6px;padding:10px 14px;scroll-snap-type:x proximity}.toc button{flex:0 0 210px;max-height:74px;margin:0;scroll-snap-align:start}#v-theory .article{padding:64px 20px 40px}#v-theory .thfull{top:100px;right:18px}body.theory-focus #v-theory.on{grid-template-rows:minmax(0,1fr)}body.theory-focus #v-theory .thfull{top:12px}}
+/* The same quiet surfaces and touch targets in both laboratories. */
+.lab-page{--ink:var(--ui-text);--dim:var(--ui-muted);--mint:var(--ui-accent);--panel:var(--ui-panel);--line:var(--ui-border);--fg:var(--ui-text);--muted:var(--ui-muted);--accent:var(--ui-accent);--bg:var(--ui-panel);--stage:var(--ui-canvas);--stage-fg:var(--ui-text);font-size:14px}
+.lab-page body{background:var(--ui-panel);color:var(--ui-text)}
+.lab-page :is(aside,.panel,.transport,.rhythm,.cycle-strip,.lab-tabs,.tabs){background:var(--ui-panel);color:var(--ui-text);border-color:var(--ui-border)}
+.lab-page :is(.viewer,.view){background:var(--ui-canvas)}
+.lab-page :is(h1,h2,.sec h3){font-family:Georgia,serif;font-weight:400;letter-spacing:-.02em}
+.lab-page :is(.lab-tabs,.panel>.tabs){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:12px 0;margin:0 0 16px;border-bottom:1px solid var(--ui-border)}
+.lab-page .panel>.tabs{margin-inline:20px;flex:none}
+.lab-page :is(.lab-tabs,.panel>.tabs) button{border:1px solid var(--ui-border);border-radius:10px;background:var(--ui-control);color:var(--ui-muted);font-size:12px;min-height:40px;margin:0;padding:8px 5px}
+.lab-page :is(.lab-tabs button[aria-selected=true],.panel>.tabs button.on,.views button[aria-pressed=true],.cams button.on){background:var(--ui-accent);color:var(--ui-on-accent);border-color:transparent}
+.lab-page :is(aside,.panel){padding:0 20px 24px}.lab-page .pane{padding:0 0 24px}.lab-page .panel>.tabs{margin-inline:0}
+.lab-page :is(.sec,.lab-box,.source-card){border-color:var(--ui-border);padding-top:18px;margin-top:16px}.lab-page .sec h3{font-size:22px;margin-bottom:14px}
+.lab-page :is(.layers label,.sw){font-size:13px;min-height:42px;gap:12px;color:var(--ui-text)}.lab-page .sw span{font-size:13px}
+.lab-page :is(.layers input[type=checkbox],.sw input){appearance:none;-webkit-appearance:none;width:36px;height:22px;min-width:36px;border:0;border-radius:99px;background:var(--ui-border);position:relative;flex:none;margin:0;cursor:pointer}
+.lab-page :is(.layers input[type=checkbox],.sw input)::after{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 1px 3px #0002;transition:transform .15s}
+.lab-page :is(.layers input[type=checkbox],.sw input):checked{background:var(--ui-accent)}.lab-page :is(.layers input[type=checkbox],.sw input):checked::after{transform:translateX(14px)}
+.lab-page :is(.views,.cams,.phase){background:var(--ui-glass);border:1px solid var(--ui-border);border-radius:14px;padding:5px;box-shadow:0 3px 14px #00000008;color:var(--ui-text)}
+.lab-page .phase{padding:10px 13px}.lab-page .views button,.lab-page .cams button{border:0;border-radius:9px;background:transparent;color:var(--ui-text);min-height:38px;padding:8px 12px;font-size:12px;box-shadow:none;backdrop-filter:none}
+.lab-page .cams{flex-direction:row;flex-wrap:wrap;justify-content:center}.lab-page .hud.tr{top:auto;bottom:66px;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px)}
+.lab-page .brand{align-items:center}.lab-page .brand h1{font-size:27px}.lab-page .brand p{font-size:12px}.lab-page .madeby{display:none}.lab-page .top{min-height:66px;padding:14px 24px;flex-wrap:nowrap}.lab-page .pane .note,.lab-page .lab-note{font-size:12px;line-height:1.65;color:var(--ui-muted)}
+.lab-page :is(.lab-card,.selection,.readout>div){background:var(--ui-control);border-color:var(--ui-border);border-radius:12px;padding:12px}.lab-page .selection{border:1px solid var(--ui-border)}
+.lab-page details>summary{list-style:none;border-radius:10px;background:var(--ui-control);padding:12px 32px 12px 12px;position:relative;color:var(--ui-text);font-size:13px}.lab-page summary::-webkit-details-marker{display:none}.lab-page summary::after{content:'⌄';position:absolute;right:12px;transition:transform .15s}.lab-page details[open]>summary::after{transform:rotate(180deg)}
+.lab-page button:not(.ui-menu-option):not(.ui-select-button){cursor:pointer}.lab-page :is(.playback button,.valve-views button,.btn,.presets button){border-radius:10px;background:var(--ui-control);border:1px solid var(--ui-border);color:var(--ui-text);min-height:38px}
+/* Give the model the viewport; keep the ECG and time controls compact. */
+.lab-page main{max-width:none}.lab-page main:not(.fetal-main) .viewer-title{padding:18px 26px;height:90px}.lab-page main:not(.fetal-main) .viewer-title h1{font-size:30px;margin:6px 0}.lab-page main:not(.fetal-main) #stage,.lab-page main:not(.fetal-main) #label-overlay{inset:88px 0 96px}
+.lab-page main:not(.fetal-main) .views{bottom:45px}.lab-page main:not(.fetal-main) .orientation{bottom:12px}.lab-page main:not(.fetal-main) .viewer-hint{display:none}
+.lab-page .viewer-title{padding-right:180px!important}.lab-page .viewer-title p{font-size:12px;line-height:1.5;max-width:none}
+.lab-page.embedded main:not(.fetal-main) .rhythm{min-height:110px;padding:12px 24px;gap:24px;grid-template-columns:260px minmax(0,1fr)}.lab-page.embedded main:not(.fetal-main) .rhythm #ecg{height:64px}.lab-page.embedded main:not(.fetal-main) .rhythm .ecg-wrap p{display:none}
+.lab-page.embedded main:not(.fetal-main) .cycle-strip{padding:8px 24px}.lab-page #phase-timeline{height:32px;margin-bottom:5px}.lab-page #phase-timeline button{font-size:10px;background:var(--ui-control);color:var(--ui-text);border:1px solid var(--ui-border)}.lab-page #phase-timeline button.active{background:var(--ui-accent);color:var(--ui-on-accent)}
+.lab-focus-button{position:absolute;top:18px;right:20px;z-index:8;display:flex;align-items:center;gap:7px;border:1px solid var(--ui-border);border-radius:11px;background:var(--ui-glass);color:var(--ui-text);padding:9px 12px;font-size:12px;min-height:40px;box-shadow:0 2px 8px #00000006}.lab-focus-button:focus-visible{outline:3px solid var(--ui-accent)}
+.lab-page .view>.lab-focus-button{top:12px;right:12px}.lab-page .hud.tl{right:180px}
+.lab-focus-target.is-model-focus{position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important;min-height:0!important;max-height:none!important;z-index:100!important;background:var(--ui-canvas)}
+.lab-focus-target:fullscreen{background:var(--ui-canvas);width:100%;height:100dvh}.lab-focus-target::backdrop{background:var(--ui-canvas)}
+.lab-host-focus .top,.lab-host-focus .anatomy-nav,.lab-host-focus .lab-isolation{display:none!important}.lab-host-focus #v-heart,.lab-host-focus #v-anat{position:fixed;inset:0;z-index:90;height:100dvh!important}.lab-host-focus iframe:not([hidden]){height:100dvh!important;min-height:0!important}
+@media(min-width:901px) and (max-height:850px){.lab-page main:not(.fetal-main) .viewer-title{height:70px;padding-top:12px}.lab-page main:not(.fetal-main) .viewer-title .eyebrow{display:none}.lab-page main:not(.fetal-main) .viewer-title h1{font-size:26px}.lab-page main:not(.fetal-main) #stage,.lab-page main:not(.fetal-main) #label-overlay{inset:72px 0 90px}.lab-page .lab-focus-button{top:12px}.lab-page.embedded main:not(.fetal-main) .cycle-strip{padding-block:6px}.lab-page .rhythm-controls>.eyebrow{display:none}}
+@media(max-width:960px){.lab-page .layout{display:block}.lab-page .panel{padding:0 20px 24px}.lab-page .brand p{display:none}.lab-page .top{min-height:60px}.lab-page .view{height:65vh;min-height:400px}}
+@media(max-width:900px){.lab-page main:not(.fetal-main) .viewer{height:max(540px,76dvh)}.lab-page .viewer-title{padding-right:24px!important}.lab-page .viewer-title p{max-width:calc(100% - 12px);font-size:11px}.lab-page main:not(.fetal-main) #stage,.lab-page main:not(.fetal-main) #label-overlay{inset:128px 0 102px}.lab-page .viewer>.lab-focus-button{top:87px;right:16px;min-height:36px}.lab-page.embedded main:not(.fetal-main) .rhythm{grid-template-columns:1fr}.lab-page .rhythm-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}.lab-page .rhythm-controls>.eyebrow{display:none}.lab-page .rhythm .ecg-wrap{margin-top:0}.lab-page .transport{gap:8px;flex-wrap:wrap}.lab-page .speed{flex-basis:120px}}
+@media(max-width:570px){.lab-page .views{max-width:calc(100% - 24px);gap:0;padding:4px}.lab-page .views button{padding:8px;font-size:11px}.lab-page .orientation span{display:none}.lab-page .orientation{justify-content:center}.lab-page .lab-tabs{grid-template-columns:repeat(3,1fr)}.lab-page .rhythm-controls{grid-template-columns:1fr}.lab-page .hud.tl{right:12px;top:62px}.lab-page .cams button{padding:7px 9px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+@media(max-width:860px){#v-theory .toc{height:86px;align-items:stretch}#v-theory .toc button{flex:0 0 210px;white-space:normal;min-width:0;max-height:64px;padding:10px 12px}}
+/* Toolbar selects occupy their content width, not a whole toolbar row. */
+.tools>.ui-select,.cmphead>.ui-select{width:auto;flex:1;min-width:120px}.tools>.ui-select{max-width:240px}
+#v-theory .toc{scrollbar-width:none}#v-theory .toc::-webkit-scrollbar{display:none}
+@media(max-width:900px){.lab-page .viewer>.lab-focus-button{top:118px}.lab-page main:not(.fetal-main) #stage,.lab-page main:not(.fetal-main) #label-overlay{inset:160px 0 102px}}
+.ui-select[hidden]{display:none!important}.bar .ctrls>.ui-select{width:190px;flex:0 1 190px}.bar .ui-select-button{min-height:34px;padding:6px 10px;font-size:12.5px}
