@@ -52,7 +52,7 @@ function movingMaterial(mat,region=0){
 const cutPlane=new T.Plane(new T.Vector3(0,0,-1),.12);
 let view='surface',selected=null,loaded=false,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,slow=false,t=4500,lastTime=0,available=true;
 const orbit={theta:.10,phi:1.43,r:9.2,target:new T.Vector3(.12,.24,0)};
-function updateCamera(){camera.position.set(orbit.target.x+orbit.r*Math.sin(orbit.phi)*Math.sin(orbit.theta),orbit.target.y+orbit.r*Math.cos(orbit.phi),orbit.target.z+orbit.r*Math.sin(orbit.phi)*Math.cos(orbit.theta));camera.lookAt(orbit.target);}
+function updateCamera(){const compact=document.documentElement.classList.contains("embedded")&&stage.clientWidth>600&&stage.clientHeight<600,target=orbit.target.clone(),r=orbit.r*(compact?1.12:1);if(compact)target.y-=.24;camera.position.set(target.x+r*Math.sin(orbit.phi)*Math.sin(orbit.theta),target.y+r*Math.cos(orbit.phi),target.z+r*Math.sin(orbit.phi)*Math.cos(orbit.theta));camera.lookAt(target);}
 const description={surface:'Camere, coronarie e vene: le strutture dell’atlante nello stesso spazio.',section:'Una sezione delle pareti rende visibili cavità, lembi e muscoli papillari.',valves:'Quattro apparati valvolari ricostruiti e animati; apertura e coaptazione modificabili.',conduction:'Vie elettriche illustrative aggiunte al modello: il tracciato guida l’animazione.'};
 function applyView(){
  for(const mesh of meshes){
