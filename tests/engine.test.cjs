@@ -27,7 +27,7 @@ test('Quiz clinici con dati pertinenti e immagini approvate senza figure teorich
   assert.equal(valves.length, 6);
   for (const sc of valves) assert.ok(Q.context(sc).includes(sc.card.soffio));
   const images = D.ATLAS.filter(a => a.quizApproved);
-  assert.equal(images.length, 6);
+  assert.equal(images.length, 78); // Approved atlas already present on main before the anatomical integration.
   assert.equal(D.ATLAS.find(a => a.id === 'lett020').quizApproved, false);
   for (const a of images) {
     assert.ok(byId[a.q]);

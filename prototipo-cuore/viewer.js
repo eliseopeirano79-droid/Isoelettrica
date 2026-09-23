@@ -103,6 +103,7 @@ new T.GLTFLoader().load('heart-z-anatomy.glb',gltf=>{
   Object.assign(o.userData,{sourceName:name,layer,label:sourceLabels[name]||name});meshes.push(o);
  });
  anatomy.add(gltf.scene);
+ if(window.HeartAtlasGeometry){const join=HeartAtlasGeometry.junctionMesh();join.material=movingMaterial(join.material);anatomy.add(join);meshes.push(join);}
  const sorted=[...meshes].sort((a,b)=>a.userData.label.localeCompare(b.userData.label,'it'));
  for(const m of sorted){const option=document.createElement('option');option.value=m.uuid;option.textContent=m.userData.label;$('part').appendChild(option);}
  loaded=true;$('load').hidden=true;if(lab)lab.loaded();applyView();
@@ -131,7 +132,7 @@ function resetRhythm(){const sc=scenarios[$('rhythm').value];const params=Object
 resetRhythm();
 function animateHeart(){
  stream.ensure(t+500);stream.prune(t-6500);
- const ev=stream.eventsAround(t),motion=lab?lab.motion(ev,t,cfg):HeartPreviewMotion.sample(ev,t,cfg),{da,dv}=motion;
+ const clock=window.CardiacClock?CardiacClock.read(stream,t,cfg):null,ev=clock?clock.events:stream.eventsAround(t),motion=lab?lab.motion(ev,t,cfg):HeartPreviewMotion.sample(ev,t,cfg),{da,dv}=motion;
  uniforms.uAtr.value=motion.atr;uniforms.uVent.value=motion.vent;uniforms.uFibr.value=motion.fibr;uniforms.uTime.value=t;
  if(lab){lab.animate(t,ev,cfg,motion);return;}
  const isAsystole=$('rhythm').value==='asistolia';
@@ -158,6 +159,7 @@ function drawECG(){
  ctx.beginPath();ctx.strokeStyle='#b4dfc0';ctx.lineWidth=1.5;
  for(let x=0;x<=w;x+=2){const tau=t-4200+x/w*4200;stream.vec(tau,vec);stream.leads(tau,vec,leads);const y=h*.62-leads[1]*32;x?ctx.lineTo(x,y):ctx.moveTo(x,y);}
  ctx.stroke();
+ ctx.strokeStyle='#e4c680';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(w-1,0);ctx.lineTo(w-1,h);ctx.stroke();
 }
 function resize(){
  const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<600?43:35;camera.updateProjectionMatrix();
@@ -191,13 +193,13 @@ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();a
 document.addEventListener('visibilitychange',()=>{lastTime=0;});
 function frame(now){
  requestAnimationFrame(frame);
- if(document.hidden||!available)return;
+ if(document.hidden||!available||window.IsoLabEmbedded?.active===false){lastTime=0;return;}
  if(lastTime&&playing)t+=Math.min(80,now-lastTime)*(slow?.25:1);lastTime=now;
  animateHeart();updateCamera();renderer.render(scene,camera);
  if(now-lastTrace>33){drawECG();lastTrace=now;}
 }
 const api={T,scene,camera,stage,anatomy,circuit,meshes,paths,nodes,uniforms,sourceLabels,movingMaterial,selectPart,applyView,setView,
- get view(){return view;},get selected(){return selected;},get time(){return t;},get stream(){return stream;},get config(){return cfg;},
+ get clock(){return window.CardiacClock?CardiacClock.read(stream,t,cfg):null;},get view(){return view;},get selected(){return selected;},get time(){return t;},get stream(){return stream;},get config(){return cfg;},
  resetRhythm, pause(){playing=false;updatePlayback();},seek(value){t=value;animateHeart();drawECG();},
  addMesh(mesh,id,label,layer,origin='Ricostruzione didattica'){
   mesh.userData={...mesh.userData,sourceName:id,label,layer,origin};meshes.push(mesh);

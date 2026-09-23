@@ -26,7 +26,7 @@ La fonte non contiene i lembi anteriori mitralico e tricuspidale; i nove lembi s
 
 La collezione di conduzione della fonte è vuota. Nodi, His, branche, Bachmann e dodici rami di Purkinje sono ricostruzioni indicative. Lo stesso vale per Botallo e i cinque marcatori di apice, setti, fossa ovale ed endocardio. I marcatori nominano punti, non superfici segmentate di quelle strutture.
 
-Il laboratorio consente 86 selezioni: 30 oggetti della fonte visibili più 56 ricostruzioni o riferimenti. Questo numero non misura la completezza anatomica. Non comprende ogni vaso, strato, variante o struttura microscopica del cuore.
+Il laboratorio consente 87 selezioni: 30 oggetti della fonte visibili più 57 ricostruzioni o riferimenti. Questo numero non misura la completezza anatomica. Non comprende ogni vaso, strato, variante o struttura microscopica del cuore.
 
 Contrazione, torsione, restringimenti coronarici e colori tissutali sono visualizzazioni qualitative. Le sezioni non generano superfici di taglio chiuse. Non esiste ancora un allineamento validato ai 17 segmenti cardiaci, ai dispositivi dell’app o ai territori perfusionali. Non sono simulati pressioni, stress meccanici, flussi fisici, rigurgiti o accoppiamento tissutale-elettrofisiologico completo.
 
@@ -40,3 +40,11 @@ I riferimenti orientano topologia e fasi; non validano il simulatore né fornisc
 - Circolazione fetale: https://openstax.org/books/anatomy-and-physiology-2e/pages/20-6-development-of-blood-vessels-and-fetal-circulation
 - Percorsi sistemici e portali: https://openstax.org/books/anatomy-and-physiology-2e/pages/20-5-circulatory-pathways
 - Dotto arterioso pervio: https://www.msdmanuals.com/professional/pediatrics/congenital-cardiovascular-anomalies/patent-ductus-arteriosus-pda
+
+## Integrazione nell’app — 23 settembre 2026
+
+Il GLB è identico al file approvato. `atlas-geometry.js` aggiunge una parete di raccordo tra il margine distale del tronco e i margini prossimali delle due arterie polmonari. La superficie ha tre aperture, non tappa il lume, e conserva i margini originali. Forma interpolata, da revisionare anatomicamente; non proviene dalla segmentazione sorgente.
+
+`atlas-coronary-map.json` deriva dalle curve e dalle superfici sopra citate, con la stessa licenza CC BY-SA 4.0. Lo strumento `tools/build-atlas-map.cjs` rende riproducibile la mappatura per la sezione Coronarie. Le superfici originali sono suddivise per la sola colorazione; i rami minuti sono attribuiti per prossimità ai percorsi. Ramo del nodo del seno, ramo del nodo AV, PDA, ramo intermedio e due settali posteriori hanno percorsi ricostruiti e indicativi. La fonte non identifica singolarmente ogni ramo del laboratorio clinico preesistente. Non è una mappatura anatomica o perfusionale validata.
+
+Il ventricolo sinistro è ripartito geometricamente in 17 territori per mantenere i controlli esistenti. Nomi e orientamento seguono il modello AHA; asse, confini e corrispondenze arteriose sono approssimazioni di visualizzazione. Fonte primaria: [AHA, Standardized Myocardial Segmentation, 2002](https://www.ahajournals.org/doi/pdf/10.1161/hc0402.102975?download=true). Le arterie di irrorazione variano fra individui. Non sono state modificate le spiegazioni cliniche e le corrispondenze preesistenti dell’app.
