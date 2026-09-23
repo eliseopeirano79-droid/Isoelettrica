@@ -11,7 +11,7 @@ function pulmonaryJunction(){
  const normal=new T.Vector3().crossVectors(centers[1].clone().sub(centers[0]),centers[2].clone().sub(centers[0])).normalize();if(normal.y<0)normal.negate();
  const ref=centers[0].clone().sub(center).normalize(),side=new T.Vector3().crossVectors(normal,ref);
  const order=[0,1,2].sort((a,b)=>Math.atan2(centers[a].clone().sub(center).dot(side),centers[a].clone().sub(center).dot(ref))-Math.atan2(centers[b].clone().sub(center).dot(side),centers[b].clone().sub(center).dot(ref)));
- let pos=[center.clone().addScaledVector(normal,.21),center.clone().addScaledVector(normal,-.21)],faces=[],ends=[];const pinned=new Set();
+ let pos=[center.clone().addScaledVector(normal,.21),center.clone().addScaledVector(normal,-.21)],faces=[],ends=[];const pinned=new Set([0,1]);
  for(const k of order){
   const r=RINGS[k].map(V),c=centers[k],tangent=new T.Vector3().crossVectors(normal,c.clone().sub(center)).normalize();
   let lo=0,hi=0;r.forEach((p,i)=>{if(p.clone().sub(c).dot(tangent)<r[lo].clone().sub(c).dot(tangent))lo=i;if(p.clone().sub(c).dot(tangent)>r[hi].clone().sub(c).dot(tangent))hi=i;});
@@ -29,7 +29,9 @@ function pulmonaryJunction(){
   const cache=new Map(),mid=(a,b)=>{let key=[Math.min(a,b),Math.max(a,b)].join(':');if(!cache.has(key)){const i=pos.length;pos.push(pos[a].clone().add(pos[b]).multiplyScalar(.5));if(edgeCount.get(key)===1)pinned.add(i);cache.set(key,i);}return cache.get(key);};
   const next=[];for(const [a,b,c] of faces){const ab=mid(a,b),bc=mid(b,c),ca=mid(c,a);next.push([a,ab,ca],[ab,b,bc],[ca,bc,c],[ab,bc,ca]);}faces=next;
   const neighbors=pos.map(()=>new Set());for(const f of faces)for(let i=0;i<3;i++){neighbors[f[i]].add(f[(i+1)%3]);neighbors[f[(i+1)%3]].add(f[i]);}
-  for(let s=0;s<4;s++){const copy=pos.map(p=>p.clone());for(let i=0;i<pos.length;i++)if(!pinned.has(i)){const mean=new T.Vector3();neighbors[i].forEach(j=>mean.add(copy[j]));pos[i].lerp(mean.divideScalar(neighbors[i].size),.35);}}
+  // Taubin smoothing avoids the shrinkage of repeated positive Laplacian steps.
+  // Opposing hub anchors preserve the lumen height; all source seams stay fixed.
+  for(const factor of [.5,-.53,.5,-.53]){const copy=pos.map(p=>p.clone());for(let i=0;i<pos.length;i++)if(!pinned.has(i)){const mean=new T.Vector3();neighbors[i].forEach(j=>mean.add(copy[j]));pos[i].lerp(mean.divideScalar(neighbors[i].size),factor);}}
  }
  // Orient the connected faces consistently (the three source loops have
  // independent winding), then choose outward orientation at the upper wall.

@@ -43,6 +43,7 @@ function app(options = {}) {
   w.ISO_SOLO_LINEE_GUIDA = !!options.onlyGuidelines;
   if (options.records) w.ISO_REALE = options.records;
   for (const f of ['three.min.js', 'engine.js', 'ipertrofie.js', 'data.js', 'atlante-digitale.js', 'ptbxl.js', 'quiz.js']) w.eval(read(f));
+  if(options.conduction)w.eval(read('conduction-model.js'));
   if (options.renderer) w.THREE.WebGLRenderer = class {
     constructor() { this.domElement=w.document.createElement('canvas'); }
     setPixelRatio() {} setSize() {} render() {}

@@ -160,7 +160,7 @@ dd{margin:0;color:var(--muted)}
 .madeby{font-size:11px;opacity:.6;margin-left:10px;white-space:nowrap}
 @media (max-width:860px){.madeby{display:none}}
 </style>
-<link rel="stylesheet" href="atlas-theme.css?v=43.0"><script src="lab-embed.js?v=43.0"></script>
+<link rel="stylesheet" href="atlas-theme.css?v=44.0"><script src="lab-embed.js?v=44.0"></script>
 </head>
 <body>
 <div class="app">
@@ -899,6 +899,7 @@ $('#speed').value=speed;$('#speed').addEventListener('input',e=>{speed=+e.target
 let lastSaved='';
 function saveState(){try{const s=JSON.stringify({layers,waveVis,vec,speed,selLead,editWave,theme:document.documentElement.getAttribute('data-theme')});if(s!==lastSaved){localStorage.setItem(STORE,s);lastSaved=s;}}catch(e){}}
 setInterval(saveState,2000);document.addEventListener('visibilitychange',saveState);window.addEventListener('pagehide',saveState);
+window.addEventListener('iso-theme',()=>onTheme());
 function onTheme(){readVars();scene.background.set(css.stage);drawStatic();}
 $('#themeBtn').addEventListener('click',()=>{const r=document.documentElement;const dark=getComputedStyle(r).getPropertyValue('color-scheme').trim()==='dark';r.setAttribute('data-theme',dark?'light':'dark');onTheme();});
 if(window.matchMedia){const mq=window.matchMedia('(prefers-color-scheme: dark)');(mq.addEventListener?mq.addEventListener('change',onTheme):mq.addListener(onTheme));}

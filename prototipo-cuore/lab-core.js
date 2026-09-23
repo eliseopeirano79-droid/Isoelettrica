@@ -33,7 +33,7 @@ function configure(cfg,p,E){const out={...cfg};if(!cfg.mode&&!cfg.av){out.rate=6
  return out;
 }
 function sample(ev,t,cfg,p){
- const da=ev.A?t-ev.A.t:Infinity,dv=ev.V?t-ev.V.t:Infinity,T=total(p),d=phases.map(([id])=>p['phase.'+id]);
+ const da=ev.A?t-ev.A.t:Infinity,dv=ev.V?t-ev.V.t:Infinity,baseT=total(p),rr=ev.V?.meta.rr,T=cfg.isoClinical&&Number.isFinite(rr)&&rr>0?rr:baseT,d=phases.map(([id])=>p['phase.'+id]*T/baseT);
  const silent=cfg.mode==='continuous'&&!cfg.cont,vf=cfg.cont==='vf';
  let x=dv+d[0],phase=6,u=1;
  if(!cfg.av&&Number.isFinite(dv))x=((x%T)+T)%T;
@@ -49,7 +49,7 @@ function sample(ev,t,cfg,p){
   valves[id]=p['valve.'+id+'.gap']+(p['valve.'+id+'.open']-p['valve.'+id+'.gap'])*opening;
  }
  if(silent||vf||!ev.V){vent=0;for(const id of Object.keys(valves))valves[id]=null;}
- if(silent||vf)atr=0;
+ if(silent||vf||cfg.cont==='af'||cfg.cont==='flutter'||cfg.atrial==='af')atr=0;
  return {da,dv,phase,u,atr,vent,fibr:vf?1:0,valves,total:T,silent};
 }
 function fresh(){return {format:'isoelettrica-heart-lab',version:1,params:defaults(),regions:[],occlusions:[],structures:{}};}

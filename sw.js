@@ -1,13 +1,13 @@
 /* Isoelettrica: shell coerente per versione e archivio offline separato. */
 'use strict';
-const VERSION = '43.0';
+const VERSION = '44.0';
 const PREFIX = 'isoelettrica-', CACHE = PREFIX + 'v' + VERSION, ASSETS = PREFIX + 'assets-v1';
 const BASE = new URL('./', self.location.href);
 const Q = '?v=' + VERSION;
 const CORE = ['./', './index.html', './anatomia.html', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './manifest.webmanifest' + Q]
-  .concat(['app.js', 'engine.js', 'quiz.js', 'ipertrofie.js', 'data.js', 'atlante-digitale.js', 'ptbxl.js', 'three.min.js', 'cuore3d.js', 'coronarie.js', 'gltfloader.js', 'atlas-geometry.js', 'heart-atlas.js', 'cardiac-clock.js', 'anatomy-host.js', 'lab-embed.js', 'atlas-theme.css'].map(f => './' + f + Q))
+  .concat(['app.js', 'engine.js', 'quiz.js', 'ipertrofie.js', 'data.js', 'atlante-digitale.js', 'ptbxl.js', 'three.min.js', 'cuore3d.js', 'coronarie.js', 'gltfloader.js', 'atlas-geometry.js', 'heart-atlas.js', 'cardiac-clock.js', 'anatomy-host.js', 'lab-embed.js', 'atlas-theme.css','conduction-model.js','conduction-view.js','pathology-catalog.js'].map(f => './' + f + Q))
   .concat(['three.min.js','gltfloader.js','engine.js','data.js'].map(f=>'./'+f))
-  .concat(['index.html','fetale.html','style.css','viewer.js','lab-core.js','lab.js','motion.js','fetal-core.js','fetal.js','heart-z-anatomy.glb','atlas-coronary-map.json','coronary-paths.json','ATTRIBUZIONI.md','SOURCE-LICENSE.txt'].map(f=>'./prototipo-cuore/'+f));
+  .concat(['index.html','fetale.html','style.css','viewer.js','pathology-ui.js','lab-core.js','lab.js','motion.js','fetal-core.js','fetal.js','heart-z-anatomy.glb','atlas-coronary-map.json','coronary-paths.json','ATTRIBUZIONI.md','SOURCE-LICENSE.txt'].map(f=>'./prototipo-cuore/'+f));
 const absolute = u => new URL(u, BASE).href;
 const own = u => u.origin === BASE.origin && u.pathname.startsWith(BASE.pathname);
 const asset = u => /\.(jpg|jpeg|png|gif|webp|svg|woff2?|ttf)$/i.test(u.pathname) || u.pathname.includes('/atlante-reale/');

@@ -24,6 +24,7 @@ test('ECG and Coronarie share the full atlas; all 17 existing territory controls
  assert.ok(b.rv.geometry.attributes.position.count>0);for(const id of map.keys){assert.ok(b.coro[id]?.material);const v=ctx.ISO_CUORE.CORO[id].via;assert.ok(v.length>1&&v.every(p=>p.length===4&&p[3]==='w'&&p.slice(0,3).every(Number.isFinite)),id);}
  for(const [name,faces]of Object.entries(map.faces)){assert.ok(faces.length>0);assert.ok(faces.every(i=>i>=0&&i<map.keys.length));}
  assert.equal(map.sourceSha256,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'prototipo-cuore/heart-z-anatomy.glb'))).digest('hex'));
+ b.setTissueOpacity(.2,true);for(const m of b.meshes){if(m.userData.layer==='coronaries'){assert.equal(m.material.opacity,1);assert.equal(m.material.depthTest,false);}else assert.equal(m.material.opacity,.2);}for(const id of map.reconstructed)assert.equal(b.coro[id].material.depthTest,false,id);b.setTissueOpacity(1,false);assert.ok(b.meshes.every(m=>m.material.opacity===1&&m.material.depthTest));
  const original=await model();assert.equal(G.sourceMeshes(original.scene).length,39);a.setOpacity(1);assert.ok(a.meshes.every(m=>!m.material.transparent&&m.material.depthWrite));
 });
 test('Navigation preserves the old vector laboratory and adds separate adult/fetal pages',()=>{

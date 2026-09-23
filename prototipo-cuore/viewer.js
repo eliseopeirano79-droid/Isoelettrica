@@ -60,9 +60,10 @@ function applyView(){
   mesh.visible=$(layer).checked;
   let opacity=1;
   if(layer==='wall' && view==='valves')opacity=.055;
-  if(layer==='wall' && view==='conduction')opacity=.11;
+  if(layer==='wall' && view==='conduction')opacity=.065;
+  if(layer==='valves' && view==='conduction')opacity=.15;
   if(layer==='vessels' && (view==='valves'||view==='conduction'))opacity=.10;
-  m.opacity=opacity;m.transparent=opacity<1;m.depthWrite=opacity===1;
+  m.opacity=opacity;m.transparent=opacity<1||layer==='conduction';m.depthWrite=opacity===1&&layer!=='conduction';
   m.clippingPlanes=layer==='wall'&&view==='section'?[cutPlane]:[];
   m.needsUpdate=true;
  }
@@ -106,35 +107,20 @@ new T.GLTFLoader().load('heart-z-anatomy.glb',gltf=>{
  if(window.HeartAtlasGeometry){const join=HeartAtlasGeometry.junctionMesh();join.material=movingMaterial(join.material);anatomy.add(join);meshes.push(join);}
  const sorted=[...meshes].sort((a,b)=>a.userData.label.localeCompare(b.userData.label,'it'));
  for(const m of sorted){const option=document.createElement('option');option.value=m.uuid;option.textContent=m.userData.label;$('part').appendChild(option);}
- loaded=true;$('load').hidden=true;if(lab)lab.loaded();applyView();
+ loaded=true;$('load').hidden=true;if(lab)lab.loaded();applyView();document.dispatchEvent(new Event('iso-atlas-loaded'));
 },undefined,error=>{$('load').textContent='Il modello non è stato caricato. Ricarica la pagina per riprovare.';console.error('Heart asset load failed',error);});
-// Approximate landmarks in the atlas coordinate frame. These are deliberately
-// labelled illustrative; the source atlas has no conduction geometry.
-const SA=[-.82,.79,-.12],AV=[-.29,-.12,.04],HIS=[.0,-.28,.27],RV=[.36,-.95,.73],LV=[.91,-1.04,.2];
-function addPath(kind,points){
- const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p)));
- const tube=new T.Mesh(new T.TubeGeometry(curve,48,.012,6,false),movingMaterial(new T.MeshBasicMaterial({color:'#c3a05d',transparent:true,opacity:.66,depthWrite:false,depthTest:false})));tube.renderOrder=5;circuit.add(tube);
- const spark=new T.Mesh(new T.SphereGeometry(.034,10,8),new T.MeshBasicMaterial({color:'#fff0b4',depthTest:false}));spark.renderOrder=6;circuit.add(spark);
- paths.push({kind,curve,spark,tube});
-}
-addPath('atr',[SA,[-.68,.40,.25],[-.48,.10,.20],AV]);
-addPath('atr',[SA,[-.21,.71,-.23],[.3,.48,-.48]]);
-addPath('his',[AV,[-.12,-.19,.16],HIS]);
-addPath('branch',[HIS,[.12,-.56,.48],RV]);
-addPath('branch',[HIS,[.35,-.48,.25],LV]);
-addPath('branch',[HIS,[.29,-.53,-.08],[.61,-.83,-.25]]);
-for(const [key,p] of [['Nodo senoatriale',SA],['Nodo AV',AV]]){
- const node=new T.Mesh(new T.SphereGeometry(.054,16,12),new T.MeshBasicMaterial({color:'#e8ce88',depthTest:false}));node.position.set(...p);node.renderOrder=7;circuit.add(node);nodes.push(node);
-}
+// One registered graph shared with the ECG view, in unscaled atlas coordinates.
+const electrical=IsoConductionView.create({material:m=>movingMaterial(m),deform:p=>lastMotion?new T.Vector3(...HeartLabCore.deformPoint(p.toArray(),lastMotion,lab.parameters,[],0,t)):p});
+circuit.add(electrical.group);electrical.xray(true);
 const scenarios=Object.fromEntries(ISO_DATA.SCENARIOS.map(sc=>[sc.id,sc]));
-let stream,cfg;
-function resetRhythm(){const sc=scenarios[$('rhythm').value];const params=Object.fromEntries(sc.params.map(p=>[p.k,p.def]));cfg=sc.build(params);if(lab)cfg=lab.configure(cfg);stream=new ECG.Stream(cfg,17);t=4500;stream.ensure(t+1000);}
+let stream,cfg,clinicalCase=null,clinicalParams={},lastMotion=null;
+function resetRhythm(){const sc=scenarios[clinicalCase||$('rhythm').value];const params={...Object.fromEntries(sc.params.map(p=>[p.k,p.def])),...clinicalParams};cfg=IsoConduction.configure(sc.id,sc.build(params),params);if(clinicalCase)cfg.isoClinical=true;if(lab&&!clinicalCase)cfg=lab.configure(cfg);stream=new ECG.Stream(cfg,17);t=4500;stream.ensure(t+1000);}
 resetRhythm();
 function animateHeart(){
  stream.ensure(t+500);stream.prune(t-6500);
  const clock=window.CardiacClock?CardiacClock.read(stream,t,cfg):null,ev=clock?clock.events:stream.eventsAround(t),motion=lab?lab.motion(ev,t,cfg):HeartPreviewMotion.sample(ev,t,cfg),{da,dv}=motion;
- uniforms.uAtr.value=motion.atr;uniforms.uVent.value=motion.vent;uniforms.uFibr.value=motion.fibr;uniforms.uTime.value=t;
- if(lab){lab.animate(t,ev,cfg,motion);return;}
+ lastMotion=motion;uniforms.uAtr.value=motion.atr;uniforms.uVent.value=motion.vent;uniforms.uFibr.value=motion.fibr;uniforms.uTime.value=t;
+ if(lab){lab.animate(t,ev,cfg,motion);const electric=electrical.update(clock,cfg);if(view==='conduction'&&$('phase').textContent!==electric.phase)$('phase').textContent=electric.phase;return;}
  const isAsystole=$('rhythm').value==='asistolia';
  let phase=isAsystole?'Asistolia · nessuna contrazione':cfg.cont==='vf'?'FV · nessuna contrazione organizzata':uniforms.uVent.value>.05?'Sistole ventricolare':uniforms.uAtr.value>.05?'Contrazione atriale':'Diastole';
  if(cfg.av==='III')phase+=' · dissociazione AV';
@@ -154,9 +140,9 @@ const ecg=$('ecg'),ctx=ecg.getContext('2d'),vec=[0,0,0],leads=new Array(12);
 let ecgWidth=0,ecgHeight=84,lastTrace=0;
 function drawECG(){
  const w=ecgWidth,h=ecgHeight;if(!w)return;ctx.clearRect(0,0,w,h);
- ctx.strokeStyle='#203931';ctx.lineWidth=.5;ctx.beginPath();
+ const light=document.documentElement.dataset.theme==='light';ctx.strokeStyle=light?'#d6e2d9':'#203931';ctx.lineWidth=.5;ctx.beginPath();
  for(let x=0;x<w;x+=16){ctx.moveTo(x,0);ctx.lineTo(x,h);}for(let y=0;y<h;y+=16){ctx.moveTo(0,y);ctx.lineTo(w,y);}ctx.stroke();
- ctx.beginPath();ctx.strokeStyle='#b4dfc0';ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.strokeStyle=light?'#214a3a':'#b4dfc0';ctx.lineWidth=1.5;
  for(let x=0;x<=w;x+=2){const tau=t-4200+x/w*4200;stream.vec(tau,vec);stream.leads(tau,vec,leads);const y=h*.62-leads[1]*32;x?ctx.lineTo(x,y):ctx.moveTo(x,y);}
  ctx.stroke();
  ctx.strokeStyle='#e4c680';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(w-1,0);ctx.lineTo(w-1,h);ctx.stroke();
@@ -179,13 +165,13 @@ function endPointer(e){
 stage.addEventListener('pointerup',endPointer);stage.addEventListener('pointercancel',endPointer);
 stage.addEventListener('wheel',e=>{e.preventDefault();orbit.r=Math.max(3,Math.min(13,orbit.r*Math.exp(e.deltaY*.001)));},{passive:false});
 stage.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-','=','Home'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')orbit.theta-=.1;if(e.key==='ArrowRight')orbit.theta+=.1;if(e.key==='ArrowUp')orbit.phi=Math.max(.15,orbit.phi-.1);if(e.key==='ArrowDown')orbit.phi=Math.min(3,orbit.phi+.1);if(e.key==='+'||e.key==='=')orbit.r=Math.max(3,orbit.r-.4);if(e.key==='-')orbit.r=Math.min(13,orbit.r+.4);if(e.key==='Home')resetCamera();});
-function resetCamera(){orbit.theta=.10;orbit.phi=1.43;orbit.r=9.2;}
+function resetCamera(){orbit.theta=.10;orbit.phi=1.43;orbit.r=9.2;orbit.target.set(.12,.24,0);}
 $('reset').addEventListener('click',resetCamera);
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 Object.keys(layerLabels).forEach(k=>$(k).addEventListener('change',applyView));
 $('cut').addEventListener('input',()=>{cutPlane.constant=Number($('cut').value);});
 $('part').addEventListener('change',()=>{const m=meshes.find(o=>o.uuid===$('part').value);if(m){$(m.userData.layer).checked=true;applyView();}selectPart(m||null);});
-$('rhythm').addEventListener('change',()=>{resetRhythm();drawECG();});
+$('rhythm').addEventListener('change',()=>{clinicalCase=$('rhythm').value==='normale'?null:$('rhythm').value;clinicalParams={};resetRhythm();drawECG();});
 function updatePlayback(){$('play').setAttribute('aria-pressed',String(playing));$('play').textContent=playing?'Ⅱ Pausa':'▶ Riprendi';}
 $('play').addEventListener('click',()=>{playing=!playing;updatePlayback();});updatePlayback();
 $('slow').addEventListener('click',()=>{slow=!slow;$('slow').setAttribute('aria-pressed',String(slow));$('slow').textContent=slow?'¼× Attivo':'¼× Rallenta';});
@@ -198,13 +184,16 @@ function frame(now){
  animateHeart();updateCamera();renderer.render(scene,camera);
  if(now-lastTrace>33){drawECG();lastTrace=now;}
 }
-const api={T,scene,camera,stage,anatomy,circuit,meshes,paths,nodes,uniforms,sourceLabels,movingMaterial,selectPart,applyView,setView,
+const api={T,scene,camera,stage,anatomy,circuit,meshes,paths,nodes,electrical,uniforms,sourceLabels,movingMaterial,selectPart,applyView,setView,
  get clock(){return window.CardiacClock?CardiacClock.read(stream,t,cfg):null;},get view(){return view;},get selected(){return selected;},get time(){return t;},get stream(){return stream;},get config(){return cfg;},
+ focusConduction(){orbit.r=3.8;orbit.theta=.1;orbit.phi=1.55;orbit.target.set(-.2,-.2,.1);updateCamera();},
+ setClinicalCase(id,params={}){clinicalCase=scenarios[id]?id:null;clinicalParams={...params};if(clinicalCase&&!Array.from($('rhythm').options).some(o=>o.value===id)){const o=document.createElement('option');o.value=id;o.textContent=scenarios[id].name;$('rhythm').append(o);}if(clinicalCase)$('rhythm').value=id;resetRhythm();},
+ clearClinicalCase(){clinicalCase=null;clinicalParams={};$('rhythm').value='normale';resetRhythm();},
  resetRhythm, pause(){playing=false;updatePlayback();},seek(value){t=value;animateHeart();drawECG();},
  addMesh(mesh,id,label,layer,origin='Ricostruzione didattica'){
   mesh.userData={...mesh.userData,sourceName:id,label,layer,origin};meshes.push(mesh);
   const op=document.createElement('option');op.value=mesh.uuid;op.textContent=label;$('part').appendChild(op);return mesh;
  }};
-lab=window.HeartLab.create(api);resetRhythm();
+lab=window.HeartLab.create(api);resetRhythm();window.IsoPathologyUI?.create(api,lab);
 resize();requestAnimationFrame(frame);
 })();
