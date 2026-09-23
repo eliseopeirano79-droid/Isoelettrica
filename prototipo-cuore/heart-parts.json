@@ -193,6 +193,48 @@
       "layer": "vessels",
       "vertices": 70,
       "faces": 60
+    },
+    {
+      "name": "Inferior vena cava (thoracic part)",
+      "layer": "vessels",
+      "vertices": 140,
+      "faces": 130
+    },
+    {
+      "name": "Left pulmonary artery",
+      "layer": "vessels",
+      "vertices": 430,
+      "faces": 420
+    },
+    {
+      "name": "Right pulmonary artery",
+      "layer": "vessels",
+      "vertices": 130,
+      "faces": 120
+    },
+    {
+      "name": "Left superior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 210,
+      "faces": 180
+    },
+    {
+      "name": "Left inferior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 200,
+      "faces": 180
+    },
+    {
+      "name": "Right superior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 370,
+      "faces": 360
+    },
+    {
+      "name": "Right inferior pulmonary vein",
+      "layer": "vessels",
+      "vertices": 140,
+      "faces": 120
     }
   ]
 }

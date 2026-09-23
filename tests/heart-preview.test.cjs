@@ -5,7 +5,7 @@ test('Preview heart keeps all named anatomical parts, no external asset dependen
  const b=fs.readFileSync(path.join(__dirname,'../prototipo-cuore/heart-z-anatomy.glb'));
  assert.equal(b.toString('utf8',0,4),'glTF');assert.equal(b.readUInt32LE(4),2);assert.equal(b.readUInt32LE(8),b.length);assert.ok(b.length<5e6);
  const j=JSON.parse(b.toString('utf8',20,20+b.readUInt32LE(12)));
- assert.equal(j.nodes.length,32);assert.equal(new Set(j.nodes.map(n=>n.extras.sourceName)).size,32);
+ assert.equal(j.nodes.length,39);assert.equal(new Set(j.nodes.map(n=>n.extras.sourceName)).size,39);
  assert.ok(j.asset.copyright.includes('CC BY-SA 4.0'));assert.equal(j.buffers.length,1);assert.equal(j.buffers[0].uri,undefined);
  assert.equal((j.images||[]).length,0);assert.equal((j.animations||[]).length,0);
  for(const n of j.nodes){const p=j.meshes[n.mesh].primitives[0],a=j.accessors[p.attributes.POSITION];assert.ok(a.count>10);assert.ok(j.accessors[p.indices].count>30);for(const v of [...a.min,...a.max])assert.ok(Number.isFinite(v)&&Math.abs(v)<4);}

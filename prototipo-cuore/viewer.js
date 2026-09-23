@@ -1,6 +1,7 @@
 /* Local feasibility prototype. See ATTRIBUZIONI.md for source and known gaps. */
 (function () {
 'use strict';
+let lab=null;
 const $ = id => document.getElementById(id), T = window.THREE;
 const sourceLabels = {
  'Right atrium':'Atrio destro','Left atrium':'Atrio sinistro','Right ventricle':'Ventricolo destro','Left ventricle':'Ventricolo sinistro',
@@ -10,6 +11,7 @@ const sourceLabels = {
  'Anterior semilunar leaflet of pulmonary valve':'Polmonare · lembo anteriore','Left semilunar leaflet of pulmonary valve':'Polmonare · lembo sinistro','Right semilunar leaflet of pulmonary valve':'Polmonare · lembo destro',
  'Right coronary artery':'Arteria coronaria destra','Left coronary artery':'Tronco comune sinistro','Circumflex artery of heart':'Arteria circonflessa','Anterior interventricular artery':'Interventricolare anteriore · IVA','Right inferolateral branch of right coronary artery':'Ramo inferolaterale della coronaria destra','Septal branches of anterior interventricular artery':'Rami settali dell’IVA',
  'Great cardiac vein':'Vena cardiaca magna','Middle cardiac vein':'Vena cardiaca media',"Inferior vein of left ventricle (//Posterior '')":'Vena inferiore del VS · ramo posteriore','Inferior vein of left ventricle':'Vena inferiore del ventricolo sinistro','Coronary sinus':'Seno coronarico',
+ 'Inferior vena cava (thoracic part)':'Vena cava inferiore · tratto toracico','Left pulmonary artery':'Arteria polmonare sinistra','Right pulmonary artery':'Arteria polmonare destra','Left superior pulmonary vein':'Vena polmonare superiore sinistra','Left inferior pulmonary vein':'Vena polmonare inferiore sinistra','Right superior pulmonary vein':'Vena polmonare superiore destra','Right inferior pulmonary vein':'Vena polmonare inferiore destra',
  'Ascending aorta':'Aorta ascendente','Aortic arch':'Arco aortico','Pulmonary trunk':'Tronco polmonare','Superior vena cava':'Vena cava superiore'
 };
 const layerLabels = {wall:'Pareti e camere',valves:'Valvole e muscoli papillari',coronaries:'Coronarie',veins:'Vene cardiache',vessels:'Grandi vasi',conduction:'Conduzione illustrativa'};
@@ -26,32 +28,32 @@ function light(color,power,x,y,z){const l=new T.DirectionalLight(color,power);l.
 light(0xffe5d9,1.55,-3,4,5);light(0xa7cde9,.85,4,1,-3);light(0xffb7a5,.45,-4,-1,-2);
 const anatomy=new T.Group(),circuit=new T.Group();scene.add(anatomy,circuit);circuit.visible=false;
 const meshes=[],paths=[],nodes=[];
-const uniforms={uAtr:{value:0},uVent:{value:0},uFibr:{value:0},uTime:{value:0}};
+const uniforms={uAmpA:{value:.06},uAmpV:{value:.10},uLong:{value:.04},uTwist:{value:.087},uAtr:{value:0},uVent:{value:0},uFibr:{value:0},uTime:{value:0}};
 // Shared displacement field keeps vessels attached to the contracting surface.
 // Illustrative motion, not a patient-specific mechanical model or valve rig.
 const deformGLSL=`
-uniform float uRegion; uniform float uAtr; uniform float uVent; uniform float uFibr; uniform float uTime;
+uniform float uAmpA; uniform float uAmpV; uniform float uLong; uniform float uTwist; uniform float uRegion; uniform float uAtr; uniform float uVent; uniform float uFibr; uniform float uTime;
 vec3 cardiacMotion(vec3 p) {
  float a=uRegion>1.5?0.0:(uRegion>0.5?1.0:smoothstep(-0.05,0.65,p.y)); float base=1.0-smoothstep(0.55,1.15,p.y);
  float v=(1.0-a)*uVent*base; float at=a*uAtr*base;
  vec3 c=vec3(0.15,-0.32,0.2); vec3 d=p-c;
- float angle=v*0.035; float cs=cos(angle);float sn=sin(angle);
+ float angle=v*uTwist; float cs=cos(angle);float sn=sin(angle);
  d.xz=mat2(cs,-sn,sn,cs)*d.xz;
- d.xz*=1.0-0.075*v-0.04*at; d.y*=1.0-0.025*v-0.025*at;
+ d.xz*=1.0-uAmpV*v-uAmpA*at; d.y*=1.0-uLong*v-0.025*at;
  p=c+d;
  p.x+=uFibr*0.009*base*sin(uTime*0.032+p.y*9.0);
  p.z+=uFibr*0.007*base*sin(uTime*0.047+p.x*11.0);
  return p;
 }`;
 function movingMaterial(mat,region=0){
- mat.onBeforeCompile=shader=>{Object.assign(shader.uniforms,uniforms,{uRegion:{value:region}});shader.vertexShader=deformGLSL+"\n"+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','vec3 transformed = cardiacMotion(position);');};
- mat.customProgramCacheKey=()=> 'iso-heart-prototype-v1';return mat;
+ mat.onBeforeCompile=shader=>{Object.assign(shader.uniforms,uniforms,{uRegion:{value:region}});shader.vertexShader=deformGLSL+"\n"+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','vec3 transformed = cardiacMotion(position);');if(lab)lab.decorate(shader,mat);};
+ mat.customProgramCacheKey=()=> 'iso-heart-lab-v2';return mat;
 }
 const cutPlane=new T.Plane(new T.Vector3(0,0,-1),.12);
 let view='surface',selected=null,loaded=false,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,slow=false,t=4500,lastTime=0,available=true;
 const orbit={theta:.10,phi:1.43,r:9.2,target:new T.Vector3(.12,.24,0)};
 function updateCamera(){camera.position.set(orbit.target.x+orbit.r*Math.sin(orbit.phi)*Math.sin(orbit.theta),orbit.target.y+orbit.r*Math.cos(orbit.phi),orbit.target.z+orbit.r*Math.sin(orbit.phi)*Math.cos(orbit.theta));camera.lookAt(orbit.target);}
-const description={surface:'Camere, coronarie e vene: le strutture dell’atlante nello stesso spazio.',section:'Una sezione delle pareti rende visibili cavità, lembi e muscoli papillari.',valves:'Lembi originali isolati. Mitrale e tricuspide sono incomplete; le valvole sono statiche.',conduction:'Vie elettriche illustrative aggiunte al modello: il tracciato guida l’animazione.'};
+const description={surface:'Camere, coronarie e vene: le strutture dell’atlante nello stesso spazio.',section:'Una sezione delle pareti rende visibili cavità, lembi e muscoli papillari.',valves:'Quattro apparati valvolari ricostruiti e animati; apertura e coaptazione modificabili.',conduction:'Vie elettriche illustrative aggiunte al modello: il tracciato guida l’animazione.'};
 function applyView(){
  for(const mesh of meshes){
   const layer=mesh.userData.layer,m=mesh.material;
@@ -68,23 +70,24 @@ function applyView(){
  $('cut-control').hidden=view!=='section';
  $('view-description').textContent=description[view];
  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+ if(lab)lab.applyVisibility();
  if(selected&&!selected.visible)selectPart(null);
 }
 function setView(next){
- view=next;
+ view=next;$('section-enabled').checked=next==='section';
  for(const k of ['wall','valves','vessels'])$(k).checked=true;
  $('coronaries').checked=next==='surface'||next==='section';$('veins').checked=next==='surface';$('conduction').checked=next==='conduction';
  applyView();
 }
 function selectPart(mesh){
- if(selected){selected.material.emissive.setHex(0);selected.material.emissiveIntensity=0;}
+ if(selected?.material.emissive){selected.material.emissive.setHex(0);selected.material.emissiveIntensity=0;}
  selected=mesh;
- if(!mesh){$('part').value='';$('selection').innerHTML='<b>32 strutture separate</b><p>Scegli una parte dal menu o tocca direttamente il cuore.</p>';return;}
- mesh.material.emissive.set('#ffd8a2');mesh.material.emissiveIntensity=.18;
+ if(!mesh){$('part').value='';$('selection').innerHTML='<b>'+meshes.filter(m=>!m.userData.originalValve).length+' strutture selezionabili</b><p>Scegli una parte dal menu o tocca direttamente il cuore.</p>';if(lab)lab.selected(null);return;}
+ if(mesh.material.emissive){mesh.material.emissive.set('#ffd8a2');mesh.material.emissiveIntensity=.18;}
  $('part').value=mesh.uuid;
  const b=document.createElement('b'),p=document.createElement('p');
- b.textContent=mesh.userData.label;p.textContent=layerLabels[mesh.userData.layer]+' · '+mesh.userData.sourceName;
- $('selection').replaceChildren(b,p);
+ b.textContent=mesh.userData.label;p.textContent=layerLabels[mesh.userData.layer]+' · '+(mesh.userData.origin||'Atlante anatomico');
+ $('selection').replaceChildren(b,p);if(lab)lab.selected(mesh);
 }
 new T.GLTFLoader().load('heart-z-anatomy.glb',gltf=>{
  gltf.scene.traverse(o=>{
@@ -93,7 +96,7 @@ new T.GLTFLoader().load('heart-z-anatomy.glb',gltf=>{
   let layer=o.userData.layer;
   if(layer==='heart')layer=/leaflet|papillary/i.test(name)?'valves':'wall';
   let color={wall:'#a85c67',coronaries:'#ed8860',veins:'#527aac',valves:'#d8c4a0',vessels:'#b86d79'}[layer];
-  if(layer==='vessels'&&/cava|Pulmonary/.test(name))color='#6084a2';
+  if(layer==='vessels'&&/cava|pulmonary artery|pulmonary trunk/i.test(name))color='#6084a2';
   if(/papillary/.test(name))color='#b47a76';
   o.material=movingMaterial(new T.MeshStandardMaterial({color,roughness:layer==='valves'?.56:.62,metalness:0,side:T.DoubleSide,emissiveIntensity:0}),/atrium/.test(name)?1:/ventricle/.test(name)&&layer==='wall'?2:0);
   o.material.color.convertSRGBToLinear();
@@ -102,7 +105,7 @@ new T.GLTFLoader().load('heart-z-anatomy.glb',gltf=>{
  anatomy.add(gltf.scene);
  const sorted=[...meshes].sort((a,b)=>a.userData.label.localeCompare(b.userData.label,'it'));
  for(const m of sorted){const option=document.createElement('option');option.value=m.uuid;option.textContent=m.userData.label;$('part').appendChild(option);}
- loaded=true;$('load').hidden=true;applyView();
+ loaded=true;$('load').hidden=true;if(lab)lab.loaded();applyView();
 },undefined,error=>{$('load').textContent='Il modello non è stato caricato. Ricarica la pagina per riprovare.';console.error('Heart asset load failed',error);});
 // Approximate landmarks in the atlas coordinate frame. These are deliberately
 // labelled illustrative; the source atlas has no conduction geometry.
@@ -124,12 +127,13 @@ for(const [key,p] of [['Nodo senoatriale',SA],['Nodo AV',AV]]){
 }
 const scenarios=Object.fromEntries(ISO_DATA.SCENARIOS.map(sc=>[sc.id,sc]));
 let stream,cfg;
-function resetRhythm(){const sc=scenarios[$('rhythm').value];const params=Object.fromEntries(sc.params.map(p=>[p.k,p.def]));cfg=sc.build(params);stream=new ECG.Stream(cfg,17);t=4500;stream.ensure(t+1000);}
+function resetRhythm(){const sc=scenarios[$('rhythm').value];const params=Object.fromEntries(sc.params.map(p=>[p.k,p.def]));cfg=sc.build(params);if(lab)cfg=lab.configure(cfg);stream=new ECG.Stream(cfg,17);t=4500;stream.ensure(t+1000);}
 resetRhythm();
 function animateHeart(){
  stream.ensure(t+500);stream.prune(t-6500);
- const ev=stream.eventsAround(t),motion=HeartPreviewMotion.sample(ev,t,cfg),{da,dv}=motion;
+ const ev=stream.eventsAround(t),motion=lab?lab.motion(ev,t,cfg):HeartPreviewMotion.sample(ev,t,cfg),{da,dv}=motion;
  uniforms.uAtr.value=motion.atr;uniforms.uVent.value=motion.vent;uniforms.uFibr.value=motion.fibr;uniforms.uTime.value=t;
+ if(lab){lab.animate(t,ev,cfg,motion);return;}
  const isAsystole=$('rhythm').value==='asistolia';
  let phase=isAsystole?'Asistolia · nessuna contrazione':cfg.cont==='vf'?'FV · nessuna contrazione organizzata':uniforms.uVent.value>.05?'Sistole ventricolare':uniforms.uAtr.value>.05?'Contrazione atriale':'Diastole';
  if(cfg.av==='III')phase+=' · dissociazione AV';
@@ -166,7 +170,7 @@ stage.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const o
 function endPointer(e){
  if(e.type==='pointerup'&&pts.size===1&&moved<6&&down&&loaded){
   const rect=stage.getBoundingClientRect(),ray=new T.Raycaster();ray.setFromCamera(new T.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
-  const hits=ray.intersectObjects(meshes.filter(m=>m.visible&&m.material.opacity>.3),false).filter(h=>!(h.object.userData.layer==='wall'&&view==='section'&&h.point.z>cutPlane.constant));selectPart(hits.length?hits[0].object:null);
+  const hits=ray.intersectObjects(meshes.filter(m=>m.visible&&m.material.opacity>.3),false).filter(h=>!lab||lab.acceptHit(h));if(!lab||!lab.hit(hits[0]))selectPart(hits.length?hits[0].object:null);
  }
  pts.delete(e.pointerId);if(pts.size<2)pinch=null;down=null;
 }
@@ -192,5 +196,13 @@ function frame(now){
  animateHeart();updateCamera();renderer.render(scene,camera);
  if(now-lastTrace>33){drawECG();lastTrace=now;}
 }
+const api={T,scene,camera,stage,anatomy,circuit,meshes,paths,nodes,uniforms,sourceLabels,movingMaterial,selectPart,applyView,setView,
+ get view(){return view;},get selected(){return selected;},get time(){return t;},get stream(){return stream;},get config(){return cfg;},
+ resetRhythm, pause(){playing=false;updatePlayback();},seek(value){t=value;animateHeart();drawECG();},
+ addMesh(mesh,id,label,layer,origin='Ricostruzione didattica'){
+  mesh.userData={...mesh.userData,sourceName:id,label,layer,origin};meshes.push(mesh);
+  const op=document.createElement('option');op.value=mesh.uuid;op.textContent=label;$('part').appendChild(op);return mesh;
+ }};
+lab=window.HeartLab.create(api);resetRhythm();
 resize();requestAnimationFrame(frame);
 })();
