@@ -2,7 +2,7 @@
 (function(root){'use strict';
 root.HeartLab={create(api){
  const C=HeartLabCore,T=api.T,$=id=>document.getElementById(id),V=a=>new T.Vector3(...a);
- let clinicalBaseline=null;
+ let clinicalBaseline=null,lastMotion=null,lastMechanicalTime=0;const dynamics=root.CardiacMechanics.createDynamics();
  let state=C.fresh(),ready=false,mode='',selectedRegion=-1,arteries=[],valveRigs=[],botallo=null,lastPhase=-1,selectedMesh=null;
  try{const saved=localStorage.getItem('iso-heart-lab-v1');if(saved)state=C.parse(saved);}catch(e){$('data-status').textContent='Configurazione salvata non valida: caricati i valori iniziali.';}
  const inputs=[],labelNodes=new Map(),flowObjects=[],occlusionMarkers=[];
@@ -39,11 +39,12 @@ root.HeartLab={create(api){
   Object.assign(shader.uniforms,shared,{uWall:{value:mat.userData.wall?1:0},uVessel:{value:mat.userData.vessel??-1}});
   const decl=`uniform int uRCount;uniform vec4 uRPos[32];uniform vec4 uRColor[32];uniform float uRDamage[32];uniform float uWall;varying vec3 vLocalHeart;\n`;
   const vertex=`uniform int uOCount;uniform vec4 uOPos[16];uniform vec4 uOTan[16];uniform float uOVessel[16];uniform float uVessel;
-float localFactor(vec3 p){float k=1.0;for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(0.7,1.0,distance(p,uRPos[i].xyz)/uRPos[i].w))*uRColor[i].w;k*=1.0-a*uRDamage[i];}return k;}
+float localFactor(vec3 p){float sum=0.0,weight=0.0;for(int i=0;i<32;i++){if(i>=uRCount)break;float w=1.0-smoothstep(0.0,1.0,distance(p,uRPos[i].xyz)/max(1.4,uRPos[i].w)),a=w*w*uRColor[i].w*uRDamage[i];sum+=a*a*a*a;weight+=a*a*a;}return 1.0/(1.0+1.5*sum/max(.00000001,weight));}
 vec3 coronaryNarrow(vec3 p){for(int i=0;i<16;i++){if(i>=uOCount)break;if(abs(uVessel-uOVessel[i])<0.1){vec3 d=p-uOPos[i].xyz;float axial=dot(d,uOTan[i].xyz);vec3 radial=d-axial*uOTan[i].xyz;float window=1.0-smoothstep(0.0,uOPos[i].w,abs(axial));if(length(radial)<0.09)p-=radial*window*uOTan[i].w;}}return p;}\n`;
   shader.vertexShader=decl+vertex+shader.vertexShader;
-  shader.vertexShader=shader.vertexShader.replace('float v=(1.0-a)*uVent*base;','float v=(1.0-a)*uVent*base*localFactor(p);');
-  shader.vertexShader=shader.vertexShader.replace('vec3 transformed = cardiacMotion(position);','vLocalHeart=position;vec3 transformed = cardiacMotion(coronaryNarrow(position));');
+  shader.vertexShader=shader.vertexShader.replace('float cardiacLoss(vec3 p){return 1.0;}','float cardiacLoss(vec3 p){return localFactor(p);}');
+  shader.vertexShader=shader.vertexShader.replace('vec3 cardiacInput(vec3 p){return p;}','vec3 cardiacInput(vec3 p){return coronaryNarrow(p);}')
+   .replace('vec3 transformed = cardiacMotion(position);','vLocalHeart=position;vec3 transformed = cardiacMotion(position);');
   shader.fragmentShader=decl+shader.fragmentShader;
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
 if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(0.72,1.0,distance(vLocalHeart,uRPos[i].xyz)/uRPos[i].w))*uRColor[i].w;diffuseColor.rgb=mix(diffuseColor.rgb,uRColor[i].rgb,a);}}
@@ -52,7 +53,7 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
  function refresh(){
   const p=state.params;api.uniforms.uAmpA.value=p['muscle.atrial'];api.uniforms.uAmpV.value=p['muscle.vent'];api.uniforms.uLong.value=p['muscle.long'];api.uniforms.uTwist.value=p['muscle.twist']*Math.PI/180;
   shared.uRCount.value=state.regions.length;state.regions.forEach((r,i)=>{shared.uRPos.value[i].set(...r.center,r.radius);const c=new T.Color(r.color).convertSRGBToLinear();shared.uRColor.value[i].set(c.r,c.g,c.b,r.strength);shared.uRDamage.value[i]=state.params['tissue.'+r.type]||0;});
-  updateOcclusions();updateBotallo();applyStructures();api.applyView();saveDraft();
+  updateOcclusions();updateBotallo();applyStructures();api.applyView();dynamics.reset();valveRigs.forEach(rig=>rig.last=-1);saveDraft();
  }
  function applyVisibility(){
   cutActive=$('section-enabled').checked;const axis=$('section-axis').value,sign=$('section-flip').checked?1:-1,pos=Number($('cut').value),thick=Number($('section-thickness').value);const n=new T.Vector3();n[axis]=sign;clips[0].normal.copy(n);clips[0].constant=-sign*pos;clips[1].normal.copy(n).negate();clips[1].constant=sign*pos+thick;
@@ -82,22 +83,32 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
   for(const d of valveDefs){
    const center=V(d.center),n=V(d.normal).normalize(),axis=new T.Vector3(1,0,0).addScaledVector(n,-n.x).normalize(),side=new T.Vector3().crossVectors(n,axis).normalize();
    const ringPoints=Array.from({length:65},(_,i)=>center.clone().addScaledVector(axis,d.radius*Math.cos(i/64*Math.PI*2)).addScaledVector(side,d.radius*Math.sin(i/64*Math.PI*2)).toArray());tube('annulus-'+d.id,'Anello '+d.label.toLowerCase(),ringPoints,.016,'#dec4a3','valves');
-   const rig={...d,center,n,axis,side,leaves:[],last:-1};
+   const papNames=d.id==='mitral'?['Inferior papillary muscle of left ventricle','Inferior papillary muscle of left ventricle']:['Anterior papillary muscle of right ventricle','Inferior papillary muscle of right ventricle','Septal papillary muscle of right ventricle'];
+   const pap=d.pap?.map((point,i)=>{const mesh=api.meshes.find(m=>m.userData.sourceName===papNames[i]);return mesh?root.CardiacAttachments.nearestPoint(mesh,V(point)).toArray():point;});
+   const rig={...d,pap,center,n,axis,side,leaves:[],last:-1};
    for(let leaf=0;leaf<d.count;leaf++){
     const N=12,R=8,pos=new Float32Array((N+1)*(R+1)*3),idx=[];
     for(let v=0;v<R;v++)for(let u=0;u<N;u++){const a=v*(N+1)+u,b=a+N+1;idx.push(a,b,a+1,b,b+1,a+1);}
     const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));g.setIndex(idx);
-    const mesh=new T.Mesh(g,material('#ead8b4','valves'));mesh.frustumCulled=false;api.anatomy.add(mesh);api.addMesh(mesh,'rig-'+d.id+'-'+leaf,d.label+' · lembo '+d.leaf[leaf]+' (animato)','valves');
+    const mesh=new T.Mesh(g,new T.MeshStandardMaterial({color:new T.Color('#ead8b4').convertSRGBToLinear(),roughness:.65,side:T.DoubleSide}));mesh.userData.worldDeformed=true;mesh.frustumCulled=false;api.anatomy.add(mesh);api.addMesh(mesh,'rig-'+d.id+'-'+leaf,d.label+' · lembo '+d.leaf[leaf]+' (animato)','valves');
     const chords=[];
-    if(d.pap){for(let j=0;j<3;j++){const geo=new T.BufferGeometry().setFromPoints([V(d.pap[leaf%d.pap.length]),center]);const line=new T.Line(geo,api.movingMaterial(new T.LineBasicMaterial({color:'#d0c2a1'})));line.frustumCulled=false;api.anatomy.add(line);api.addMesh(line,'chord-'+d.id+'-'+leaf+'-'+j,'Corda '+(j+1)+' · '+d.label.toLowerCase()+' · '+d.leaf[leaf],'valves');chords.push(line);}}
+    if(rig.pap){for(let j=0;j<3;j++){const geo=new T.BufferGeometry().setFromPoints([V(rig.pap[leaf%rig.pap.length]),center]);const line=new T.Line(geo,new T.LineBasicMaterial({color:new T.Color('#d0c2a1').convertSRGBToLinear()}));line.userData.worldDeformed=true;line.frustumCulled=false;api.anatomy.add(line);api.addMesh(line,'chord-'+d.id+'-'+leaf+'-'+j,'Corda '+(j+1)+' · '+d.label.toLowerCase()+' · '+d.leaf[leaf],'valves');chords.push(line);}}
     rig.leaves.push({mesh,N,R,leaf,chords});
    }
    valveRigs.push(rig);moveValve(rig,0);
   }
  }
- function leafPoint(rig,leaf,u,v,open){const a=(leaf+(u*.98+.01))*Math.PI*2/rig.count,free=rig.radius*(.035+.77*open),rad=rig.radius+(free-rig.radius)*v;
-  return rig.center.clone().addScaledVector(rig.axis,rad*Math.cos(a)).addScaledVector(rig.side,rad*Math.sin(a)).addScaledVector(rig.n,(rig.pap?-1:1)*rig.radius*(.1*Math.sin(Math.PI*v)+.9*open*v));}
- function moveValve(rig,open){if(Math.abs(rig.last-open)<.0001)return;rig.last=open;for(const part of rig.leaves){const a=part.mesh.geometry.attributes.position;for(let v=0;v<=part.R;v++)for(let u=0;u<=part.N;u++){const p=leafPoint(rig,part.leaf,u/part.N,v/part.R,open);a.setXYZ(v*(part.N+1)+u,p.x,p.y,p.z);}a.needsUpdate=true;part.mesh.geometry.computeVertexNormals();part.mesh.geometry.computeBoundingSphere();part.chords.forEach((l,i)=>{const p=leafPoint(rig,part.leaf,(i+1)/4,1,open),a=l.geometry.attributes.position;a.setXYZ(1,p.x,p.y,p.z);a.needsUpdate=true;});}}
+ function moveValve(rig,open,m=lastMotion||{atr:0,vent:0},t=lastMechanicalTime){
+  // No GPU deformation on these meshes: the constraint solver has already
+  // mapped each attachment into the same deformed space as the surrounding wall.
+  const stamp=[open,m.atr,m.vent,m.fibr,t].join('|');if(rig.last===stamp)return;rig.last=stamp;
+  const deform=q=>V(root.CardiacMechanics.deform(q.toArray(),m,state.params,state.regions,t));
+  for(const part of rig.leaves){const a=part.mesh.geometry.attributes.position,anchor=rig.pap?deform(V(rig.pap[part.leaf%rig.pap.length])):null;
+   const point=(u,v)=>root.CardiacAttachments.constrainedLeaf(rig,part.leaf,u,v,open,deform,root.CardiacMechanics.tether);
+   for(let v=0;v<=part.R;v++)for(let u=0;u<=part.N;u++){const q=point(u/part.N,v/part.R);a.setXYZ(v*(part.N+1)+u,q.x,q.y,q.z);}a.needsUpdate=true;part.mesh.geometry.computeVertexNormals();part.mesh.geometry.computeBoundingSphere();
+   part.chords.forEach((l,i)=>{const q=point((i+1)/4,1),a=l.geometry.attributes.position;a.setXYZ(0,anchor.x,anchor.y,anchor.z);a.setXYZ(1,q.x,q.y,q.z);a.needsUpdate=true;});
+  }
+ }
  function updateBotallo(){if(!botallo)return;const patent=state.params['botallo.patent']>0,diam=state.params['botallo.diameter'];botallo.scale.setScalar(1); // Geometry remains centered in the same anatomical frame.
   const r=patent?diam*.01:.024;if(botallo.userData.radius!==r){botallo.geometry.dispose();botallo.geometry=new T.TubeGeometry(botallo.userData.curve,32,r,10,false);botallo.userData.radius=r;}
   botallo.userData.label=patent?'Dotto arterioso di Botallo pervio':'Legamento arterioso (Botallo)';botallo.material.color.set(patent?'#d692ad':'#b9aa91').convertSRGBToLinear();const op=[...$('part').options].find(o=>o.value===botallo.uuid);if(op)op.textContent=botallo.userData.label;if(api.selected===botallo)$('selection').querySelector('b').textContent=botallo.userData.label;
@@ -105,7 +116,7 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
  function anatomicalAdditions(){
   botallo=tube('botallo','Legamento arterioso (Botallo)',[[.52,1.1,-.85],[.47,1.02,-.72],[.36,.86,-.52]],.024,'#b9aa91');botallo.userData.curve=new T.CatmullRomCurve3([[.52,1.1,-.85],[.47,1.02,-.72],[.36,.86,-.52]].map(V));
   const markers=[['septum-atrial','Setto interatriale',[-.29,.2,-.32]],['fossa-ovalis','Fossa ovale',[-.30,.23,-.25]],['septum-vent','Setto interventricolare',[.14,-.42,.24]],['apex','Apice cardiaco',[.91,-1.19,.62]],['endocardium','Endocardio · parete interna VS',[.7,-.54,.10]]];
-  for(const [id,label,p] of markers){const mesh=new T.Mesh(new T.SphereGeometry(.023,10,8),new T.MeshBasicMaterial({color:'#b9cfbd',transparent:true,opacity:.8}));mesh.position.copy(V(p));api.anatomy.add(mesh);api.addMesh(mesh,id,label+' · riferimento','wall','Punto di riferimento indicativo');mesh.userData.landmark=true;}
+  for(const [id,label,p] of markers){const geometry=new T.SphereGeometry(.023,10,8).translate(...p),mesh=new T.Mesh(geometry,api.movingMaterial(new T.MeshBasicMaterial({color:'#b9cfbd',transparent:true,opacity:.8})));api.anatomy.add(mesh);api.addMesh(mesh,id,label+' · riferimento','wall','Punto di riferimento indicativo');mesh.userData.landmark=true;}
  }
  function conductionAdditions(){
   for(const [id,p]of api.electrical.paths)api.addMesh(p.tube,'conduction-'+id,p.label,'conduction','Percorso didattico registrato sull’atlante');
@@ -150,7 +161,7 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
   for(const o of state.occlusions){const vesselIndex=arteries.findIndex(a=>a.name===o.vessel),a=arteries[vesselIndex],points=a?.splines[o.spline];if(!points)continue;
    const q=C.pointOn(points,o.position);shared.uOPos.value[i].set(...q.point,o.length/2);shared.uOTan.value[i].set(...q.tangent,o.severity);shared.uOVessel.value[i]=vesselIndex;
    if(!occlusionMarkers[i]){const marker=new T.Mesh(new T.TorusGeometry(.065,.006,8,24),new T.MeshBasicMaterial({color:'#ffbc60',depthTest:false,transparent:true}));marker.renderOrder=8;api.scene.add(marker);occlusionMarkers[i]=marker;}
-   const marker=occlusionMarkers[i];marker.userData.rest=q.point;marker.userData.mesh=api.meshes.find(m=>m.userData.sourceName===o.vessel);marker.position.copy(V(q.point));marker.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),V(q.tangent).normalize());marker.material.opacity=.35+o.severity*.65;marker.visible=true;i++;
+   const marker=occlusionMarkers[i];marker.userData.rest=q.point;marker.userData.tangent=q.tangent;marker.userData.mesh=api.meshes.find(m=>m.userData.sourceName===o.vessel);marker.position.copy(V(q.point));marker.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),V(q.tangent).normalize());marker.material.opacity=.35+o.severity*.65;marker.visible=true;i++;
   }
   shared.uOCount.value=i;occlusionMarkers.forEach((m,j)=>{if(j>=i)m.visible=false;});
  }
@@ -165,27 +176,28 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
  let pendingArteries=null;
  if(root.HEART_CORONARY_PATHS)bindArteries(root.HEART_CORONARY_PATHS);else fetch('coronary-paths.json').then(r=>{if(!r.ok)throw Error('paths');return r.json();}).then(bindArteries).catch(()=>{modeNote.textContent='Percorsi coronarici non disponibili. Ricarica la pagina.';$('add-occlusion').disabled=true;});
  function hit(h){if(!h)return false;
-  if(mode==='paint'){if(h.object.userData.layer!=='wall')return false;addRegion(h.object.worldToLocal(h.point.clone()).toArray());return true;}
-  if(mode==='occlusion'){const a=arteries.find(a=>a.name===h.object.userData.sourceName);if(!a)return false;let best={distance:Infinity};const p=h.object.worldToLocal(h.point.clone()).toArray();a.splines.forEach((points,spline)=>{const q=C.nearest(points,p);if(q.distance<best.distance)best={...q,spline};});addOcclusion(a.name,best.spline,best.position);return true;}
+  if(mode==='paint'){if(h.object.userData.layer!=='wall')return false;addRegion((h.restPoint||h.object.worldToLocal(h.point.clone())).toArray());return true;}
+  if(mode==='occlusion'){const a=arteries.find(a=>a.name===h.object.userData.sourceName);if(!a)return false;let best={distance:Infinity};const p=(h.restPoint||h.object.worldToLocal(h.point.clone())).toArray();a.splines.forEach((points,spline)=>{const q=C.nearest(points,p);if(q.distance<best.distance)best={...q,spline};});addOcclusion(a.name,best.spline,best.position);return true;}
   return false;
  }
- function labelFrame(){const mode=$('label-mode').value,w=api.stage.clientWidth,h=api.stage.clientHeight;for(const m of api.meshes){let visible=m.visible&&!m.userData.originalValve&&mode!=='none'&&(mode==='all'||m===api.selected||mode==='major'&&(/atrium|ventricle|botallo|node-|annulus/.test(m.userData.sourceName)));
+ function deformPoint(point,object,world=true){const q=[...(point.toArray?point.toArray():point)];const vessel=object?.material.userData.vessel;for(let i=0;i<shared.uOCount.value;i++){if(vessel!==shared.uOVessel.value[i])continue;const o=shared.uOPos.value[i],dir=shared.uOTan.value[i],d=[q[0]-o.x,q[1]-o.y,q[2]-o.z],axial=d[0]*dir.x+d[1]*dir.y+d[2]*dir.z,radial=d.map((x,k)=>x-axial*[dir.x,dir.y,dir.z][k]);if(Math.hypot(...radial)<.09){const window=1-C.smooth(Math.abs(axial)/o.w);radial.forEach((r,k)=>q[k]-=r*window*dir.w);}}const v=V(root.CardiacMechanics.deform(q,lastMotion||{atr:0,vent:0},state.params,state.regions,lastMechanicalTime));if(object&&world){object.updateWorldMatrix(true,false);v.applyMatrix4(object.matrixWorld);}return v;}
+ function labelFrame(){const mode=$('label-mode').value,w=api.stage.clientWidth,h=api.stage.clientHeight;for(const m of api.meshes){let visible=m.visible&&(m.userData.layer!=='conduction'||api.circuit.visible)&&!m.userData.originalValve&&mode!=='none'&&(mode==='all'||m===api.selected||mode==='major'&&(/atrium|ventricle|botallo|node-|annulus/.test(m.userData.sourceName)));
    let label=labelNodes.get(m);if(!label&&visible){label=document.createElement('div');label.className='anatomy-label';labelOverlay.append(label);labelNodes.set(m,label);}
    if(!label)continue;
-   if(visible){if(!m.geometry.boundingSphere)m.geometry.computeBoundingSphere();const p=m.geometry.boundingSphere.center.clone().applyMatrix4(m.matrixWorld).project(api.camera);visible=p.z>-1&&p.z<1&&Math.abs(p.x)<.96&&Math.abs(p.y)<.92;if(visible){label.textContent=m.userData.label;label.classList.toggle('chosen',m===api.selected);label.style.left=(p.x*.5+.5)*w+'px';label.style.top=(-p.y*.5+.5)*h+'px';}}
+   if(visible){m.updateWorldMatrix(true,false);if(!m.geometry.boundingSphere)m.geometry.computeBoundingSphere();const rest=m.geometry.boundingSphere.center;const p=(m.userData.worldDeformed?rest.clone().applyMatrix4(m.matrixWorld):m.userData.rest?m.position.clone():deformPoint(rest,m)).project(api.camera);visible=p.z>-1&&p.z<1&&Math.abs(p.x)<.96&&Math.abs(p.y)<.92;if(visible){label.textContent=m.userData.label;label.classList.toggle('chosen',m===api.selected);label.style.left=(p.x*.5+.5)*w+'px';label.style.top=(-p.y*.5+.5)*h+'px';}}
    label.hidden=!visible;
   }
  }
  function animate(t,ev,cfg,m){
-  const deform=(point,object)=>{const v=V(C.deformPoint(point,m,state.params,state.regions,0,t));if(object){object.updateWorldMatrix(true,false);v.applyMatrix4(object.matrixWorld);}return v;};
-  const p=state.params;for(const rig of valveRigs){const op=m.valves[rig.id];if(op!==null)moveValve(rig,op);}
+  lastMotion=m;lastMechanicalTime=t;const deform=deformPoint;
+  const p=state.params;for(const rig of valveRigs)moveValve(rig,m.valves[rig.id]??0,m,t);
   const disabled=m.silent||m.fibr;let phase=disabled?(m.fibr?'FV · nessuna contrazione organizzata':'Asistolia · nessuna contrazione'):C.phases[m.phase][1];if(cfg.av==='III')phase+=' · atri indipendenti';$('phase').textContent=phase;
   if(lastPhase!==m.phase||disabled){[...$('phase-timeline').children].forEach((b,i)=>b.classList.toggle('active',!disabled&&i===m.phase));lastPhase=m.phase;}
   if(document.activeElement!==$('cycle-seek'))$('cycle-seek').value=C.phases.slice(0,m.phase).reduce((s,[id])=>s+p['phase.'+id],0)+m.u*p['phase.'+C.phases[m.phase][0]];
   for(const [i,b] of [...$('phase-timeline').children].entries())b.disabled=Boolean(cfg.mode||cfg.isoClinical||(cfg.av&&i===0));$('cycle-seek').disabled=Boolean(cfg.mode||cfg.isoClinical);
   $('cycle-position').textContent=Math.round(m.u*100)+'% della fase · '+Math.round(m.total)+' ms';
   for(const f of flowObjects){for(const [i,dot] of f.particles.entries()){const u=((t*.00018*p['flow.speed']+i/5)%1),attenuation=C.flowFactor(coronaryTree,f.a.name,f.spline,u,state.occlusions);dot.visible=$('coronaries').checked&&!m.silent&&!m.fibr&&attenuation>.025;const q=C.pointOn(f.points,u);dot.position.copy(deform(q.point,f.mesh));dot.scale.setScalar(.4+.6*attenuation);}}
-  occlusionMarkers.forEach((o,i)=>{o.visible=i<shared.uOCount.value&&$('coronaries').checked;if(o.userData.rest)o.position.copy(deform(o.userData.rest,o.userData.mesh));});labelFrame();
+  occlusionMarkers.forEach((o,i)=>{o.visible=i<shared.uOCount.value&&$('coronaries').checked;if(o.userData.rest){o.position.copy(deform(o.userData.rest,o.userData.mesh));const tangent=deform(o.userData.rest.map((x,k)=>x+.001*o.userData.tangent[k]),o.userData.mesh).sub(o.position).normalize();o.quaternion.setFromUnitVectors(V([0,0,1]),tangent);}});
  }
  function importState(input){const parsed=C.parse(input);for(const o of parsed.occlusions)if(arteries.length&&!arteries.some(a=>a.name===o.vessel&&a.splines[o.spline]))throw Error('Coronaria o ramo non presenti nel modello');state=parsed;syncParams();regionList();occlusionList();refresh();api.resetRhythm();if(selectedMesh)selected(selectedMesh);}
  $('save-lab').onclick=()=>{const url=URL.createObjectURL(new Blob([serialize()],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='isoelettrica-cuore-configurazione.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Configurazione esportata.');};
@@ -195,6 +207,6 @@ if(uWall>0.5){for(int i=0;i<32;i++){if(i>=uRCount)break;float a=(1.0-smoothstep(
  regionList();occlusionList();syncParams();saveDraft();
  function clinicalOverlay(params){if(!clinicalBaseline)clinicalBaseline=JSON.parse(serialize());state=C.parse(clinicalBaseline);for(const [key,value]of Object.entries(params||{}))if(C.schema[key])C.set(state.params,key,value);syncParams();refresh();}
  function clearClinicalOverlay(){if(clinicalBaseline){state=C.parse(clinicalBaseline);clinicalBaseline=null;syncParams();refresh();}}
- return {get parameters(){return state.params;},clinicalOverlay,clearClinicalOverlay,decorate,configure:cfg=>C.configure(cfg,state.params,ECG),motion:(ev,t,cfg)=>C.sample(ev,t,cfg,state.params),animate,selected,hit,applyVisibility,acceptHit,loaded(){loaded();if(pendingArteries){pendingArteries();pendingArteries=null;}}};
+ return {get parameters(){return state.params;},deformPoint,updateLabels:labelFrame,resetMechanics(){dynamics.reset();},clinicalOverlay,clearClinicalOverlay,decorate,configure:cfg=>C.configure(cfg,state.params,ECG),motion:(ev,t,cfg)=>dynamics.sample(t,at=>C.sample(api.stream.eventsAround(at),at,cfg,state.params),state.params,cfg.isoScenario||'laboratory'),animate,selected,hit,applyVisibility,acceptHit,loaded(){loaded();if(pendingArteries){pendingArteries();pendingArteries=null;}}};
 }};
 })(window);

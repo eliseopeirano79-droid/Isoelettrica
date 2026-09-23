@@ -1,11 +1,13 @@
 /* Parameter registry and deterministic educational cardiac mechanics. */
 (function(root){
 'use strict';
+const Mechanics=root.CardiacMechanics||(typeof module!=='undefined'?require('../cardiac-mechanics.js'):null);
 const phases=[['atrial','Sistole atriale',100],['isoC','Contrazione isovolumetrica',50],['fastE','Eiezione rapida',110],['slowE','Eiezione ridotta',140],['isoR','Rilasciamento isovolumetrico',80],['fastF','Riempimento rapido',120],['diastasis','Diastasi',200]];
 const schema={};
 function param(key,label,group,min,max,step,value,unit=''){schema[key]={key,label,group,min,max,step,value,unit};}
 phases.forEach(([id,label,value])=>param('phase.'+id,label,'cycle',id==='atrial'?50:20,600,5,value,'ms'));
 param('muscle.atrial','Accorciamento atriale','mechanics',0,.25,.005,.06,'quota');param('muscle.vent','Accorciamento ventricolare','mechanics',0,.30,.005,.10,'quota');param('muscle.long','Accorciamento longitudinale','mechanics',0,.20,.005,.04,'quota');param('muscle.twist','Torsione ventricolare','mechanics',0,20,.5,5,'°');
+param('mechanics.stiffness','Rigidità elastica relativa','mechanics',.25,3,.05,1,'×');param('mechanics.damping','Smorzamento relativo','mechanics',.7,2,.05,1,'×');
 param('electric.atrial','Transito negli atri','electric',10,180,5,50,'ms');param('electric.av','Permanenza nel nodo AV','electric',10,450,5,70,'ms');param('electric.his','Transito nel fascio di His','electric',5,80,5,20,'ms');param('electric.right','Transito branca destra','electric',10,180,5,35,'ms');param('electric.left','Transito branche sinistre','electric',10,180,5,35,'ms');param('electric.purkinje','Transito rete di Purkinje','electric',5,120,5,25,'ms');
 param('electric.blockAV','Blocco AV completo','electric',0,1,1,0);param('electric.blockR','Blocco branca destra','electric',0,1,1,0);param('electric.blockL','Blocco branca sinistra','electric',0,1,1,0);
 for(const [id,label] of [['mitral','Mitrale'],['tricuspid','Tricuspide'],['aortic','Aortica'],['pulmonary','Polmonare']]){param('valve.'+id+'.open',label+' · apertura massima','valves',.05,1,.01,1,'quota');param('valve.'+id+'.gap',label+' · difetto di coaptazione','valves',0,.75,.01,0,'quota');param('valve.'+id+'.speed',label+' · transizione','valves',5,80,5,20,'ms');}
@@ -88,7 +90,6 @@ function coronaryTree(data){
 }
 function flowFactor(tree,vessel,spline,u,lesions){let b=tree.get(vessel+'|'+spline),factor=1;const visited=new Set();while(b&&!visited.has(b)){visited.add(b);for(const o of lesions)if(o.vessel===b.vessel&&o.spline===b.spline&&o.position<=u)factor*=1-o.severity;u=b.attachment;b=tree.get(b.parent);}return factor;}
 // Same displacement as the vertex shader, used by moving flow markers.
-function deformPoint(q,m,p,regions=[],region=0,t=0){let [x,y,z]=q;const a=region>1.5?0:region>.5?1:smooth((y+.05)/.7),base=1-smooth((y-.55)/.6);let loss=1;for(const r of regions){const w=(1-smooth((Math.hypot(x-r.center[0],y-r.center[1],z-r.center[2])/r.radius-.7)/.3))*r.strength;loss*=1-w*(p['tissue.'+r.type]||0);}const v=(1-a)*m.vent*base*loss,at=a*m.atr*base,angle=v*p['muscle.twist']*Math.PI/180,cs=Math.cos(angle),sn=Math.sin(angle),dx=x-.15,dz=z-.2,k=1-p['muscle.vent']*v-p['muscle.atrial']*at;
- x=.15+(cs*dx+sn*dz)*k;z=.2+(-sn*dx+cs*dz)*k;y=-.32+(y+.32)*(1-p['muscle.long']*v-.025*at);x+=m.fibr*.009*base*Math.sin(t*.032+y*9);z+=m.fibr*.007*base*Math.sin(t*.047+x*11);return [x,y,z];}
+function deformPoint(q,m,p,regions=[],region=0,t=0){return Mechanics.deform(q,m,p,regions,t);}
 root.HeartLabCore={schema,phases,defaults,set,total,configure,sample,fresh,parse,pointOn,nearest,smooth,coronaryTree,flowFactor,deformPoint};if(typeof module!=='undefined'&&module.exports)module.exports=root.HeartLabCore;
 })(typeof window!=='undefined'?window:{});

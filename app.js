@@ -352,8 +352,8 @@ class Scene3D {
   buildConduction() {
     if(window.IsoConductionView&&this.atlasHeart){
       this.conduction=IsoConductionView.create({scale:HeartAtlas.SCALE,material:m=>this.atlasHeart.movingMaterial(m),deform:p=>this.atlasHeart.deformPoint(p)});
-      this.G.cond.add(this.conduction.group);this.conduction.xray(true);
-      for(const [name,pos]of [['NSA',IsoConduction.anchors.sa],['NAV',IsoConduction.anchors.av],['His',IsoConduction.anchors.his]]){const label=makeLabel(name,{h:.085,color:'#785326',bg:'rgba(250,246,234,.9)',weight:600});label.position.set(pos[0]*HeartAtlas.SCALE-.09,pos[1]*HeartAtlas.SCALE+.055,pos[2]*HeartAtlas.SCALE);this.G.cond.add(label);}
+      this.G.cond.add(this.conduction.group);this.conduction.xray(true);this.conductionLabels=[];
+      for(const [name,pos]of [['NSA',IsoConduction.anchors.sa],['NAV',IsoConduction.anchors.av],['His',IsoConduction.anchors.his]]){const label=makeLabel(name,{h:.085,color:'#785326',bg:'rgba(250,246,234,.9)',weight:600});label.position.set(pos[0]*HeartAtlas.SCALE-.09,pos[1]*HeartAtlas.SCALE+.055,pos[2]*HeartAtlas.SCALE);label.userData.rest=pos;this.conductionLabels.push(label);this.G.cond.add(label);}
       return;
     }
     const G = this.G.cond, FX = this.G.fx; this.paths = {};
@@ -479,6 +479,7 @@ class Scene3D {
     }
     if(this.conduction){
       this.atlasHeart.update(t,st,this.cfg);
+      for(const label of this.conductionLabels){const p=this.atlasHeart.deformPoint(new THREE.Vector3(...label.userData.rest)).multiplyScalar(HeartAtlas.SCALE);label.position.copy(p).add(new THREE.Vector3(-.09,.055,0));}
       const plan=this.conduction.update(CardiacClock.read(st,t,this.cfg),this.cfg);this.phase=plan.phase;
     }else{
     // attivazioni

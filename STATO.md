@@ -35,6 +35,7 @@ Una riga per sessione, la più recente in alto.
 
 | Data | Prompt (e parte) | Ramo | Commit finale | Esito |
 |------|------------------|------|---------------|-------|
+| 2026-09-23 | Meccanica coerente richiesta dall’utente · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 125 test Node + 5 Python; elasticità e vincoli geometrici; anteprima verificata; non pubblicata |
 | 2026-09-23 | Correzioni richieste dall’utente · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 114 test Node + 5 Python; anteprima verificata; pubblicazione da autorizzare |
 | 2026-09-23 | Integrazione app + 01 A | feat/anatomia-app | 99302d7 | v43 pubblicata con consenso esplicito tramite PR #6; Pages e aggiornamento cache verificati; prompt 01 aperto |
 
@@ -44,6 +45,7 @@ Copia sincronizzata con la scheda "Cosa è completo e cosa manca" del prototipo.
 
 - Completo: nuova Anatomia con laboratorio adulto e fetale separato; vecchi assi e orbitali preservati in Fisiologia; cuore Z-Anatomy sotto ECG e in Coronarie; raccordo polmonare aggiunto; grafica comune; controlli preesistenti delle occlusioni e territori; funzionamento offline degli asset; CardiacClock in sola lettura. Il laboratorio precedente conserva sezioni, valvole animate, parametri, Botallo, ostruzioni, mappe tissutali e importazione/esportazione.
 - Aggiunto in v44: conduzione e impulsi nello stesso spazio del modello, vie rapida/lenta, Kent in 10 sedi e James opzionale; rientri AVNRT/AVRT illustrativi; BAV III e blocchi di branca con animazione dedicata; Patologia con 172 voci (101 ECG, 8 valvole animate, Botallo configurabile, 62 localizzazioni); trasparenza e coronarie nascoste; tema chiaro; correzione del restringimento polmonare. Queste aggiunte non completano i moduli avanzati del kit.
+- Aggiunta nella revisione meccanica v44: risposta massa–molla–smorzatore a passo temporale fisso, deformazione continua comune e normali aggiornate; attacchi valvolari e corde vincolati, riferimenti e selezione sulla superficie deformata, rigidità/smorzamento relativi modificabili. È un modello elastico ridotto, non una simulazione completa di pressioni o tessuti.
 - Mancante o non ancora modellato: attivazione regionale validata e isocrone, grafo elettrofisiologico validato, dizionario TA completo, HemoModel, valvole passive guidate da gradienti, simulazioni complete di cardiopatie congenite/acquisite, mezzo eccitabile per rientri/FV, streaming e saturazioni fetali cliniche, suoni, prestazioni iPad. I controlli meccanici del laboratorio precedente possono ancora impostare la frequenza sinusale: separazione da completare nel prompt 01 prima di avanzare al 02.
 
 ## Priorità confermate dall’utente il 23 settembre
@@ -53,3 +55,5 @@ La richiesta attuale supera il vincolo originario «solo prototipo»: integrare 
 Tutti i prompt originali restano in `sviluppo/prompts/`; non si considerano completati dalla presenza delle animazioni illustrative precedenti. La parte 01 A non soddisfa ancora l’intera accettazione del prompt 01. Non sono stati iniziati i prompt 02–09 in questa sessione.
 
 La richiesta successiva sulle vie accessorie, Patologia, trasparenza e tema è stata affrontata come correzione esplicitamente richiesta, senza dichiarare completati i prompt 02–09. Dettagli, fonti e limiti nel report `reports/2026-09-23-conduzione-patologia-v44.md`.
+
+L’ulteriore richiesta di fisica è trattata nella stessa proposta v44, con vincoli geometrici e dinamica elastica semplificata. Non completa i prompt 02–03 né introduce pressioni calibrate, interazione fluido–struttura o collisioni complete. Dettagli nel report `reports/2026-09-23-meccanica-coerente-v44.md`.

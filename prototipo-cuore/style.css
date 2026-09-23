@@ -23,3 +23,5 @@ aside{padding:0 20px 25px;min-width:0;max-height:calc(100vh - 330px)}.lab-tabs{p
 :root[data-theme="light"] .fetal-main aside label,:root[data-theme="light"] .fetal-view-title p,:root[data-theme="light"] .fetal-help{color:var(--dim)}
 :root[data-theme="light"] .preset-note{color:#73551c}
 :root[data-theme="light"] #flow-table td{border-color:var(--line)}
+
+:root[data-theme="light"] summary{color:var(--ink)}
