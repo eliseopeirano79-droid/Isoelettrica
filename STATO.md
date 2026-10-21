@@ -35,6 +35,7 @@ Una riga per sessione, la più recente in alto.
 
 | Data | Prompt (e parte) | Ramo | Commit finale | Esito |
 |------|------------------|------|---------------|-------|
+| 2026-10-21 | Hotfix avviso aggiornamenti ricorrente · v45.1 | fix/update-popup-v45-1 | PR hotfix | Versioni worker/pagina confrontate, rinvio per release, nuovo test automatico; prova Safari da fare; motore ECG invariato |
 | 2026-09-23 | Interfaccia adattiva, tema e schermo intero · v45 | feat/interfaccia-adattiva-v45 | commit che contiene il report | 145 test Node + 5 Python; menu ricercabili; verifica visiva desktop, tablet e telefono nel browser; nessuna modifica clinica |
 | 2026-09-23 | Rilascio ufficiale v44.0 autorizzato | feat/conduzione-patologia-v44 → main · PR #7 | commit che contiene il report di rilascio | Autorizzazione esplicita alla pubblicazione; revisione applicativa 992bf4e; 140 test Node + 5 Python; distribuzione tramite GitHub Pages |
 | 2026-09-23 | Osti venosi/cavali, infundibolo e tronco polmonare · v44 | feat/conduzione-patologia-v44 | commit che contiene questo report | 140 test Node + 5 Python; raccordi interno/esterno e biforcazione continua; anteprima desktop verificata; non pubblicata |
