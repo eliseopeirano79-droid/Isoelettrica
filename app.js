@@ -2051,8 +2051,54 @@ requestAnimationFrame(loop);
    controlla a ogni riapertura se sul sito c'è una versione più recente.
    ===================================================================== */
 let swReg = null, ricaricando = false, ultimoCheck = 0;
-function barraAggiornamento() {
+// Leggi la versione del codice caricato, non quella del worker ancora attivo.
+const versionePagina = new URL(document.querySelector('script[src*="app.js?v="]')?.src ||
+  document.querySelector('link[rel="manifest"]')?.href || location.href).searchParams.get('v');
+const chiaveAggiornamentoRimandato = 'isoelettrica-aggiornamento-rimandato';
+const versioniWorker = new WeakMap();
+let workerRimandato = null;
+function versioneSuccessiva(versione) {
+  if (!versione || !versionePagina) return true; // Compatibilità con worker precedenti.
+  const nuova = versione.split('.').map(Number), corrente = versionePagina.split('.').map(Number);
+  if (nuova.some(v => !Number.isFinite(v)) || corrente.some(v => !Number.isFinite(v))) return versione !== versionePagina;
+  for (let i = 0; i < Math.max(nuova.length, corrente.length); i++) {
+    const differenza = (nuova[i] || 0) - (corrente[i] || 0);
+    if (differenza) return differenza > 0;
+  }
+  return false;
+}
+function leggiVersioneWorker(worker) {
+  if (!worker || typeof MessageChannel === 'undefined') return Promise.resolve(null);
+  if (versioniWorker.has(worker)) return versioniWorker.get(worker);
+  const richiesta = new Promise(resolve => {
+    const channel = new MessageChannel();
+    let conclusa = false;
+    const termina = versione => {
+      if (conclusa) return;
+      conclusa = true;
+      clearTimeout(timer);
+      channel.port1.close();
+      resolve(versione);
+    };
+    channel.port1.onmessage = e => termina(e.data?.type === 'version' && typeof e.data.version === 'string' ? e.data.version : null);
+    const timer = setTimeout(() => termina(null), 1500);
+    try { worker.postMessage({ type: 'version' }, [channel.port2]); }
+    catch (_) { termina(null); }
+  });
+  versioniWorker.set(worker, richiesta);
+  return richiesta;
+}
+async function barraAggiornamento(esplicito = false) {
   if (document.getElementById('updBar')) return;
+  const worker = swReg?.waiting;
+  if (!worker || !navigator.serviceWorker.controller) return;
+  const versione = await leggiVersioneWorker(worker);
+  if (!swReg || swReg.waiting !== worker || !versioneSuccessiva(versione) || document.getElementById('updBar')) return;
+  if (!esplicito) {
+    let rimandata = null;
+    try { rimandata = sessionStorage.getItem(chiaveAggiornamentoRimandato); } catch (_) {}
+    if (workerRimandato === worker || (versione && rimandata === versione)) return;
+  }
   const d = document.createElement('div');
   d.id = 'updBar'; d.className = 'updbar';
   d.innerHTML = '<span>È pronta una versione aggiornata di Isoelettrica.</span>' +
@@ -2063,14 +2109,24 @@ function barraAggiornamento() {
     const w = swReg && swReg.waiting;
     if (w) { document.getElementById('updGo').disabled = true; w.postMessage({ type: 'skipWaiting' }); }
   });
-  document.getElementById('updNo').addEventListener('click', () => d.remove());
+  document.getElementById('updNo').addEventListener('click', () => {
+    workerRimandato = worker;
+    if (versione) { try { sessionStorage.setItem(chiaveAggiornamentoRimandato, versione); } catch (_) {} }
+    d.remove();
+  });
 }
 function controllaAggiornamenti(forza) {
   const ora = Date.now();
   if (!forza && ora - ultimoCheck < 20000) return Promise.resolve('recent');
   ultimoCheck = ora;
   if (!swReg) return Promise.resolve('unavailable');
-  return swReg.update().then(() => swReg.waiting ? 'ready' : swReg.installing ? 'installing' : 'checked').catch(() => 'offline');
+  return swReg.update().then(async () => {
+    if (swReg.waiting) {
+      const versione = await leggiVersioneWorker(swReg.waiting);
+      return versioneSuccessiva(versione) ? 'ready' : 'checked';
+    }
+    return swReg.installing ? 'installing' : 'checked';
+  }).catch(() => 'offline');
 }
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(location.hostname==='127.0.0.1' && new URLSearchParams(location.search).has('preview'))) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -2110,8 +2166,8 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(loc
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v45.0 · ' + (messages[result] || 'Controllo completato');
-    if (result === 'ready') barraAggiornamento();
+    cr.textContent = 'Isoelettrica · v45.1 · ' + (messages[result] || 'Controllo completato');
+    if (result === 'ready') barraAggiornamento(true);
   });
   if (cr) cr.addEventListener('dblclick', () => {
     if (!navigator.onLine) { cr.textContent = 'Per ripristinare la cache è necessaria una connessione.'; return; }
