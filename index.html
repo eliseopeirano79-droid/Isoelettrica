@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Isoelettrica">
 <meta name="theme-color" content="#0d151b">
-<link rel="manifest" href="manifest.webmanifest?v=45.1">
+<link rel="manifest" href="manifest.webmanifest?v=46.0">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -420,9 +420,10 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
 .pnota.fuori{opacity:1;color:#e8865f;font-weight:500}
 .scene-notice{position:absolute;inset:35% 20px auto;padding:16px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;z-index:5;text-align:center} :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 </style>
-<link rel="stylesheet" href="atlas-theme.css?v=45.1">
-<link rel="stylesheet" href="ui-surface.css?v=45.1">
-<script src="ui-surface.js?v=45.1" defer></script>
+<link rel="stylesheet" href="atlas-theme.css?v=46.0">
+<link rel="stylesheet" href="ui-surface.css?v=46.0">
+<link rel="stylesheet" href="casi.css?v=46.0">
+<script src="ui-surface.js?v=46.0" defer></script>
 </head>
 <body>
 <div class="app">
@@ -440,6 +441,7 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
       <button data-v="anat">Fisiologia</button>
       <button data-v="heart">Anatomia</button>
       <button data-v="quiz">Quiz</button>
+      <button data-v="casi">Casi clinici</button>
     </nav>
     <div class="spacer"></div>
     <span class="credit" id="credit" title="Tocca per cercare una versione più recente">App made by Eliseo Peirano · 2026</span>
@@ -634,6 +636,22 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
       <div class="qright" id="qRight"></div>
     </div>
   </section>
+  <!-- CASI CLINICI: modulo separato (casi-dati.js, casi-paziente.js, casi-clinici.js) -->
+  <section class="view" id="v-casi">
+    <div class="casi-home" id="casiHome"></div>
+    <div class="casi-run" id="casiRun" hidden>
+      <div class="casi-left">
+        <div class="casi-stage" id="casiStage">
+          <div class="casi-hud"><div class="chi" id="casiChi"></div><button class="esci" id="casiEsci">Esci dal caso</button></div>
+          <div class="casi-evento" id="casiEvento" role="status"></div>
+        </div>
+        <div class="casi-vitali num" id="casiVitali" aria-label="Parametri vitali"></div>
+        <div class="casi-ecgbar"><span>ECG in tempo reale</span><div class="seg" id="casiModo"><button data-m="print" class="on">12 derivazioni</button><button data-m="monitor">Monitor</button></div></div>
+        <div class="ecgwrap" id="casiEcgWrap"><canvas id="casiEcg"></canvas><canvas id="casiEcgOv" class="ov"></canvas></div>
+      </div>
+      <div class="casi-right" id="casiPanel"></div>
+    </div>
+  </section>
 </div>
 
 <!-- Alla prossima pubblicazione cambia il numero dopo ?v= qui sotto e VERSION in sw.js:
@@ -642,25 +660,30 @@ body.zen-card .card .pane .sec h3{font-size:15.5px;margin-bottom:8px}
      i rimandi al manuale. true: versione appoggiata alle sole linee guida
      internazionali, senza atlante di immagini altrui — quella pubblicabile. -->
 <script>window.ISO_SOLO_LINEE_GUIDA = false;</script>
-<script src="three.min.js?v=45.1"></script>
-<script src="cuore3d.js?v=45.1"></script>
-<script src="gltfloader.js?v=45.1"></script>
-<script src="vascular-cuffs.js?v=45.1"></script><script src="pulmonary-arteries.js?v=45.1"></script><script src="atlas-geometry.js?v=45.1"></script>
-<script src="cardiac-clock.js?v=45.1"></script>
-<script src="cardiac-mechanics.js?v=45.1"></script>
-<script src="cardiac-attachments.js?v=45.1"></script>
-<script src="anatomy-refinements.js?v=45.1"></script>
-<script src="heart-atlas.js?v=45.1"></script>
-<script src="anatomy-host.js?v=45.1"></script>
-<script src="engine.js?v=45.1"></script>
-<script src="ipertrofie.js?v=45.1"></script>
-<script src="data.js?v=45.1"></script>
-<script src="atlante-digitale.js?v=45.1"></script>
-<script src="ptbxl.js?v=45.1"></script>
-<script src="quiz.js?v=45.1"></script>
-<script src="conduction-model.js?v=45.1"></script>
-<script src="conduction-view.js?v=45.1"></script>
-<script src="app.js?v=45.1"></script>
-<script src="coronarie.js?v=45.1"></script>
+<script src="three.min.js?v=46.0"></script>
+<script src="cuore3d.js?v=46.0"></script>
+<script src="gltfloader.js?v=46.0"></script>
+<script src="vascular-cuffs.js?v=46.0"></script><script src="pulmonary-arteries.js?v=46.0"></script><script src="atlas-geometry.js?v=46.0"></script>
+<script src="cardiac-clock.js?v=46.0"></script>
+<script src="cardiac-mechanics.js?v=46.0"></script>
+<script src="cardiac-attachments.js?v=46.0"></script>
+<script src="anatomy-refinements.js?v=46.0"></script>
+<script src="heart-atlas.js?v=46.0"></script>
+<script src="anatomy-host.js?v=46.0"></script>
+<script src="engine.js?v=46.0"></script>
+<script src="ipertrofie.js?v=46.0"></script>
+<script src="data.js?v=46.0"></script>
+<script src="atlante-digitale.js?v=46.0"></script>
+<script src="ptbxl.js?v=46.0"></script>
+<script src="quiz.js?v=46.0"></script>
+<script src="conduction-model.js?v=46.0"></script>
+<script src="conduction-view.js?v=46.0"></script>
+<script src="app.js?v=46.0"></script>
+<script src="coronarie.js?v=46.0"></script>
+<script src="casi-dati.js?v=46.0"></script>
+<script src="casi-reali.js?v=46.0"></script>
+<script>window.ISO_VERSIONE = '46.0';</script>
+<script src="casi-paziente.js?v=46.0"></script>
+<script src="casi-clinici.js?v=46.0"></script>
 </body>
 </html>

@@ -2001,13 +2001,14 @@ function showView(v) {
   }
   if(window.IsoAnatomyHost)IsoAnatomyHost.show(v);
   if (v === 'quiz') { renderQFilter(); requestAnimationFrame(() => { qmon.layout(); if (!Q.cur) newQuestion(); }); }
+  if (window.ISO_CASI) window.ISO_CASI.vista(v === 'casi');
 }
 $$('#nav button').forEach(b => b.addEventListener('click', () => showView(b.dataset.v)));
 $('#themeBtn').addEventListener('click', () => {
   const r = document.documentElement; const dark = getComputedStyle(r).getPropertyValue('color-scheme').trim() === 'dark';
   r.setAttribute('data-theme', dark ? 'light' : 'dark'); store.theme = dark ? 'light' : 'dark'; save(); onTheme();
 });
-function onTheme() { readVars(); if(scene.scene.background)scene.scene.background.set(css.stage); if (S.view === 'trace') mon.layout(); if (S.view === 'quiz') qmon.layout(); if (S.view === 'theory') renderTheory(); if (CMP.ready) ['A', 'B'].forEach(s => CMP[s].mon.layout()); }
+function onTheme() { readVars(); if (window.ISO_CASI) window.ISO_CASI.tema(); if(scene.scene.background)scene.scene.background.set(css.stage); if (S.view === 'trace') mon.layout(); if (S.view === 'quiz') qmon.layout(); if (S.view === 'theory') renderTheory(); if (CMP.ready) ['A', 'B'].forEach(s => CMP[s].mon.layout()); }
 if (window.matchMedia) { const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', onTheme); }
 
 let lastW = 0;
@@ -2038,6 +2039,9 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+/* Interfaccia minima per i moduli separati (Casi clinici): sola lettura di
+   scenari e monitor, nessuna modifica al motore o ai dati. */
+window.ISO_APP = { Monitor, Stream, Sampled, byId, defaultParams, esc, configura: (sc, p) => { const cfg = window.IsoConduction ? IsoConduction.configure(sc.id, sc.build(p), p) : sc.build(p); cfg.noise = 0; return cfg; } };
 window.ISO_OPEN = (id, params) => { if (!byId[id]) return; if (params) store.params[id] = Object.assign(defaultParams(byId[id]), params); showView('trace'); loadScenario(id, false); };
 renderLib('');
 setPlaying(S.playing);
@@ -2166,7 +2170,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(loc
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v45.1 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v46.0 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento(true);
   });
   if (cr) cr.addEventListener('dblclick', () => {
