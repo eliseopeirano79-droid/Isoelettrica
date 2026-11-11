@@ -96,3 +96,31 @@ In **Parametri → Aggiungi dispositivo** scegli Pacemaker, DAE, ICD o CRT-D. La
 Modello didattico con rilevazione e cattura ideali: tempi ed esiti esemplificativi, senza guasti o fusione. Non simula l’impianto né ne determina l’indicazione clinica. Gli indici di ipertrofia e l’inserimento manuale di extrasistoli sono disabilitati durante la stimolazione aggiunta. Le sequenze seguono il tempo del simulatore (pausa e rallentamento inclusi) e sono annullate quando cambia il caso, il dispositivo o un parametro del ritmo. I dati PTB-XL rimangono registrazioni originali.
 
 Riferimenti: [AHA 2025, Adult Advanced Life Support](https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support), [ESC 2021, Pacing e CRT](https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/cardiac-pacing-and-cardiac-resynchronization-therapy/).
+
+## Casi clinici (v46.0)
+
+La sezione **Casi clinici** ha due modalità.
+
+**Casi guidati (15, 66 decisioni).** Lettura dell’ECG, diagnosi, decisione, farmaco e dose, seguito. Il tracciato di ogni fase è generato dal motore con gli scenari esistenti e cambia in continuità sulla stessa striscia quando lo stato del paziente cambia (per esempio fibrillazione ventricolare → scarica → ritmo sinusale). La frequenza mostrata è letta dai battiti generati. Le scelte pericolose mostrano una conseguenza simulata, dichiarata come tale.
+
+**ECG reali (96).** Tracciati veri dall’archivio PTB-XL 1.0.3 (CC BY 4.0), con età, sesso e referto originale del cardiologo. `tools/build-casi-reali.py` li sceglie dal catalogo locale: validati da un cardiologo, senza artefatti segnalati, con una sola diagnosi principale a probabilità 100 e nessun’altra affermazione diagnostica; sei per ciascuna di 16 classi. PTB-XL non contiene sintomi, terapia né decorso: la prima domanda chiede il reperto, la seconda è generale sul quadro riconosciuto e non descrive la storia di quel paziente. Il segnale si scarica alla prima apertura dal mirror già usato dall’Atlante, con verifica SHA-256, e resta poi disponibile offline.
+
+**Paziente 3D.** Corpo umano dalla mesh base di MakeHuman con il suo scheletro e i suoi pesi (CC0 1.0), in quattro corporature (uomo/donna, sotto e sopra i 62 anni), costruito da `tools/build-paziente.py` in `paziente-corpo.bin`. Mostra postura, colorito, sudorazione, coscienza, respiro, presìdi e manovre. Non ha texture della pelle né mimica facciale; non è un modello anatomico interno e non simula l’emodinamica.
+
+Fonti cliniche: ESC 2023 (sindromi coronariche acute), ESC 2019 (tachicardie sopraventricolari), ESC 2024 (fibrillazione atriale), ESC 2022 (aritmie ventricolari), ESC 2021 (stimolazione), ESC 2019 (embolia polmonare), ESC 2025 (miocardite e pericardite), ERC 2025 (supporto avanzato e circostanze speciali), AHA/ACCF/HRS 2009 (criteri ECG).
+
+| File | Responsabilità |
+| --- | --- |
+| `casi-dati.js` | Casi guidati: stati del paziente, domande, commenti, fonti |
+| `casi-reali.js` | Elenco dei tracciati PTB-XL e domande per classe (generato) |
+| `casi-paziente.js`, `paziente-corpo.bin` | Scena 3D e corpo del paziente |
+| `casi-clinici.js` | Svolgimento, punteggio, collegamento a monitor e motore tramite `window.ISO_APP` |
+| `tests/casi.test.cjs` | Coerenza di dati, scenari, tracciati, frequenze, fonti, elenco PTB-XL e corpo |
+
+`engine.js` e `data.js` non sono modificati. I contenuti sono stati confrontati con le linee guida citate ma **non sono stati rivisti né certificati da un cardiologo**; dosi e scelte sono quelle dell’adulto e non sostituiscono i protocolli locali. I tracciati reali sono stati scelti dai metadati dell’archivio, non riguardati uno per uno. Verifica su iPad reale non eseguita.
+
+Restano da ricontrollare sul testo delle fonti i tempi della strategia invasiva nel caso Wellens, la pericardiocentesi nel tamponamento, le raccomandazioni nel caso Brugada, la dose del magnesio e lo schema della colchicina secondo il peso. I test automatici non verificano l’appropriatezza clinica di queste indicazioni.
+
+Durante l’integrazione è stato scaricato realmente il tracciato PTB-XL n. 23: entrambi i file originali hanno superato la verifica SHA-256; il caricamento delle 12 derivazioni e la comparsa del referto dopo la risposta sono stati controllati con Node.js e jsdom. Questa verifica non comprende il rendering in un browser né la revisione clinica del tracciato. La prova visiva della versione integrata resta da fare. Dettagli: `reports/2026-11-11-integrazione-v46.md`.
+
+Attribuzioni: PTB-XL — Wagner P et al., PhysioNet, CC BY 4.0. MakeHuman base mesh, default skeleton e macro targets — MakeHuman Community, CC0 1.0.

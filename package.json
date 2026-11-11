@@ -1,6 +1,6 @@
 {
   "name": "isoelettrica",
-  "version": "45.1.0",
+  "version": "46.0.0",
   "private": true,
   "description": "Simulatore didattico ECG: verifiche del motore e dell'interfaccia",
   "scripts": {
