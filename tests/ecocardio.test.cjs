@@ -54,7 +54,7 @@ test('Exercise cannot be completed by matching only one movement or the depth',(
 async function app(){
  const {g}=await source(),h=environment('ecocardio/index.html'),w=h.w;
  w.THREE={...T,GLTFLoader:class{load(url,done){queueMicrotask(()=>done(g));}}};
- Object.assign(w,{EchoCore:C,EchoViews:D,EchoVolume:Volume,EchoBody:Body,EchoImaging:Imaging,EchoTraining:Training,HeartAtlasGeometry:G,AnatomyRefinements:R,CardiacMechanics:M,CardiacClock:require('../cardiac-clock.js'),HeartPreviewMotion:require('../prototipo-cuore/motion.js'),ECG:require('../engine.js'),ISO_DATA:require('../data.js')});
+ Object.assign(w,{EchoCore:C,EchoViews:D,EchoVolume:Volume,EchoBody:Body,EchoImaging:Imaging,EchoTraining:Training,EchoThorax:require('../ecocardio/thorax.js'),EchoValves:require('../ecocardio/valves.js'),HeartAtlasGeometry:G,AnatomyRefinements:R,CardiacMechanics:M,CardiacClock:require('../cardiac-clock.js'),HeartPreviewMotion:require('../prototipo-cuore/motion.js'),ECG:require('../engine.js'),ISO_DATA:require('../data.js')});
  w.HTMLElement.prototype.scrollIntoView=()=>{};
  w.fetch=async url=>({ok:true,arrayBuffer:async()=>binary('ecocardio/'+url.split('?')[0])});
  const getContext=w.HTMLCanvasElement.prototype.getContext;w.HTMLCanvasElement.prototype.getContext=function(type){const ctx=getContext.call(this,type);if(ctx)ctx.createImageData=(width,height)=>({data:new Uint8ClampedArray(width*height*4),width,height});return ctx;};

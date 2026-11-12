@@ -18,6 +18,8 @@ const dictionary={
  'Superior vena cava':{id:'vena_cava_superior',label:'Vena cava superiore',short:'VCS',color:'#82a8ce'},
  'Pulmonary trunk':{id:'truncus_pulmonalis',label:'Tronco polmonare',short:'TP',color:'#85a8c9'},
  'Posterior leaflet of left atrioventricular valve':{id:'valva_atrioventricularis_sinistra_cuspis_posterior',label:'Mitrale · lembo posteriore',short:'M',color:'#f0dbad'},
+ 'Anterior leaflet of left atrioventricular valve':{id:'valva_atrioventricularis_sinistra_cuspis_anterior',label:'Mitrale · lembo anteriore',short:'M ant.',color:'#f0dbad'},
+ 'Anterior leaflet of right atrioventricular valve':{id:'valva_atrioventricularis_dextra_cuspis_anterior',label:'Tricuspide · lembo anteriore',short:'T ant.',color:'#f0dbad'},
  'Inferior leaflet of right atrioventricular valve':{id:'valva_atrioventricularis_dextra_cuspis_inferior',label:'Tricuspide · lembo inferiore',short:'T',color:'#f0dbad'},
  'Septal leaflet of right atrioventricular valve':{id:'valva_atrioventricularis_dextra_cuspis_septalis',label:'Tricuspide · lembo settale',short:'T',color:'#f0dbad'},
  'Left coronary leaflet':{id:'valva_aortae_valvula_semilunaris_sinistra',label:'Valvola aortica · cuspide sinistra',short:'VAo',color:'#f0dbad'},
@@ -67,6 +69,18 @@ const views=[
 // not a validated clinical acquisition. The same plane is used in both displays.
 const four=views.find(v=>v.id==='a4c'),fourPose=C.pose(four,{rotation:10,fan:-10});
 four.target=C.add(fourPose.origin,C.mul(fourPose.d,2.5));four.right=fourPose.u;
-const sources=[{title:'ASE · Esame ecocardiografico transtoracico, 2019',href:'https://www.asecho.org/wp-content/uploads/2019/01/2019_Comprehensive-TTE.pdf'},{title:'BSE · Minimum dataset, 2020',href:'https://pmc.ncbi.nlm.nih.gov/articles/PMC7923056/'}];
-return {dictionary,groups,views,sources};
+function alignValves(input,rigs){
+ const byId=Object.fromEntries(rigs.map(r=>[r.id,r])),mv=byId.mitral.center,tv=byId.tricuspid.center,ao=byId.aortic.center,apex=[.93,-1.20,.42],result=input.map(v=>({...v}));
+ function projectOrigin(origin,center,normal){return C.sub(origin,C.mul(normal,C.dot(C.sub(origin,center),normal)));}
+ const plax=result.find(v=>v.id==='plax'),normal=C.unit(C.cross(C.sub(ao,mv),C.sub(plax.origin,mv))),projectedApex=projectOrigin(apex,mv,normal);
+ Object.assign(plax,{target:C.mul(C.add(projectedApex,ao),.5),right:C.sub(ao,projectedApex)});
+ const a4=result.find(v=>v.id==='a4c'),base=C.mul(C.add(mv,tv),.5),axis=C.unit(C.sub(base,apex));
+ Object.assign(a4,{origin:[1.6,-1.55,1.9],target:base,right:C.sub(mv,tv)});
+ for(const [id,rig,offset]of [['psax-ao',byId.aortic,.10],['psax-mv',byId.mitral,-.018]]){
+  const view=result.find(v=>v.id===id),n=C.unit(rig.normal),center=C.add(rig.center,C.mul(n,offset)),origin=projectOrigin(view.origin,center,n),d=C.unit(C.sub(center,origin));let right=C.unit(C.cross(d,n));if(right[0]<0)right=C.mul(right,-1);Object.assign(view,{origin,target:center,right});
+ }
+ return result;
+}
+const sources=[{title:'ASE · Esame ecocardiografico transtoracico, 2019',href:'https://www.asecho.org/wp-content/uploads/2019/01/2019_Comprehensive-TTE.pdf'},{title:'BSE · Minimum dataset, 2020',href:'https://pmc.ncbi.nlm.nih.gov/articles/PMC7923056/'},{title:'OpenStax · Sequenza del ciclo cardiaco',href:'https://openstax.org/books/anatomy-and-physiology/pages/19-3-cardiac-cycle'},{title:'Z-Anatomy · Modelli anatomici originali',href:'https://github.com/Z-Anatomy/Models-of-human-anatomy'}];
+return {dictionary,groups,views,alignValves,sources};
 });

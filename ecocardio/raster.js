@@ -13,7 +13,7 @@ function prepare(mesh,{deform=false,grid=0}={}){
  for(const f of faces){const n=C.cross(C.sub(points[f[1]],points[f[0]]),C.sub(points[f[2]],points[f[0]]));for(const i of f)for(let j=0;j<3;j++)normals[i][j]+=n[j];}
  for(const n of normals){const d=C.norm(n)||1;for(let j=0;j<3;j++)n[j]/=d;}
  const color=mesh.material.color.clone();if(color.convertLinearToSRGB)color.convertLinearToSRGB();
- return {points,faces,normals,color:[color.r*255,color.g*255,color.b*255],deform,mesh,name:mesh.userData.sourceName,layer:mesh.userData.layer};
+ return {points,faces,normals,color:[color.r*255,color.g*255,color.b*255],deform,mesh,live:!!mesh.userData.dynamicValve,name:mesh.userData.sourceName,layer:mesh.userData.layer};
 }
 function create(){
  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');let pixels,depth,W=0,H=0;
@@ -36,20 +36,29 @@ function create(){
   }
   for(const item of items){
    if(item.mesh.visible===false)continue;
+   const activeClip=options.keepValves&&item.mesh.userData.dynamicValve?null:clip,livePos=item.live?item.mesh.geometry.attributes.position:null,liveNormals=item.live?item.mesh.geometry.attributes.normal:null;
    const matrix=item.deform?null:item.mesh.matrixWorld?.elements;
    const projected=item.points.map((p,i)=>{
-    let q=item.deform?window.CardiacMechanics.deform(p,motion):p,n=item.normals[i];
+    if(livePos)p=[livePos.getX(i),livePos.getY(i),livePos.getZ(i)];
+    let q=item.deform?window.CardiacMechanics.deform(p,motion):p,n=liveNormals?[liveNormals.getX(i),liveNormals.getY(i),liveNormals.getZ(i)]:item.normals[i];
     if(matrix){const m=matrix;q=[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12],m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13],m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]];n=[m[0]*n[0]+m[4]*n[1]+m[8]*n[2],m[1]*n[0]+m[5]*n[1]+m[9]*n[2],m[2]*n[0]+m[6]*n[1]+m[10]*n[2]];}
     const x=q[0],y=q[1],z=q[2],cw=e[3]*x+e[7]*y+e[11]*z+e[15],px=(e[0]*x+e[4]*y+e[8]*z+e[12])/cw,py=(e[1]*x+e[5]*y+e[9]*z+e[13])/cw,pz=(e[2]*x+e[6]*y+e[10]*z+e[14])/cw;
-    const nl=C.norm(n)||1,lambert=Math.max(0,C.dot(n,light)/nl),rim=Math.pow(1-Math.abs(n[2]/nl),2)*.13,shade=.38+lambert*.64+rim;
-    return [(px+1)*W/2,(1-py)*H/2,(pz+1)/2,shade,clip?C.dot(q,clip.normal)+clip.constant:-1];
+    if(item.mesh.material.side===T.DoubleSide&&C.dot(n,[camera.position.x-x,camera.position.y-y,camera.position.z-z])<0)n=n.map(v=>-v);
+    const nl=C.norm(n)||1,lambert=Math.max(0,C.dot(n,light)/nl),rim=Math.pow(1-Math.abs(n[2]/nl),2)*.13,shade=.44+lambert*.58+rim;
+    return [(px+1)*W/2,(1-py)*H/2,(pz+1)/2,shade,activeClip?C.dot(q,activeClip.normal)+activeClip.constant:-1];
    });
    let color=item.color;if(highlight)color=item.name===highlight?[109,239,203]:color.map(x=>x*.64);
-   for(const f of item.faces){let ps=f.map(i=>projected[i]);if(clip){const out=[];for(let i=0;i<3;i++){const a=ps[i],b=ps[(i+1)%3];if(a[4]<=0)out.push(a);if((a[4]<=0)!==(b[4]<=0)){const t=a[4]/(a[4]-b[4]);out.push(a.map((v,j)=>v+(b[j]-v)*t));}}ps=out;}if(ps.length<3)continue;for(let i=1;i<ps.length-1;i++)triangle(ps[0],ps[i],ps[i+1],color);}
+   for(const f of item.faces){let ps=f.map(i=>projected[i]);if(activeClip){const out=[];for(let i=0;i<3;i++){const a=ps[i],b=ps[(i+1)%3];if(a[4]<=0)out.push(a);if((a[4]<=0)!==(b[4]<=0)){const t=a[4]/(a[4]-b[4]);out.push(a.map((v,j)=>v+(b[j]-v)*t));}}ps=out;}if(ps.length<3)continue;for(let i=1;i<ps.length-1;i++)triangle(ps[0],ps[i],ps[i+1],color);}
   }
   ctx.putImageData(pixels,0,0);return canvas;
  }
- return {render};
+ function snapshot(){return {width:W,height:H,data:new Uint8ClampedArray(pixels.data),depth:new Float32Array(depth)};}
+ function overlay(layer,alpha){
+  if(!layer||layer.width!==W||layer.height!==H)return canvas;
+  for(let i=0;i<depth.length;i++){const k=i*4;if(!layer.data[k+3]||layer.depth[i]>=depth[i])continue;const background=pixels.data[k+3]/255,a=layer.data[k+3]/255*alpha,total=a+background*(1-a);for(let c=0;c<3;c++)pixels.data[k+c]=(layer.data[k+c]*a+pixels.data[k+c]*background*(1-a))/total;pixels.data[k+3]=Math.round(total*255);}
+  ctx.putImageData(pixels,0,0);return canvas;
+ }
+ return {render,snapshot,overlay};
 }
 window.EchoRaster={prepare,create};
 })();

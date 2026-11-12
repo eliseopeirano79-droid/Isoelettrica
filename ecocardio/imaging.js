@@ -7,12 +7,12 @@
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const defaults=Object.freeze({gain:52,contrast:52,focus:58,tgcNear:0,tgcMid:0,tgcFar:0,sector:86});
 function chart(w,h,p){const top=30,bottom=h-32,scale=Math.min((bottom-top)/p.depth,(w-44)/(2*p.depth*Math.sin(p.halfAngle)));return {x:w/2,y:top+Math.max(0,bottom-top-p.depth*scale)/2,scale};}
-function create(volume){
+function create(volume,valves=null){
  const definitions=volume.meta.structures,colors=[[0,0,0],...definitions.map(d=>{const s=d.color?.replace('#','')||'b8c6bd';return [0,2,4].map(i=>parseInt(s.slice(i,i+2),16));})];
  const a={},b={},q=[0,0,0],q2=[0,0,0];
  function point(world,p,inverse,opts,depth,out={}){
-  inverse(world[0],world[1],world[2],q);volume.sample(q[0],q[1],q[2],a);
-  inverse(world[0]+p.d[0]*.022,world[1]+p.d[1]*.022,world[2]+p.d[2]*.022,q2);volume.sample(q2[0],q2[1],q2[2],b);
+  inverse(world[0],world[1],world[2],q);volume.sample(q[0],q[1],q[2],a);valves?.sample(q[0],q[1],q[2],a);
+  inverse(world[0]+p.d[0]*.022,world[1]+p.d[1]*.022,world[2]+p.d[2]*.022,q2);volume.sample(q2[0],q2[1],q2[2],b);valves?.sample(q2[0],q2[1],q2[2],b);
   const edge=Math.min(1,Math.abs(a.rho-b.rho)*3.0),scatter=Math.pow(clamp(a.noise*1.8-.35,0,1),1.3);
   const f=depth/p.depth,tgc=f<.5?opts.tgcNear*(1-f*2)+opts.tgcMid*f*2:opts.tgcMid*(2-f*2)+opts.tgcFar*(f*2-1);
   const gain=Math.pow(2,(opts.gain-52+tgc*.65)/26),attenuation=Math.exp(-f*.72),focus=.79+.21*Math.exp(-Math.pow((f-opts.focus/100)*4,2));
@@ -21,6 +21,7 @@ function create(volume){
   out.rho=a.rho;out.label=a.label;out.gray=clamp(Math.round(intensity*255),0,255);out.noise=scatter;return out;
  }
  function render(p,m,options={},width=400,height=360){
+  valves?.update(m.valves);
   const opts={...defaults,...options},inverse=V.inverseMotion(m),ch=chart(width,height,p),pixels=new Uint8ClampedArray(width*height*4),labels=new Uint8Array(width*height),world=[0,0,0],s={},counts=new Uint32Array(definitions.length+1);
   const rowStep=p.d.map(x=>x/ch.scale),colStep=p.u.map(x=>x/ch.scale),start=p.origin.map((v,i)=>v-colStep[i]*ch.x-rowStep[i]*ch.y),tan=Math.tan(p.halfAngle),depth2=p.depth*p.depth;
   for(let y=0;y<height;y++){
@@ -43,6 +44,7 @@ function create(volume){
   return {pixels,labels,width,height,chart:ch,counts,pose:p,motion:{...m}};
  }
  function line(p,m,options,angle,count=240){
+  valves?.update(m.valves);
   const opts={...defaults,...options},inverse=V.inverseMotion(m),r=angle*Math.PI/180,d=p.d.map((v,i)=>v*Math.cos(r)+p.u[i]*Math.sin(r)),world=[0,0,0],s={},out=new Uint8Array(count);
   for(let i=0;i<count;i++){const depth=i/(count-1)*p.depth;for(let j=0;j<3;j++)world[j]=p.origin[j]+d[j]*depth;point(world,p,inverse,opts,depth,s);out[i]=s.gray;}
   return out;

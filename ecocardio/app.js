@@ -1,7 +1,7 @@
 (function(){'use strict';
 const C=window.EchoCore,D=window.EchoViews,M=window.CardiacMechanics,V=window.EchoVolume,I=window.EchoImaging,Training=window.EchoTraining,$=id=>document.getElementById(id);
 let views=D.views.map(v=>({...v})),view=views[0],state={...C.defaults},settings={...I.defaults},renderMode='echo',layout='single',labels=false,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,ready=false,available=true;
-let t=4500,cycleStart=0,cycleDuration=850,previous=0,lastDraw=0,dirty=true,speed=1,simElapsed=0,volume,imager,meshes=[],motion={atr:0,vent:0},currentPose=C.pose(view),currentFrame=null,secondaryFrame=null,frameRecord=null;
+let t=4500,cycleStart=0,cycleDuration=850,previous=0,lastDraw=0,dirty=true,speed=1,simElapsed=0,volume,imager,valves,meshes=[],motion={atr:0,vent:0},currentPose=C.pose(view),currentFrame=null,secondaryFrame=null,frameRecord=null;
 let selected=0,selectedRest=null,tool='inspect',measure=[],planeAngle=90,mAngle=0,mHistory=[],lastM=-Infinity,session=null,comparison=null,legendKey='',feedbackPending=true,toastTimer;
 const stage=window.EchoScene.create($('stage'),(x,y)=>{
  const nx=C.clamp(x-view.origin[0],-.6,.6),ny=C.clamp(y-view.origin[1],-.6,.6);
@@ -85,7 +85,8 @@ function updateFeedback(frame){cue();const found=new Set();for(let i=1;i<frame.c
  $('plane-feedback').textContent=missed.length?'Nel piano attuale manca una porzione sufficiente di: '+missed.join(', ')+'. Confronta il riferimento per capire quale movimento la recupera.':layout==='biplane'?'I due settori condividono origine e asse centrale. Il piano B è ruotato di '+planeAngle+'° rispetto ad A.':'Le strutture bersaglio attraversano questo piano. Questo riscontro geometrico non valuta la qualità di un esame clinico.';feedbackPending=false;
 }
 function calculate(){
- if(!ready)return;currentPose=poseFor();const clock=window.CardiacClock.read(stream,t,cfg);motion=window.HeartPreviewMotion.sample(clock.events,t,cfg);const second=layout==='biplane'?V.orthogonal(currentPose,planeAngle):null;
+ if(!ready)return;currentPose=poseFor();const clock=window.CardiacClock.read(stream,t,cfg);motion=window.HeartPreviewMotion.sample(clock.events,t,cfg);motion.valves=window.EchoValves.state(clock);const second=layout==='biplane'?V.orthogonal(currentPose,planeAngle):null;
+ $('mechanical-phase').textContent=motion.valves.phase;for(const r of valves.rigs){const el=$('status-'+r.id),open=motion.valves[r.id]>.15;el.textContent=r.label+' · '+(open?'aperta':'chiusa');el.dataset.open=String(open);}
  stage.setPose(currentPose,poseFor(view,C.defaults),second);stage.setMotion(motion,t);if(selectedRest)stage.highlight(imager.definitions[selected-1]?.name,M.deform(selectedRest,motion));stage.draw();
  const d=dimensions($('scan'));currentFrame=imager.render(currentPose,motion,{...settings,mode:renderMode,selected},d.rw,d.rh);drawFrame(currentFrame,$('scan'));
  frameRecord={time:t,phase:(t-cycleStart)/cycleDuration,state:{...state},settings:{...settings},view:view.id,renderMode};
@@ -100,7 +101,7 @@ function calculate(){
 }
 function chooseStructure(id,world){selected=id;const def=imager.definitions[id-1];if(!def)return;selectedRest=world?V.inverseMotion(motion)(...world,[0,0,0]):null;stage.highlight(def.name,world);observe('select',def.id);$('clear-selection').hidden=false;
  const testing=session?.mission.kind==='identify'&&!session.finished;
- $('structure-title').textContent=testing?'Selezione registrata':def.label;$('structure-description').textContent=testing?'Premi Verifica per controllare la tua risposta. Il punto scelto è evidenziato nel modello.':Training.explanations[def.id]||(def.layer==='valves'?'La superficie mostrata appartiene all’apparato valvolare dell’atlante. I lembi disponibili sono incompleti e non seguono qui una cinematica guidata da pressioni.':'Ritrova questa struttura in 3D e osserva come cambia il suo profilo quando inclini o ruoti il piano.');legendKey='';dirty=true;
+ $('structure-title').textContent=testing?'Selezione registrata':def.label;$('structure-description').textContent=testing?'Premi Verifica per controllare la tua risposta. Il punto scelto è evidenziato nel modello.':Training.explanations[def.id]||(def.layer==='valves'?'I lembi ricostruiti cambiano forma nello stesso ciclo del 3D e dell’eco. Apri “Valvole in movimento” e rallenta il ciclo per seguire apertura e coaptazione. La cinematica è didattica: non deriva da pressioni simulate.':'Ritrova questa struttura in 3D e osserva come cambia il suo profilo quando inclini o ruoti il piano.');legendKey='';dirty=true;
 }
 function imageClick(e){if(!currentFrame||!ready)return;const canvas=$('scan'),r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*currentFrame.width,y=(e.clientY-r.top)/r.height*currentFrame.height,q=currentFrame.chart,xx=(x-q.x)/q.scale,yy=(y-q.y)/q.scale;
  if(!C.inside(xx,yy,currentPose))return;
@@ -135,6 +136,9 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
 document.querySelectorAll('[data-layout]').forEach(b=>b.addEventListener('click',()=>setLayout(b.dataset.layout)));
 document.querySelectorAll('[data-render]').forEach(b=>b.addEventListener('click',()=>setRender(b.dataset.render)));
 document.querySelectorAll('[data-camera]').forEach(b=>b.addEventListener('click',()=>stage.cameraView(b.dataset.camera)));
+function valveHint(){return ['mitral','tricuspid'].includes($('valve-choice').value)?'Vista dalla base · trascina per vedere le corde':'Vista dalla base · trascina per esplorare le cuspidi';}
+document.querySelectorAll('[data-anatomy]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-anatomy]').forEach(a=>a.setAttribute('aria-pressed',String(a===b)));$('valve-choice').hidden=b.dataset.anatomy!=='valve';document.querySelector('.orientation').hidden=b.dataset.anatomy==='valve';stage.anatomyView(b.dataset.anatomy,$('valve-choice').value);$('stage-note').textContent=b.dataset.anatomy==='valve'?valveHint():'Trascina per orbitare · pizzica per zoom';dirty=true;}));
+$('valve-choice').addEventListener('change',()=>{stage.anatomyView('valve',$('valve-choice').value);$('stage-note').textContent=valveHint();dirty=true;});
 document.querySelectorAll('[data-drag]').forEach(b=>b.addEventListener('click',()=>{stage.setDragMode(b.dataset.drag);document.querySelectorAll('[data-drag]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.drag===b.dataset.drag)));$('stage-note').textContent=b.dataset.drag==='probe'?'Trascina sul torace · la sonda segue la cute':'Trascina il torace · pizzica per zoom';}));
 $('labels').addEventListener('click',()=>{labels=!labels;$('labels').setAttribute('aria-pressed',String(labels));if(labels&&session?.mission.kind==='identify')observe('help');dirty=true;});
 $('play').addEventListener('click',()=>setPlaying(!playing));$('speed').addEventListener('change',()=>{speed=Number($('speed').value);resetM();});
@@ -149,6 +153,7 @@ $('clear-measure').addEventListener('click',()=>{clearMeasure();dirty=true;});$(
 $('layers').addEventListener('click',()=>{$('layer-panel').hidden=!$('layer-panel').hidden;$('layers').setAttribute('aria-expanded',String(!$('layer-panel').hidden));});
 for(const key of ['skin','ribs','vessels','plane','ghost'])$(key).addEventListener('change',()=>{stage.setLayers({[key]:$(key).checked});if(key==='ghost'&&$(key).checked)observe('help');stage.draw();});
 $('opacity').addEventListener('input',()=>{stage.setLayers({opacity:Number($('opacity').value)/100});stage.draw();});$('skin-opacity').addEventListener('input',()=>{stage.setLayers({skinOpacity:Number($('skin-opacity').value)/100});stage.draw();});
+$('bone-opacity').addEventListener('input',()=>{stage.setLayers({boneOpacity:Number($('bone-opacity').value)/100});stage.draw();});
 $('cut').addEventListener('click',()=>{const on=$('cut').getAttribute('aria-pressed')!=='true';$('cut').setAttribute('aria-pressed',String(on));stage.setLayers({cut:on});stage.draw();});$('camera-reset').addEventListener('click',()=>stage.resetCamera());
 $('check').addEventListener('click',checkMission);$('end-practice').addEventListener('click',()=>{session=null;$('practice').hidden=true;clearSelection();changed();});
 $('capture').addEventListener('click',capture);$('download').addEventListener('click',exportImage);
@@ -163,9 +168,9 @@ async function loadAtlas(){
  $('load').hidden=false;$('load').textContent='Caricamento di torace, atlante e volume…';
  try{
   const array=async url=>{const r=await fetch(url);if(!r.ok)throw Error('Asset non disponibile: '+url);return r.arrayBuffer();};
-  const [gltf,vol,bd]=await Promise.all([new Promise((resolve,reject)=>new window.THREE.GLTFLoader().load('../prototipo-cuore/heart-z-anatomy.glb',resolve,undefined,reject)),array('tissue.bin?v=47.1'),array('body.bin?v=47.1')]);
-  const source=window.HeartAtlasGeometry.sourceMeshes(gltf.scene);window.AnatomyRefinements.apply(source,window.HeartAtlasGeometry.material);meshes=source.filter(m=>['wall','valves','vessels'].includes(m.userData.layer));
-  volume=V.decode(vol);volume.meta.structures=volume.meta.structures.map(d=>({...d,...D.dictionary[d.name]}));imager=I.create(volume);stage.setBody(window.EchoBody.decode(bd));views=stage.registerViews(D.views);view=views.find(v=>v.id===view.id);stage.setModel(meshes);
+  const [gltf,vol,bd,th]=await Promise.all([new Promise((resolve,reject)=>new window.THREE.GLTFLoader().load('../prototipo-cuore/heart-z-anatomy.glb',resolve,undefined,reject)),array('tissue.bin?v=47.2'),array('body.bin?v=47.2'),array('thorax.bin?v=47.2')]);
+  const source=window.HeartAtlasGeometry.sourceMeshes(gltf.scene);window.AnatomyRefinements.apply(source,window.HeartAtlasGeometry.material);meshes=source.filter(m=>['wall','valves','vessels'].includes(m.userData.layer)&&!/leaflet/i.test(m.userData.sourceName));
+  volume=V.decode(vol);volume.meta.structures=volume.meta.structures.map(d=>({...d,...D.dictionary[d.name]}));valves=window.EchoValves.create(meshes,volume);meshes.push(...valves.meshes);imager=I.create(volume,valves);stage.setBody(window.EchoBody.decode(bd));stage.setThorax(window.EchoThorax.decode(th));views=stage.registerViews(D.alignValves(D.views,valves.rigs));view=views.find(v=>v.id===view.id);stage.setModel(meshes,valves);
   ready=true;$('load').hidden=true;$('stage').dataset.ready='true';$('stage').dataset.renderer=stage.software?'canvas':'webgl';$('renderer-kind').textContent=stage.software?'RESA CPU':'WEBGL';stage.resize();calculate();window.parent.postMessage({type:'iso-echo-ready'},location.origin);
  }catch(error){console.error('Ecocardio Studio: caricamento non riuscito',error);ready=false;$('load').hidden=false;$('load').textContent='Il laboratorio non è stato caricato. Controlla la connessione e riprova.';const b=document.createElement('button');b.textContent='Riprova il caricamento';b.className='quiet';b.addEventListener('click',loadAtlas,{once:true});$('load').append(b);}
 }

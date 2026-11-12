@@ -9,7 +9,10 @@ src, out = map(Path,sys.argv[1:3])
 b=src.read_bytes(); n=struct.unpack_from('<I',b,4)[0]; h=json.loads(b[8:8+n]); base=8+n
 v=h['varianti']['M']['pos']; p=np.frombuffer(b,dtype='<f4',offset=base+v[0],count=v[1]//4).reshape(-1,3).copy()
 p[:,0]*=1.5; p[:,1]=(p[:,1]-3.7)*1.5; p[:,2]=(p[:,2]-.75)*1.65
-groups={}; vertices=p.tolist(); boundary={}; cut_y=-3.7
+# Display registration around the real thoracic cage. This is an affine fit of
+# an independent MakeHuman surface, not the atlas subject's skin.
+p[:,0]=p[:,0]*1.50-.44; p[:,2]=p[:,2]*1.55+.55
+groups={}; vertices=p.tolist(); boundary={}; cut_y=-5.3
 def intersect(a,b):
     key=tuple(sorted((int(a),int(b))))
     if key not in boundary:
@@ -32,7 +35,7 @@ p=np.asarray(vertices,dtype=np.float32)
 skin=np.concatenate([groups[k] for k in ['pelle','camice','capelliCorti']])
 used=np.unique(np.concatenate([skin.ravel(),groups['occhi'].ravel()])); remap=np.zeros(len(p),np.uint16);remap[used]=np.arange(len(used));p0=p;p=p[used]
 arrays=[p.astype('<f4').tobytes(),remap[skin].astype('<u2').tobytes(),remap[groups['capelliCorti']].astype('<u2').tobytes(),remap[groups['occhi']].astype('<u2').tobytes()]
-step=.045; lo=np.array([-3.4,-3.7]); dims=np.array([153,181]); grid=np.full(tuple(dims),-99,dtype=np.float32)
+step=.045; lo=np.array([-4.5,-5.3]); dims=np.array([190,220]); grid=np.full(tuple(dims),-99,dtype=np.float32)
 for t in p0[skin]:
     a,bb,c=t[:,:2];det=(bb[1]-c[1])*(a[0]-c[0])+(c[0]-bb[0])*(a[1]-c[1])
     if abs(det)<1e-12:continue

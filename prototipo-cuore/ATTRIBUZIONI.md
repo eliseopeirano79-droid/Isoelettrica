@@ -65,3 +65,12 @@ Dettagli della correzione di osti, infundibolo e biforcazione: `../reports/2026-
 La conversione usa una ricostruzione limitata delle pareti, gusci illustrativi dei vasi e uno spessore di visualizzazione per le superfici valvolari sottili. Giunzioni aperte e superfici mancanti non diventano anatomia validata. Texture, attenuazione, fuoco e TGC sono effetti grafici. Il moto è quello semplificato e condiviso di Isoelettrica.
 
 `ecocardio/body.bin` deriva dalla variante maschile del file `paziente-corpo.bin` già incluso nell’app, generato dalla base e dai target MakeHuman **CC0 1.0**. Adattamenti: estrazione della parte superiore, trasformazione delle coordinate, taglio piano alla base del torace, separazione di cute/capelli/occhi e griglia di contatto. Fonte e licenza: https://www.makehumancommunity.org/content/license.html e https://creativecommons.org/publicdomain/zero/1.0/. Le coste e la registrazione del cuore nel torace sono ricostruzioni illustrative. I generatori sono in `tools/export-echo-atlas.cjs`, `tools/build-echo-volume.py` e `tools/build-echo-body.py`.
+
+
+## Scheletro toracico di Ecocardio Studio 03
+
+`ecocardio/thorax.bin` contiene 72 strutture estratte da Z-Anatomy, revisione `2b652413b1116c9119e616eabc1e63af3cc6267d`: 24 coste, 20 cartilagini costali, manubrio, corpo sternale, processo xifoideo, due clavicole, 12 vertebre toraciche e 11 dischi intervertebrali. La trasformazione è identica a quella dell’esportazione cardiaca originale. Coordinate quantizzate a 0,0005 unità dell’atlante, errore massimo 0,00025 per asse; topologia triangolata conservata.
+
+Fonte: [Z-Anatomy · Models of human anatomy](https://github.com/Z-Anatomy/Models-of-human-anatomy), Gauthier Kervyn e collaboratori. Modelli derivati da BodyParts3D, Database Center for Life Science. Z-Anatomy: CC BY-SA 4.0; fonte BodyParts3D: CC BY-SA 2.1 Japan. Questo derivato è distribuito con CC BY-SA 4.0, conservando le attribuzioni della fonte. Inventario, impronta e trasformazione sono in `ecocardio/thorax.json`; estrazione riproducibile in `tools/build-echo-thorax.py`.
+
+Le superfici valvolari animate sono ricostruzioni parametriche originali registrate sui riferimenti del modello; non sono scansioni di tessuti, né una simulazione biomeccanica validata. Il GLB originale resta inalterato.
