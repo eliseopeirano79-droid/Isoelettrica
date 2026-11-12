@@ -154,3 +154,30 @@ test('Il corpo del paziente ha intestazione valida, quattro corporature e pesi n
   assert.ok(ind.every(x => x < H.ossa.length));
   for (const g of Object.values(H.gruppi)) { const a = new Uint16Array(b.buffer.slice(b.byteOffset + base + g[0], b.byteOffset + base + g[0] + g[1])); assert.ok(a.length % 3 === 0 && a.every(x => x < H.n)); }
 });
+
+/* ---------- Turno di guardia ---------- */
+const { calcoli, statoAl } = require(path.join(root, 'casi-clinici.js'));
+
+test('I calcoli di dose danno il risultato esatto, una sola risposta corretta e quattro opzioni distinte', () => {
+  const num = t => Number(t.split(' ')[0].replace(',', '.'));
+  for (let seme = 1; seme <= 400; seme++) {
+    const R = E.rng(seme), lista = calcoli(R);
+    assert.equal(lista.length, 3);
+    for (const c of lista) {
+      const p = c.passi[0], ok = p.opz.filter(o => o.v === 'ok'), dove = c.id + ' seme ' + seme;
+      assert.equal(ok.length, 1, dove); assert.equal(p.opz.length, 4, dove);
+      assert.equal(new Set(p.opz.map(o => o.t)).size, 4, dove + ': opzioni doppie');
+      assert.ok(p.opz.every(o => num(o.t) > 0 && o.f.length > 20), dove);
+      const kg = Number((c.intro.match(/Peso (\d+) kg/) || [])[1]), dose = Number((c.intro.match(/adrenalina (\d+) µg\/min/) || [])[1]);
+      const atteso = c.id === 'calc-eparina-bolo' ? 80 * kg : c.id === 'calc-eparina-infusione' ? Math.round(18 * kg / 50 * 10) / 10 : dose * 60 / 10;
+      assert.ok(Number.isFinite(atteso) && atteso > 0, dove); assert.equal(num(ok[0].t), atteso, dove);
+      assert.ok(p.fonte.every(f => FONTI[f]), dove); assert.ok(byId[c.stati.a.ecg[0]], dove);
+      if (c.id === 'calc-adrenalina') assert.ok(dose >= 2 && dose <= 10, dove + ': dose fuori dall’intervallo ERC');
+    }
+  }
+});
+
+test('Ogni passo di ogni caso ha uno stato definito anche se estratto da solo', () => {
+  for (const c of CASI) c.passi.forEach((p, i) => { const n = statoAl(c, i); assert.ok(c.stati[n], c.id + ' passo ' + (i + 1) + ': ' + n); });
+  const fa = CASI.find(c => c.id === 'arresto-fv'); assert.equal(statoAl(fa, 1), 'rcp'); assert.equal(statoAl(fa, 4), 'rosc');
+});

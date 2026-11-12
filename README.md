@@ -97,15 +97,19 @@ Modello didattico con rilevazione e cattura ideali: tempi ed esiti esemplificati
 
 Riferimenti: [AHA 2025, Adult Advanced Life Support](https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support), [ESC 2021, Pacing e CRT](https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/cardiac-pacing-and-cardiac-resynchronization-therapy/).
 
-## Casi clinici (v46.0)
+## Casi clinici (v46.2)
 
-La sezione **Casi clinici** ha due modalità.
+La sezione **Casi clinici** comprende casi guidati, ECG reali e un Turno di guardia.
 
 **Casi guidati (15, 66 decisioni).** Lettura dell’ECG, diagnosi, decisione, farmaco e dose, seguito. Il tracciato di ogni fase è generato dal motore con gli scenari esistenti e cambia in continuità sulla stessa striscia quando lo stato del paziente cambia (per esempio fibrillazione ventricolare → scarica → ritmo sinusale). La frequenza mostrata è letta dai battiti generati. Le scelte pericolose mostrano una conseguenza simulata, dichiarata come tale.
 
 **ECG reali (96).** Tracciati veri dall’archivio PTB-XL 1.0.3 (CC BY 4.0), con età, sesso e referto originale del cardiologo. `tools/build-casi-reali.py` li sceglie dal catalogo locale: validati da un cardiologo, senza artefatti segnalati, con una sola diagnosi principale a probabilità 100 e nessun’altra affermazione diagnostica; sei per ciascuna di 16 classi. PTB-XL non contiene sintomi, terapia né decorso: la prima domanda chiede il reperto, la seconda è generale sul quadro riconosciuto e non descrive la storia di quel paziente. Il segnale si scarica alla prima apertura dal mirror già usato dall’Atlante, con verifica SHA-256, e resta poi disponibile offline.
 
-**Paziente 3D.** Corpo umano dalla mesh base di MakeHuman con il suo scheletro e i suoi pesi (CC0 1.0), in quattro corporature (uomo/donna, sotto e sopra i 62 anni), costruito da `tools/build-paziente.py` in `paziente-corpo.bin`. Mostra postura, colorito, sudorazione, coscienza, respiro, presìdi e manovre. Non ha texture della pelle né mimica facciale; non è un modello anatomico interno e non simula l’emodinamica.
+**Turno di guardia.** Dieci chiamate: otto passaggi da casi diversi e due esercizi di calcolo della dose. Le risposte e le fonti vengono mostrate alla fine; si può saltare una chiamata. Le diluizioni dei calcoli sono esempi didattici espliciti. Dopo le risposte ai casi guidati sono disponibili anche le spiegazioni delle altre alternative e la scheda ECG già presente nell’app.
+
+**Paziente 3D.** Corpo umano MakeHuman (CC0 1.0), con scheletro e pesi originali. Il binario del kit contiene quattro insiemi di vertici identici: `casi-paziente-aspetto.js` applica ora variazioni parametriche dichiarate a proporzioni, spalle e volto, muovendo anche giunti e ancore. Capelli volumetrici, sopracciglia, iridi, colorazione del viso e camice separato completano la scena. La coperta è una superficie aperta con pieghe, orlo e risvolto: si adatta ai punti del corpo durante il cambio di postura. Letto raccordato, cuscino con federa, sponde e ombre rendono più leggibili i contatti. Il modello mostra postura, colorito, sudorazione, coscienza, respiro, presìdi e manovre. I capelli e gli abiti vengono conservati in memoria per riutilizzarli nei casi successivi. Si ruota con un dito e si ingrandisce con due dita o con i pulsanti; ↺ ripristina la vista.
+
+Sono forme illustrative, con colorazione procedurale: non sono persone fotorealistiche, non includono una mimica completa né un modello anatomico interno, e non simulano l’emodinamica o la fisica completa dei tessuti.
 
 Fonti cliniche: ESC 2023 (sindromi coronariche acute), ESC 2019 (tachicardie sopraventricolari), ESC 2024 (fibrillazione atriale), ESC 2022 (aritmie ventricolari), ESC 2021 (stimolazione), ESC 2019 (embolia polmonare), ESC 2025 (miocardite e pericardite), ERC 2025 (supporto avanzato e circostanze speciali), AHA/ACCF/HRS 2009 (criteri ECG).
 
@@ -113,14 +117,16 @@ Fonti cliniche: ESC 2023 (sindromi coronariche acute), ESC 2019 (tachicardie sop
 | --- | --- |
 | `casi-dati.js` | Casi guidati: stati del paziente, domande, commenti, fonti |
 | `casi-reali.js` | Elenco dei tracciati PTB-XL e domande per classe (generato) |
-| `casi-paziente.js`, `paziente-corpo.bin` | Scena 3D e corpo del paziente |
+| `casi-paziente.js`, `casi-paziente-aspetto.js`, `paziente-corpo.bin` | Scena 3D, corporature, capelli, abiti e biancheria |
 | `casi-clinici.js` | Svolgimento, punteggio, collegamento a monitor e motore tramite `window.ISO_APP` |
-| `tests/casi.test.cjs` | Coerenza di dati, scenari, tracciati, frequenze, fonti, elenco PTB-XL e corpo |
+| `tests/casi.test.cjs`, `tests/casi-ui.test.cjs`, `tests/paziente-aspetto.test.cjs` | Dati, calcoli, percorsi DOM, geometria, cambio paziente e comandi 3D |
 
 `engine.js` e `data.js` non sono modificati. I contenuti sono stati confrontati con le linee guida citate ma **non sono stati rivisti né certificati da un cardiologo**; dosi e scelte sono quelle dell’adulto e non sostituiscono i protocolli locali. I tracciati reali sono stati scelti dai metadati dell’archivio, non riguardati uno per uno. Verifica su iPad reale non eseguita.
 
 Restano da ricontrollare sul testo delle fonti i tempi della strategia invasiva nel caso Wellens, la pericardiocentesi nel tamponamento, le raccomandazioni nel caso Brugada, la dose del magnesio e lo schema della colchicina secondo il peso. I test automatici non verificano l’appropriatezza clinica di queste indicazioni.
 
-Durante l’integrazione è stato scaricato realmente il tracciato PTB-XL n. 23: entrambi i file originali hanno superato la verifica SHA-256; il caricamento delle 12 derivazioni e la comparsa del referto dopo la risposta sono stati controllati con Node.js e jsdom. Questa verifica non comprende il rendering in un browser né la revisione clinica del tracciato. La prova visiva della versione integrata resta da fare. Dettagli: `reports/2026-11-11-integrazione-v46.md`.
+Il rilascio v46.0 è stato verificato nel browser pubblico, compreso l’aggiornamento della PWA e il tracciato reale n. 23 con referto. Per la v46.2: 176 test Node e 5 Python superati; nove file protetti invariati; rendering offline della geometria Three.js nelle pose semiseduta e supina, con varianti e compressioni. Il browser disponibile per questa revisione non dispone di WebGL: i rendering Blender verificano le forme e i contatti, ma non certificano shader, prestazioni o resa su Safari/iPad. Dettagli in `reports/2026-11-12-pazienti-v46-2.md`.
+
+La verifica grafica offline è riproducibile con `tools/esporta-paziente.cjs` e `tools/render-paziente.py`. Richiede, solo per questi strumenti, `@napi-rs/canvas` e Blender 4; non aggiunge dipendenze al sito.
 
 Attribuzioni: PTB-XL — Wagner P et al., PhysioNet, CC BY 4.0. MakeHuman base mesh, default skeleton e macro targets — MakeHuman Community, CC0 1.0.
