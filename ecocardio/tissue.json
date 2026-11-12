@@ -1,0 +1,300 @@
+{
+  "version": 1,
+  "dims": [
+    128,
+    204,
+    120
+  ],
+  "min": [
+    -1.6560000000000001,
+    -2.04,
+    -1.6560000000000001
+  ],
+  "step": 0.024,
+  "structures": [
+    {
+      "id": "atrium_dextrum",
+      "label": "Atrio destro",
+      "short": "AD",
+      "color": "#74b1c6",
+      "name": "Right atrium",
+      "layer": "wall"
+    },
+    {
+      "id": "ventriculus_dexter",
+      "label": "Ventricolo destro",
+      "short": "VD",
+      "color": "#81b8c8",
+      "name": "Right ventricle",
+      "layer": "wall"
+    },
+    {
+      "id": "atrium_sinistrum",
+      "label": "Atrio sinistro",
+      "short": "AS",
+      "color": "#e9a5a0",
+      "name": "Left atrium",
+      "layer": "wall"
+    },
+    {
+      "id": "ventriculus_sinister",
+      "label": "Ventricolo sinistro",
+      "short": "VS",
+      "color": "#dd8790",
+      "name": "Left ventricle",
+      "layer": "wall"
+    },
+    {
+      "id": "musculus_papillaris_inferior_ventriculi_dextri",
+      "label": "Papillare inferiore del VD",
+      "short": "Pap VD",
+      "color": "#d9c598",
+      "name": "Inferior papillary muscle of right ventricle",
+      "layer": "valves"
+    },
+    {
+      "id": "musculus_papillaris_anterior_ventriculi_dextri",
+      "label": "Papillare anteriore del VD",
+      "short": "Pap VD",
+      "color": "#d9c598",
+      "name": "Anterior papillary muscle of right ventricle",
+      "layer": "valves"
+    },
+    {
+      "id": "musculus_papillaris_septalis",
+      "label": "Papillare settale del VD",
+      "short": "Pap VD",
+      "color": "#d9c598",
+      "name": "Septal papillary muscle of right ventricle",
+      "layer": "valves"
+    },
+    {
+      "id": "musculus_papillaris_inferior_ventriculi_sinistri",
+      "label": "Papillare inferiore del VS",
+      "short": "Pap VS",
+      "color": "#d9c598",
+      "name": "Inferior papillary muscle of left ventricle",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_atrioventricularis_dextra_cuspis_inferior",
+      "label": "Tricuspide · lembo inferiore",
+      "short": "T",
+      "color": "#f0dbad",
+      "name": "Inferior leaflet of right atrioventricular valve",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_atrioventricularis_dextra_cuspis_septalis",
+      "label": "Tricuspide · lembo settale",
+      "short": "T",
+      "color": "#f0dbad",
+      "name": "Septal leaflet of right atrioventricular valve",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_atrioventricularis_sinistra_cuspis_posterior",
+      "label": "Mitrale · lembo posteriore",
+      "short": "M",
+      "color": "#f0dbad",
+      "name": "Posterior leaflet of left atrioventricular valve",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_aortae_valvula_semilunaris_sinistra",
+      "label": "Valvola aortica · cuspide sinistra",
+      "short": "VAo",
+      "color": "#f0dbad",
+      "name": "Left coronary leaflet",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_aortae_valvula_semilunaris_posterior",
+      "label": "Valvola aortica · cuspide non coronarica",
+      "short": "VAo",
+      "color": "#f0dbad",
+      "name": "Non-coronary leaflet",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_aortae_valvula_semilunaris_dextra",
+      "label": "Valvola aortica · cuspide destra",
+      "short": "VAo",
+      "color": "#f0dbad",
+      "name": "Right coronary leaflet",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_trunci_pulmonalis_valvula_semilunaris_anterior",
+      "label": "Polmonare · cuspide anteriore",
+      "short": "VP",
+      "color": "#d9c598",
+      "name": "Anterior semilunar leaflet of pulmonary valve",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_trunci_pulmonalis_valvula_semilunaris_sinistra",
+      "label": "Polmonare · cuspide sinistra",
+      "short": "VP",
+      "color": "#d9c598",
+      "name": "Left semilunar leaflet of pulmonary valve",
+      "layer": "valves"
+    },
+    {
+      "id": "valva_trunci_pulmonalis_valvula_semilunaris_dextra",
+      "label": "Polmonare · cuspide destra",
+      "short": "VP",
+      "color": "#d9c598",
+      "name": "Right semilunar leaflet of pulmonary valve",
+      "layer": "valves"
+    },
+    {
+      "id": "aorta_ascendens",
+      "label": "Aorta ascendente",
+      "short": "Ao",
+      "color": "#e7ae7d",
+      "name": "Ascending aorta",
+      "layer": "vessels"
+    },
+    {
+      "id": "arcus_aortae",
+      "label": "Arco aortico",
+      "short": "Arco",
+      "color": "#e7ae7d",
+      "name": "Aortic arch",
+      "layer": "vessels"
+    },
+    {
+      "id": "truncus_pulmonalis",
+      "label": "Tronco polmonare",
+      "short": "TP",
+      "color": "#85a8c9",
+      "name": "Pulmonary trunk",
+      "layer": "vessels"
+    },
+    {
+      "id": "vena_cava_superior",
+      "label": "Vena cava superiore",
+      "short": "VCS",
+      "color": "#82a8ce",
+      "name": "Superior vena cava",
+      "layer": "vessels"
+    },
+    {
+      "id": "vena_cava_inferior",
+      "label": "Vena cava inferiore",
+      "short": "VCI",
+      "color": "#82a8ce",
+      "name": "Inferior vena cava (thoracic part)",
+      "layer": "vessels"
+    },
+    {
+      "id": "arteria_pulmonalis_sinistra",
+      "label": "Arteria polmonare sinistra",
+      "short": "AP sx",
+      "color": "#85a8c9",
+      "name": "Left pulmonary artery",
+      "layer": "vessels"
+    },
+    {
+      "id": "arteria_pulmonalis_dextra",
+      "label": "Arteria polmonare destra",
+      "short": "AP dx",
+      "color": "#85a8c9",
+      "name": "Right pulmonary artery",
+      "layer": "vessels"
+    },
+    {
+      "id": "vena_pulmonalis_superior_sinistra",
+      "label": "Vena polmonare superiore sinistra",
+      "short": "VP sx",
+      "color": "#d89598",
+      "name": "Left superior pulmonary vein",
+      "layer": "vessels"
+    },
+    {
+      "id": "vena_pulmonalis_inferior_sinistra",
+      "label": "Vena polmonare inferiore sinistra",
+      "short": "VP sx",
+      "color": "#d89598",
+      "name": "Left inferior pulmonary vein",
+      "layer": "vessels"
+    },
+    {
+      "id": "vena_pulmonalis_superior_dextra",
+      "label": "Vena polmonare superiore destra",
+      "short": "VP dx",
+      "color": "#d89598",
+      "name": "Right superior pulmonary vein",
+      "layer": "vessels"
+    },
+    {
+      "id": "vena_pulmonalis_inferior_dextra",
+      "label": "Vena polmonare inferiore destra",
+      "short": "VP dx",
+      "color": "#d89598",
+      "name": "Right inferior pulmonary vein",
+      "layer": "vessels"
+    },
+    {
+      "id": "aorta_thoracica_descendens",
+      "label": "Aorta discendente",
+      "short": "Ao desc.",
+      "color": "#e7ae7d",
+      "name": "Aorta thoracica descendens",
+      "layer": "vessels"
+    },
+    {
+      "id": "truncus_brachiocephalicus",
+      "label": "Tronco brachiocefalico",
+      "short": "TBC",
+      "color": "#e7ae7d",
+      "name": "Truncus brachiocephalicus",
+      "layer": "vessels"
+    },
+    {
+      "id": "arteria_carotis_communis_sinistra",
+      "label": "Carotide comune sinistra",
+      "short": "CC sx",
+      "color": "#e7ae7d",
+      "name": "Arteria carotis communis sinistra",
+      "layer": "vessels"
+    },
+    {
+      "id": "arteria_subclavia_sinistra",
+      "label": "Succlavia sinistra",
+      "short": "SC sx",
+      "color": "#e7ae7d",
+      "name": "Arteria subclavia sinistra",
+      "layer": "vessels"
+    },
+    {
+      "id": "ligamentum_arteriosum",
+      "label": "Legamento arterioso",
+      "short": "LA",
+      "color": "#cdbba4",
+      "name": "botallo",
+      "layer": "vessels"
+    }
+  ],
+  "source_sha256": "6faea8a3caf6a981633939cf41670da81838c73277df440580f88d0d8a298ef0",
+  "method": "three-axis wall parity consensus; open junctions approximated and bounded by source surface distance; vessels as surface shells; one-voxel valve surfaces",
+  "units": "atlas, not clinical length",
+  "axes": [
+    {
+      "axis": 0,
+      "closed_ray_fraction": 0.97704
+    },
+    {
+      "axis": 1,
+      "closed_ray_fraction": 0.97526
+    },
+    {
+      "axis": 2,
+      "closed_ray_fraction": 0.98039
+    }
+  ],
+  "voxels": 3133440,
+  "tissue_fraction": 0.046945,
+  "license": "Z-Anatomy CC BY-SA 4.0 / BodyParts3D CC BY-SA 2.1 JP; Isoelettrica derived educational volume"
+}

@@ -19,6 +19,17 @@ function pose(view,state=defaults){
  f.d=rotate(f.d,f.n,s.rock);f.u=unit(cross(f.d,f.n));
  f.depth=view.depth*clamp(s.depth,50,180)/100;f.halfAngle=rad(view.sector||43);return f;
 }
+// Parallel-transport the probe frame along the actual torso surface. Reference
+// presets keep their cut plane; sliding changes contact and local orientation.
+function surfacePose(view,state=defaults,surface){
+ const p=pose(view,state);if(!surface)return p;
+ const ref=surface.point(view.origin[0],view.origin[1]),hit=surface.point(p.origin[0],p.origin[1]);
+ if(!ref||!hit){p.contact=false;return p;}
+ p.origin=hit.position;p.contact=true;p.surfaceNormal=hit.normal;
+ const axis=cross(ref.normal,hit.normal),length=norm(axis),cos=clamp(dot(ref.normal,hit.normal),-1,1);
+ if(length>1e-6){const angle=Math.atan2(length,cos)*180/Math.PI;p.d=rotate(p.d,axis,angle);p.u=rotate(p.u,axis,angle);p.n=unit(cross(p.u,p.d));}
+ return p;
+}
 function project(point,p){const q=sub(point,p.origin);return [dot(q,p.u),dot(q,p.d),dot(q,p.n)];}
 function world(x,y,p){return add(p.origin,add(mul(p.u,x),mul(p.d,y)));}
 function inside(x,y,p){return y>=0&&x*x+y*y<=p.depth*p.depth&&Math.abs(Math.atan2(x,y))<=p.halfAngle;}
@@ -73,5 +84,5 @@ function alignment(state){
  return {reached,position,angle,depth,score,largest:candidates[0][0]};
 }
 function perturbed(seed=1){const sign=seed%2?1:-1;return {...defaults,slideX:.22*sign,slideY:-.14,rotation:sign*24,fan:-12,rock:8};}
-return {add,sub,mul,dot,cross,norm,unit,rotate,frame,pose,project,world,inside,intersect,contours,slice,alignment,perturbed,defaults,clamp};
+return {add,sub,mul,dot,cross,norm,unit,rotate,frame,pose,surfacePose,project,world,inside,intersect,contours,slice,alignment,perturbed,defaults,clamp};
 });

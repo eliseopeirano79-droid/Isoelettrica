@@ -57,3 +57,11 @@ Il ventricolo sinistro è ripartito geometricamente in 17 territori per mantener
 Le cuspidi semilunari sono ricostruzioni a tasca con inserzioni festonate, lunule e noduli illustrativi. `congenital-morphology.js` aggiunge sette morfologie semplificate reversibili, senza simulazione emodinamica. Le geometrie derivate seguono la licenza CC BY-SA 4.0 e le attribuzioni sopra riportate. Limiti e fonti anatomiche: `../reports/2026-09-23-raccordi-anatomici-v44.md`.
 
 Dettagli della correzione di osti, infundibolo e biforcazione: `../reports/2026-09-23-osti-e-tronco-polmonare-v44.md`. Calibri, lunghezze e spessori sono unità grafiche dell’atlante, non misure del paziente.
+
+## Ecocardio Studio 02 — novembre 2026
+
+`ecocardio/tissue.bin` è un volume didattico derivato da 33 superfici selezionate dell’atlante e dalle ricostruzioni di Isoelettrica. I derivati anatomici, compreso il volume, conservano la licenza **CC BY-SA 4.0**, con attribuzione Z-Anatomy e BodyParts3D indicata sopra. `tissue.json` registra inventario, provenienza e metodo. Il GLB originale a 39 oggetti non è stato modificato. Le immagini prodotte sono sezioni sintetiche del modello, non acquisizioni cliniche; non contengono materiale di EchoSuite.
+
+La conversione usa una ricostruzione limitata delle pareti, gusci illustrativi dei vasi e uno spessore di visualizzazione per le superfici valvolari sottili. Giunzioni aperte e superfici mancanti non diventano anatomia validata. Texture, attenuazione, fuoco e TGC sono effetti grafici. Il moto è quello semplificato e condiviso di Isoelettrica.
+
+`ecocardio/body.bin` deriva dalla variante maschile del file `paziente-corpo.bin` già incluso nell’app, generato dalla base e dai target MakeHuman **CC0 1.0**. Adattamenti: estrazione della parte superiore, trasformazione delle coordinate, taglio piano alla base del torace, separazione di cute/capelli/occhi e griglia di contatto. Fonte e licenza: https://www.makehumancommunity.org/content/license.html e https://creativecommons.org/publicdomain/zero/1.0/. Le coste e la registrazione del cuore nel torace sono ricostruzioni illustrative. I generatori sono in `tools/export-echo-atlas.cjs`, `tools/build-echo-volume.py` e `tools/build-echo-body.py`.
