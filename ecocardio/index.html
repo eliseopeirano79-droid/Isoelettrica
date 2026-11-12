@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="it" data-theme="dark">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#10191c"><title>Ecocardio · Isoelettrica</title>
+ <link rel="stylesheet" href="style.css?v=47.0">
+</head>
+<body>
+ <header class="echo-header">
+  <a class="back" href="../" target="_top" aria-label="Torna a Isoelettrica">← <span>Isoelettrica</span></a>
+  <div class="identity"><span class="eyebrow">LABORATORIO INTERATTIVO</span><h1>Ecocardio<span class="beta">Anteprima</span></h1></div>
+  <div class="header-actions"><button id="play" class="quiet" aria-pressed="false">▷ Anima</button><button id="info" class="quiet" aria-label="Apri guida, fonti e limiti">Guida e fonti</button><button id="theme" class="round" aria-label="Cambia tema">◐</button></div>
+ </header>
+ <main>
+  <div class="intro"><p>Muovi la sonda. <strong>Comprendi il piano.</strong></p><div class="mode-switch" role="group" aria-label="Modalità"><button data-mode="explore" aria-pressed="true">Esplora</button><button data-mode="practice" aria-pressed="false">Esercitati</button></div></div>
+  <div class="workspace">
+   <section class="anatomy-panel panel" aria-label="Torace e piano ecografico">
+    <div class="panel-title"><span><i class="dot cyan"></i> ANATOMIA 3D</span><div><button id="layers" class="quiet" aria-expanded="false" aria-controls="layer-panel">Livelli</button><button id="camera-reset" class="quiet" aria-label="Ripristina la camera">↺ Vista</button></div></div>
+    <div id="stage" class="stage" aria-label="Torace con sonda mobile"><div id="load" role="status">Caricamento dell’atlante anatomico…</div></div>
+    <div id="layer-panel" class="layer-panel" hidden>
+     <label><input id="skin" type="checkbox" checked> Torace trasparente</label><label><input id="ribs" type="checkbox" checked> Coste e sterno</label><label><input id="vessels" type="checkbox" checked> Grandi vasi</label><label><input id="plane" type="checkbox" checked> Piano di scansione</label><label><input id="ghost" type="checkbox"> Sonda di riferimento</label>
+     <label class="opacity">Trasparenza del cuore <input id="opacity" type="range" min="25" max="100" value="95" aria-label="Opacità del cuore"></label>
+    </div>
+    <div class="stage-toolbar"><div role="group" aria-label="Trascinamento sul torace"><button data-drag="orbit" aria-pressed="true">Ruota il torace</button><button data-drag="probe" aria-pressed="false">Sposta la sonda</button></div><span id="stage-note">Trascina per ruotare · pizzica per ingrandire</span></div>
+   </section>
+   <section class="scan-panel panel" aria-label="Sezione ecografica interattiva">
+    <div class="panel-title"><span><i class="dot mint"></i> <span id="scan-kind">ECO SINTETICA</span></span><div class="scan-switch" role="group" aria-label="Aspetto della sezione"><button data-render="echo" aria-pressed="true">Eco</button><button data-render="anatomy" aria-pressed="false">Anatomia</button><button id="labels" aria-pressed="true">Nomi</button></div></div>
+    <div class="scan-title"><span id="view-code">PLAX</span><h2 id="view-title">Asse lungo parasternale</h2></div>
+    <canvas id="scan" aria-label="Sezione del cuore calcolata dal piano della sonda"></canvas>
+    <div class="scan-footer"><span><i class="dot cyan"></i> marker della sonda</span><span>Geometria illustrativa · profondità relativa</span></div>
+    <div id="legend" class="legend" aria-label="Strutture attraversate dal piano"></div>
+   </section>
+  </div>
+  <section class="controls panel" aria-label="Controlli della sonda">
+   <div class="control-heading"><div><span class="eyebrow">LA TUA SONDA</span><p id="hint" role="status" aria-live="polite">Scegli una finestra e osserva la stessa sezione nei due pannelli.</p></div><button id="reset" class="quiet">↺ Posizione di riferimento</button></div>
+   <div class="sliders">
+    <label>Laterale <output id="slideX-out">0%</output><input id="slideX" type="range" min="-60" max="60" step="1" value="0" aria-label="Spostamento laterale della sonda"><small>destra paziente ↔ sinistra paziente</small></label>
+    <label>Verticale <output id="slideY-out">0%</output><input id="slideY" type="range" min="-60" max="60" step="1" value="0" aria-label="Spostamento verticale della sonda"><small>inferiore ↔ superiore</small></label>
+    <label>Rotazione <output id="rotation-out">0°</output><input id="rotation" type="range" min="-180" max="180" step="1" value="0" aria-label="Rotazione della sonda"><small>ruota il marker</small></label>
+    <label>Inclinazione <output id="fan-out">0°</output><input id="fan" type="range" min="-40" max="40" step="1" value="0" aria-label="Inclinazione fuori piano"><small>attraversa piani vicini</small></label>
+    <label>Basculamento <output id="rock-out">0°</output><input id="rock" type="range" min="-35" max="35" step="1" value="0" aria-label="Basculamento nel piano"><small>centra lungo il piano</small></label>
+    <label>Profondità <output id="depth-out">100%</output><input id="depth" type="range" min="65" max="150" step="1" value="100" aria-label="Profondità relativa"><small>campo superficiale ↔ profondo</small></label>
+   </div>
+   <div id="practice" class="practice" hidden><div><span class="eyebrow">OBIETTIVO GEOMETRICO</span><strong id="practice-target">Ritrova la posizione PLAX</strong><p>Allinea contatto e orientamento alla vista di riferimento.</p></div><div><progress id="alignment" max="100" value="0" aria-label="Allineamento geometrico"></progress><span id="alignment-text">0%</span></div><button id="check" class="primary">Verifica posizione</button><span id="practice-result" role="status" aria-live="polite"></span></div>
+  </section>
+  <section class="windows panel" aria-label="Finestre ecografiche"><nav id="groups" aria-label="Finestre di accesso"></nav><div id="views" class="view-buttons" role="group" aria-label="Proiezioni della finestra"></div><div class="guide"><span class="guide-number">↳</span><div><p id="tip"></p><p id="learn" class="learn"></p></div></div></section>
+  <footer class="page-footer"><span>Simulazione anatomica didattica · nessuna misura diagnostica</span><a href="../prototipo-cuore/ATTRIBUZIONI.md" target="_blank" rel="noopener">Z-Anatomy / BodyParts3D · attribuzioni</a></footer>
+ </main>
+ <dialog id="info-dialog" aria-labelledby="info-title"><div class="dialog-heading"><h2 id="info-title">Dalla sonda alla sezione</h2><button id="info-close" class="quiet">Chiudi</button></div><p>Il ventaglio azzurro mostra il piano che attraversa l’atlante. A destra vedi la sezione della stessa geometria: spostando o ruotando la sonda cambia il taglio.</p><h3>Prova in 30 secondi</h3><ol><li>Apri <b>Apicale → A4C</b> e passa ad <b>Anatomia</b>.</li><li>Muovi <b>Inclinazione</b>: osserva le cavità entrare e uscire dal piano.</li><li>Torna al riferimento, poi scegli <b>Esercitati</b> e ritrova l’orientamento con i cursori.</li></ol><h3>Cosa rappresenta</h3><p>Sezioni geometriche, con grana grafica opzionale. I contorni aperti dell’atlante restano aperti; la luminosità e lo spessore del tratto sono grafici, non misure del tessuto. Il campo di profondità è relativo all’atlante e non è espresso in centimetri. L’animazione legge il ritmo sinusale dal motore ECG e usa la deformazione illustrativa già presente nell’app.</p><h3>Limiti della prima versione</h3><p>Non sono presenti filmati clinici, propagazione degli ultrasuoni, attenuazione, ombre costali, Doppler, misure o patologie ecocardiografiche. Il torace è un riferimento illustrativo; l’atlante non contiene tutti i lembi e le corde valvolari. La cava disponibile è il tratto toracico. Le viste sono riferimenti geometrici da sottoporre a revisione specialistica; l’esercizio non certifica la capacità di acquisire un esame reale.</p><h3>Fonti e attribuzioni</h3><ul id="sources"></ul><p>Modello Z-Anatomy / BodyParts3D e ricostruzioni Isoelettrica: <a href="../prototipo-cuore/ATTRIBUZIONI.md" target="_blank" rel="noopener">licenze e limiti anatomici</a>. Interfaccia e codice del laboratorio originali; riferimento funzionale indicato da Eli: <a href="https://echosuite.app/" target="_blank" rel="noopener">EchoSuite</a>.</p></dialog>
+ <script src="../three.min.js?v=47.0"></script><script src="../gltfloader.js?v=47.0"></script><script src="../vascular-cuffs.js?v=47.0"></script><script src="../pulmonary-arteries.js?v=47.0"></script><script src="../atlas-geometry.js?v=47.0"></script><script src="../anatomy-refinements.js?v=47.0"></script><script src="../cardiac-mechanics.js?v=47.0"></script><script src="../engine.js?v=47.0"></script><script src="../ipertrofie.js?v=47.0"></script><script src="../data.js?v=47.0"></script><script src="../cardiac-clock.js?v=47.0"></script><script src="../prototipo-cuore/motion.js"></script><script src="core.js?v=47.0"></script><script src="views.js?v=47.0"></script><script src="scene.js?v=47.0"></script><script src="app.js?v=47.0"></script>
+</body>
+</html>

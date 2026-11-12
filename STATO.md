@@ -35,6 +35,7 @@ Una riga per sessione, la più recente in alto.
 
 | Data | Prompt (e parte) | Ramo | Commit finale | Esito |
 |------|------------------|------|---------------|-------|
+| 2026-11-12 | Laboratorio Ecocardio richiesto da Eli · anteprima v47 | feat/ecocardio-lab-v47 | commit con questo report | 11 preset geometrici, sonda e sezioni accoppiate, esercitazione, animazione e fallback software; 9 nuovi test e regressioni aggiornate; 9 hash protetti invariati; prova browser dei controlli; anteprima privata pubblicata; revisione clinica, WebGL e Safari/iPad aperti; app pubblica non sostituita |
 | 2026-11-12 | Kit v46.1 e revisione visiva dei pazienti · v46.2 | feat/pazienti-v46-2 → main | commit con questo report | Richiesta esplicita di caricamento e miglioria; coperta drappeggiata adattata alla posa, capelli volumetrici, abiti separati, quattro proporzioni distinte, zoom touch; Turno di guardia e approfondimenti; 176 test Node + 5 Python; 9 hash protetti invariati; rendering offline verificati; WebGL/Safari su iPad reale restano da verificare |
 | 2026-11-12 | Rilascio ufficiale v46.0 autorizzato | feat/casi-clinici-v46 → main | PR di rilascio v46 | Consenso esplicito alla pubblicazione; revisione applicativa 931e439; 169 test Node + 5 Python superati in preparazione; 9 file protetti invariati; distribuzione tramite GitHub Pages con controllo della versione pubblica; revisione clinica e prova su iPad reale aperte |
 | 2026-11-11 | Integrazione kit v46 e correzioni dei casi | feat/casi-clinici-v46 | commit che contiene il report | Preparata in locale; 20/20 impronte del kit verificate prima delle correzioni; 169 test Node + 5 Python; 66 decisioni percorse tramite DOM; download reale PTB-XL n. 23 verificato con Node/jsdom; 9 file protetti invariati; prova visiva e iPad aperte; nessuna pubblicazione |
@@ -71,3 +72,8 @@ L’ulteriore richiesta di fisica è trattata nella stessa proposta v44, con vin
 La revisione di osti, Botallo, arco e semilunari è documentata in `reports/2026-09-23-raccordi-anatomici-v44.md`. Anteprima aggiornata senza cache: `http://127.0.0.1:8002/?preview=1`.
 
 La revisione v45 riguarda soltanto l’interfaccia: Teoria adattiva, sfondo coerente in fullscreen, cuore a schermo intero, controlli condivisi e menu desktop ricercabili. Non completa i prompt clinici del kit. Dettagli in `reports/2026-09-23-interfaccia-adattiva-v45.md`.
+
+
+## Ecocardio richiesto il 12 novembre 2026
+
+La richiesta e gli screenshot di EchoSuite avviano un modulo separato, documentato in `reports/2026-11-12-ecocardio-v47.md`. Il codice è originale e riusa l’atlante e la deformazione di Isoelettrica. Non è una simulazione acustica o clinicamente validata, non comprende clip cliniche e non completa i prompt 02–09. L’anteprima privata è pubblicata per la prova; l’integrazione nell’app principale resta sul ramo della proposta v47.
