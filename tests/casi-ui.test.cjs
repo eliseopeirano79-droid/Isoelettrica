@@ -117,3 +117,34 @@ test('Senza WebGL la riapertura dei casi non duplica l’avviso', t => {
   assert.equal(h.w.document.querySelectorAll('#casiStage .casi-no3d').length, 1);
   assert.equal(h.errors.length, 0);
 });
+
+test('Il turno presenta dieci chiamate senza svelare la correzione e salva il risultato finale', t => {
+  const h = casi(); t.after(h.close); const { w } = h;
+  h.click('#casiTurno');
+  for (let i = 0; i < 10; i++) {
+    assert.match(w.document.querySelector('#casiChi').textContent, new RegExp('chiamata ' + (i + 1) + ' di 10'));
+    assert.equal(w.document.querySelectorAll('#casiPanel .casi-fb').length, 0);
+    assert.equal(w.document.querySelector('#casiAvanti').disabled, true);
+    h.click('#casiPanel .opts button');
+    assert.equal(w.document.querySelectorAll('#casiPanel .right,#casiPanel .wrong,#casiPanel .grave').length, 0);
+    h.click('#casiAvanti');
+  }
+  assert.equal(w.document.querySelectorAll('#casiPanel .casi-fb').length, 10);
+  assert.match(w.document.querySelector('#casiPanel').textContent, /Fine del turno/);
+  assert.equal(JSON.parse(w.localStorage.getItem('iso-casi-v1'))._turno.tot, 10);
+  h.click('#casiAltri'); assert.equal(w.document.querySelectorAll('#casiHome [data-caso]').length, 15);
+  assert.equal(h.errors.length, 0);
+});
+
+test('Saltare tutte le chiamate produce dieci correzioni e un nuovo turno riparte senza avvisi residui', t => {
+  const h = casi(); t.after(h.close); const { w } = h;
+  h.click('#casiTurno');
+  for (let i = 0; i < 10; i++) h.click('#casiSalta');
+  assert.equal(w.document.querySelectorAll('#casiPanel .casi-fb.no').length, 10);
+  assert.equal(JSON.parse(w.localStorage.getItem('iso-casi-v1'))._turno.ok, 0);
+  h.click('#casiNuovo'); assert.match(w.document.querySelector('#casiChi').textContent, /chiamata 1 di 10/);
+  assert.equal(w.document.querySelectorAll('#casiPanel .casi-fb').length, 0);
+  h.click('#casiEsci'); h.click('#casiHome [data-caso]');
+  assert.ok(w.document.querySelector('#casiPanel .opts button'));
+  assert.equal(h.errors.length, 0);
+});

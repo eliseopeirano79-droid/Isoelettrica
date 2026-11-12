@@ -38,12 +38,27 @@ def tri(fs):
         f = [remap[i] for i in f]
         o += [f[0], f[1], f[2]] + ([f[0], f[2], f[3]] if len(f) == 4 else [])
     return o
-pelle = [f for f in grp['pelle'] if not all(dom[remap[i]] in CAMICE for i in f)]
-camice = [f for f in grp['pelle'] if all(dom[remap[i]] in CAMICE for i in f)]
+# camice: tronco fino alla base del collo e maniche fino a metà braccio, con bordi tagliati per geometria
+# (anelli puliti) e non per osso dominante, che dava bordi seghettati
+def G0(nome): return V[J[B[nome]['head']]].mean(0)
+ycollo = G0('neck01')[1] - 0.05
+BR = {KEEP.index('upperarm01.' + l): (G0('upperarm01.' + l), G0('lowerarm01.' + l)) for l in 'LR'}
+def camice_v(i):
+    k = dom[remap[i]]; v = V[i]
+    if k in BR:
+        a, b = BR[k]; return np.dot(v - a, b - a) / np.dot(b - a, b - a) < 0.5
+    return k in CAMICE and v[1] < ycollo
+CAMICE = CAMICE - set(BR)
+pelle = [f for f in grp['pelle'] if not all(camice_v(i) for i in f)]
+camice = [f for f in grp['pelle'] if all(camice_v(i) for i in f)]
 ycapo = np.mean(V[J[B['head']['head']]], 0)[1]; zcapo = np.mean(V[J[B['head']['head']]], 0)[2]
 # la mesh dei capelli ha una frangia che copre il viso: si tengono solo le facce dietro la linea della fronte
 grp['capelli'] = [f for f in grp['capelli'] if not (max(V[i][2] for i in f) > zcapo + 0.62 and min(V[i][1] for i in f) < ycapo + 1.25)]
-corti = [f for f in grp['capelli'] if min(V[i][1] for i in f) > ycapo - 0.15]
+# capelli corti: la cute del capo sopra l'attaccatura (fronte alta, sopra le orecchie, nuca), non la mesh dei capelli lunghi
+TESTA = KEEP.index('head')
+def scalpo(i): return dom[remap[i]] == TESTA and (V[i][1] - ycapo) > 0.25 + 0.43 * (V[i][2] - zcapo + 0.65)
+corti = [f for f in grp['pelle'] if all(scalpo(i) for i in f)]
+pelle = [f for f in pelle if not all(scalpo(i) for i in f)]
 gruppi = collections.OrderedDict([('pelle', tri(pelle)), ('camice', tri(camice)), ('occhi', tri(grp['occhi'])), ('capelli', tri(grp['capelli'])), ('capelliCorti', tri(corti))])
 def variante(nome):
     P = V.copy()
