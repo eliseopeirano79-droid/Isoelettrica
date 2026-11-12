@@ -6,7 +6,7 @@ Aggiorna questa pagina alla fine di ogni sessione. Stati ammessi: `da fare` · `
 |---|--------|-------|-----------------|-----------------------|
 | 01 | Fondazioni: orologio, regioni, attivazione sinusale | in corso | 2026-09-23 · v44 | CardiacClock in sola lettura; 17 segmenti VS; grafo illustrativo condiviso e registrato sul cuore, rientri e Kent selezionabile. Mancano attivazione regionale validata, regioni atriali/VD/setto, LAT/APD/isocrone e validazione sinusale a 70 bpm. |
 | 02 | Ciclo cardiaco in 7 fasi, pannello Wiggers, parametri | da fare | — | — |
-| 03 | Valvole: anatomia e animazione passiva | in corso | 2026-09-23 · v44 | Cuspidi semilunari ricostruite, inserzioni e coaptazione condivise. Mancano gradienti di pressione, anatomia completa e validazione. |
+| 03 | Valvole: anatomia e animazione passiva | in corso | 2026-11-12 · v47.2 | Ecocardio: quattro valvole con lembi mobili e densità condivisa con B-mode/M-mode; scheletro toracico da atlante. Temporizzazione illustrativa da ECG. Mancano gradienti di pressione, anatomia sottovalvolare completa e validazione; il prompt non è completato. |
 | 04 | Nomenclatura totale | da fare | — | — |
 | 05 | Cardiopatie congenite | in corso | 2026-09-23 · v44 | Sette morfologie illustrative modificabili oltre al Botallo. Mancano cardiopatie complesse, shunt e conseguenze emodinamiche. |
 | 06 | Cardiopatie acquisite e dispositivi | da fare | — | — |
@@ -35,6 +35,9 @@ Una riga per sessione, la più recente in alto.
 
 | Data | Prompt (e parte) | Ramo | Commit finale | Esito |
 |------|------------------|------|---------------|-------|
+| 2026-11-12 | Correzione anatomica richiesta da Eli · Studio 03 / v47.2 | feat/ecocardio-lab-v47 | commit con questo report | 12 coppie di coste e 72 strutture toraciche dall’atlante; quattro valvole con apertura/chiusura propria condivisa con l’eco; vista ravvicinata e correzione della profondità nel renderer CPU; 197 test Node + 5 Python; 9 hash protetti invariati; prova visiva apertura/chiusura e pubblicazione sullo stesso Site privato |
+| 2026-11-12 | Ecocardio Studio 02 richiesto da Eli · v47.1 | feat/ecocardio-lab-v47 | commit con questo report | Volume derivato e contatto sulla cute, doppio piano, M-mode campionato, interrogazione anatomica, cine, acquisizioni e otto esercizi; prove e limiti nel report Studio 02; pubblicazione sullo stesso sito privato, integrazione principale nella PR #12 |
+| 2026-11-12 | Laboratorio Ecocardio richiesto da Eli · anteprima v47 | feat/ecocardio-lab-v47 | commit con questo report | 11 preset geometrici, sonda e sezioni accoppiate, esercitazione, animazione e fallback software; 9 nuovi test e regressioni aggiornate; 9 hash protetti invariati; prova browser dei controlli; anteprima privata pubblicata; revisione clinica, WebGL e Safari/iPad aperti; app pubblica non sostituita |
 | 2026-11-12 | Kit v46.1 e revisione visiva dei pazienti · v46.2 | feat/pazienti-v46-2 → main | commit con questo report | Richiesta esplicita di caricamento e miglioria; coperta drappeggiata adattata alla posa, capelli volumetrici, abiti separati, quattro proporzioni distinte, zoom touch; Turno di guardia e approfondimenti; 176 test Node + 5 Python; 9 hash protetti invariati; rendering offline verificati; WebGL/Safari su iPad reale restano da verificare |
 | 2026-11-12 | Rilascio ufficiale v46.0 autorizzato | feat/casi-clinici-v46 → main | PR di rilascio v46 | Consenso esplicito alla pubblicazione; revisione applicativa 931e439; 169 test Node + 5 Python superati in preparazione; 9 file protetti invariati; distribuzione tramite GitHub Pages con controllo della versione pubblica; revisione clinica e prova su iPad reale aperte |
 | 2026-11-11 | Integrazione kit v46 e correzioni dei casi | feat/casi-clinici-v46 | commit che contiene il report | Preparata in locale; 20/20 impronte del kit verificate prima delle correzioni; 169 test Node + 5 Python; 66 decisioni percorse tramite DOM; download reale PTB-XL n. 23 verificato con Node/jsdom; 9 file protetti invariati; prova visiva e iPad aperte; nessuna pubblicazione |
@@ -71,3 +74,12 @@ L’ulteriore richiesta di fisica è trattata nella stessa proposta v44, con vin
 La revisione di osti, Botallo, arco e semilunari è documentata in `reports/2026-09-23-raccordi-anatomici-v44.md`. Anteprima aggiornata senza cache: `http://127.0.0.1:8002/?preview=1`.
 
 La revisione v45 riguarda soltanto l’interfaccia: Teoria adattiva, sfondo coerente in fullscreen, cuore a schermo intero, controlli condivisi e menu desktop ricercabili. Non completa i prompt clinici del kit. Dettagli in `reports/2026-09-23-interfaccia-adattiva-v45.md`.
+
+
+## Ecocardio richiesto il 12 novembre 2026
+
+La richiesta e gli screenshot di EchoSuite avviano un modulo separato, documentato in `reports/2026-11-12-ecocardio-v47.md`. Il codice è originale e riusa l’atlante e la deformazione di Isoelettrica. Non è una simulazione acustica o clinicamente validata, non comprende clip cliniche e non completa i prompt 02–09. L’anteprima privata è pubblicata per la prova; l’integrazione nell’app principale resta sul ramo della proposta v47.
+
+La successiva richiesta di un laboratorio molto più avanzato autorizza la revisione **Studio 02 / v47.1**, documentata in `reports/2026-11-12-ecocardio-studio-02.md`. Introduce tessuto volumetrico, torace umano con contatto sulla superficie, doppio piano sincronizzato, M-mode derivato, selezione anatomica collegata, cine e acquisizioni ripristinabili, controlli immagine ed esercizi verificabili. Non costituisce validazione clinica, simulazione Doppler o completamento del kit. Non viene dichiarata superiorità complessiva rispetto a EchoSuite: le nuove funzioni sono descritte e verificate singolarmente.
+
+La critica a coste e valvole autorizza la correzione **Studio 03 / v47.2**, documentata in `reports/2026-11-12-anatomia-ecocardio-v47-2.md`. Lo scheletro procedurale è sostituito con geometrie Z-Anatomy registrate al cuore originale. I lembi hanno movimento proprio, coaptazione e campi di densità dinamici per l’eco, con viste ravvicinate delle quattro valvole. È una correzione anatomica e illustrativa: non completa HemoModel, animazione valvolare passiva o revisione clinica. La stessa anteprima privata viene aggiornata; l’integrazione principale resta nella PR #12.

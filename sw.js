@@ -1,6 +1,6 @@
 /* Isoelettrica: shell coerente per versione e archivio offline separato. */
 'use strict';
-const VERSION = '46.2';
+const VERSION = '47.2';
 const PREFIX = 'isoelettrica-', CACHE = PREFIX + 'v' + VERSION, ASSETS = PREFIX + 'assets-v1';
 const BASE = new URL('./', self.location.href);
 const Q = '?v=' + VERSION;
@@ -8,6 +8,7 @@ const CORE = ['./', './index.html', './anatomia.html', './icon-192.png', './icon
   .concat(['app.js', 'engine.js', 'quiz.js', 'ipertrofie.js', 'data.js', 'atlante-digitale.js', 'ptbxl.js', 'three.min.js', 'cuore3d.js', 'coronarie.js', 'gltfloader.js', 'atlas-geometry.js', 'heart-atlas.js', 'cardiac-clock.js', 'anatomy-host.js', 'lab-embed.js', 'atlas-theme.css','ui-surface.css','ui-surface.js','lab-ui.js','congenital-morphology.js','physiology-atlas.js','pulmonary-arteries.js', 'vascular-cuffs.js', 'anatomy-refinements.js','cardiac-attachments.js','cardiac-mechanics.js','conduction-model.js','conduction-view.js','pathology-catalog.js','casi-dati.js','casi-reali.js','casi-paziente-aspetto.js', 'casi-paziente.js','casi-clinici.js','casi.css','paziente-corpo.bin'].map(f => './' + f + Q))
   .concat(['three.min.js','gltfloader.js','engine.js','data.js'].map(f=>'./'+f))
   .concat(['index.html','fetale.html','style.css','viewer.js','pathology-ui.js','lab-core.js','lab.js','motion.js','fetal-core.js','fetal.js','heart-z-anatomy.glb','atlas-coronary-map.json','coronary-paths.json','ATTRIBUZIONI.md','SOURCE-LICENSE.txt'].map(f=>'./prototipo-cuore/'+f));
+CORE.push('./ecocardio/', './ecocardio/index.html', ...['style.css','core.js','views.js','volume.js','body.js','thorax.js','valves.js','imaging.js','raster.js','training.js','scene.js','app.js','host.js','tissue.bin','body.bin','thorax.bin'].map(f=>'./ecocardio/'+f+Q));
 const absolute = u => new URL(u, BASE).href;
 const own = u => u.origin === BASE.origin && u.pathname.startsWith(BASE.pathname);
 const asset = u => /\.(jpg|jpeg|png|gif|webp|svg|woff2?|ttf)$/i.test(u.pathname) || u.pathname.includes('/atlante-reale/');

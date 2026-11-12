@@ -1,0 +1,769 @@
+{
+  "version": 2,
+  "positionStep": 0.0005,
+  "source": "https://github.com/Z-Anatomy/Models-of-human-anatomy",
+  "revision": "2b652413b1116c9119e616eabc1e63af3cc6267d",
+  "license": "Z-Anatomy CC BY-SA 4.0; BodyParts3D CC BY-SA 2.1 Japan; derivative CC BY-SA 4.0",
+  "transform": {
+    "scale": 20,
+    "axes": [
+      "x",
+      "z",
+      "-y"
+    ],
+    "translation": [
+      -0.44,
+      -26,
+      -0.56
+    ]
+  },
+  "registrationChecks": {
+    "Left ventricle": {
+      "min": [
+        -0.39056087616831064,
+        -1.265345573425293,
+        -0.8713904409110547
+      ],
+      "max": [
+        1.2066188430786133,
+        0.5269041061401367,
+        0.8765945756435394
+      ]
+    },
+    "Right atrium": {
+      "min": [
+        -1.175747069120407,
+        -1.076737403869629,
+        -0.7146858716756106
+      ],
+      "max": [
+        -0.2824881510436535,
+        0.8954586982727051,
+        0.7599330866336822
+      ]
+    }
+  },
+  "parts": [
+    {
+      "id": "corpus_sterni",
+      "name": "Body of sternum",
+      "label": "Corpo dello sterno",
+      "kind": "sternum",
+      "vertices": 2240,
+      "indices": 13398,
+      "offset": 0,
+      "bytes": 40236
+    },
+    {
+      "id": "clavicula_sinistra",
+      "name": "Clavicle.l",
+      "label": "Clavicola sinistra",
+      "kind": "clavicle",
+      "vertices": 789,
+      "indices": 4650,
+      "offset": 40236,
+      "bytes": 14034
+    },
+    {
+      "id": "clavicula_dextra",
+      "name": "Clavicle.r",
+      "label": "Clavicola destra",
+      "kind": "clavicle",
+      "vertices": 789,
+      "indices": 4650,
+      "offset": 54270,
+      "bytes": 14034
+    },
+    {
+      "id": "cartilago_costalis_8_sinistra",
+      "name": "Costal cartilage of eighth rib.l",
+      "label": "Cartilagine costale 8ª sinistra",
+      "kind": "cartilage",
+      "vertices": 328,
+      "indices": 1956,
+      "offset": 68304,
+      "bytes": 5880
+    },
+    {
+      "id": "cartilago_costalis_8_dextra",
+      "name": "Costal cartilage of eighth rib.r",
+      "label": "Cartilagine costale 8ª destra",
+      "kind": "cartilage",
+      "vertices": 328,
+      "indices": 1956,
+      "offset": 74184,
+      "bytes": 5880
+    },
+    {
+      "id": "cartilago_costalis_5_sinistra",
+      "name": "Costal cartilage of fifth rib.l",
+      "label": "Cartilagine costale 5ª sinistra",
+      "kind": "cartilage",
+      "vertices": 543,
+      "indices": 3246,
+      "offset": 80064,
+      "bytes": 9750
+    },
+    {
+      "id": "cartilago_costalis_5_dextra",
+      "name": "Costal cartilage of fifth rib.r",
+      "label": "Cartilagine costale 5ª destra",
+      "kind": "cartilage",
+      "vertices": 543,
+      "indices": 3246,
+      "offset": 89814,
+      "bytes": 9750
+    },
+    {
+      "id": "cartilago_costalis_1_sinistra",
+      "name": "Costal cartilage of first rib.l",
+      "label": "Cartilagine costale 1ª sinistra",
+      "kind": "cartilage",
+      "vertices": 233,
+      "indices": 1386,
+      "offset": 99564,
+      "bytes": 4170
+    },
+    {
+      "id": "cartilago_costalis_1_dextra",
+      "name": "Costal cartilage of first rib.r",
+      "label": "Cartilagine costale 1ª destra",
+      "kind": "cartilage",
+      "vertices": 233,
+      "indices": 1386,
+      "offset": 103734,
+      "bytes": 4170
+    },
+    {
+      "id": "cartilago_costalis_4_sinistra",
+      "name": "Costal cartilage of fourth rib.l",
+      "label": "Cartilagine costale 4ª sinistra",
+      "kind": "cartilage",
+      "vertices": 375,
+      "indices": 2238,
+      "offset": 107904,
+      "bytes": 6726
+    },
+    {
+      "id": "cartilago_costalis_4_dextra",
+      "name": "Costal cartilage of fourth rib.r",
+      "label": "Cartilagine costale 4ª destra",
+      "kind": "cartilage",
+      "vertices": 375,
+      "indices": 2238,
+      "offset": 114630,
+      "bytes": 6726
+    },
+    {
+      "id": "cartilago_costalis_9_sinistra",
+      "name": "Costal cartilage of ninth rib.l",
+      "label": "Cartilagine costale 9ª sinistra",
+      "kind": "cartilage",
+      "vertices": 246,
+      "indices": 1464,
+      "offset": 121356,
+      "bytes": 4404
+    },
+    {
+      "id": "cartilago_costalis_9_dextra",
+      "name": "Costal cartilage of ninth rib.r",
+      "label": "Cartilagine costale 9ª destra",
+      "kind": "cartilage",
+      "vertices": 246,
+      "indices": 1464,
+      "offset": 125760,
+      "bytes": 4404
+    },
+    {
+      "id": "cartilago_costalis_2_sinistra",
+      "name": "Costal cartilage of second rib.l",
+      "label": "Cartilagine costale 2ª sinistra",
+      "kind": "cartilage",
+      "vertices": 286,
+      "indices": 1704,
+      "offset": 130164,
+      "bytes": 5124
+    },
+    {
+      "id": "cartilago_costalis_2_dextra",
+      "name": "Costal cartilage of second rib.r",
+      "label": "Cartilagine costale 2ª destra",
+      "kind": "cartilage",
+      "vertices": 286,
+      "indices": 1704,
+      "offset": 135288,
+      "bytes": 5124
+    },
+    {
+      "id": "cartilago_costalis_7_sinistra",
+      "name": "Costal cartilage of seventh rib.l",
+      "label": "Cartilagine costale 7ª sinistra",
+      "kind": "cartilage",
+      "vertices": 1149,
+      "indices": 6882,
+      "offset": 140412,
+      "bytes": 20658
+    },
+    {
+      "id": "cartilago_costalis_7_dextra",
+      "name": "Costal cartilage of seventh rib.r",
+      "label": "Cartilagine costale 7ª destra",
+      "kind": "cartilage",
+      "vertices": 1149,
+      "indices": 6882,
+      "offset": 161070,
+      "bytes": 20658
+    },
+    {
+      "id": "cartilago_costalis_6_sinistra",
+      "name": "Costal cartilage of sixth rib.l",
+      "label": "Cartilagine costale 6ª sinistra",
+      "kind": "cartilage",
+      "vertices": 679,
+      "indices": 4062,
+      "offset": 181728,
+      "bytes": 12198
+    },
+    {
+      "id": "cartilago_costalis_6_dextra",
+      "name": "Costal cartilage of sixth rib.r",
+      "label": "Cartilagine costale 6ª destra",
+      "kind": "cartilage",
+      "vertices": 679,
+      "indices": 4062,
+      "offset": 193926,
+      "bytes": 12198
+    },
+    {
+      "id": "cartilago_costalis_10_sinistra",
+      "name": "Costal cartilage of tenth rib.l",
+      "label": "Cartilagine costale 10ª sinistra",
+      "kind": "cartilage",
+      "vertices": 191,
+      "indices": 1134,
+      "offset": 206124,
+      "bytes": 3414
+    },
+    {
+      "id": "cartilago_costalis_10_dextra",
+      "name": "Costal cartilage of tenth rib.r",
+      "label": "Cartilagine costale 10ª destra",
+      "kind": "cartilage",
+      "vertices": 191,
+      "indices": 1134,
+      "offset": 209538,
+      "bytes": 3414
+    },
+    {
+      "id": "cartilago_costalis_3_sinistra",
+      "name": "Costal cartilage of third rib.l",
+      "label": "Cartilagine costale 3ª sinistra",
+      "kind": "cartilage",
+      "vertices": 302,
+      "indices": 1800,
+      "offset": 212952,
+      "bytes": 5412
+    },
+    {
+      "id": "cartilago_costalis_3_dextra",
+      "name": "Costal cartilage of third rib.r",
+      "label": "Cartilagine costale 3ª destra",
+      "kind": "cartilage",
+      "vertices": 302,
+      "indices": 1800,
+      "offset": 218364,
+      "bytes": 5412
+    },
+    {
+      "id": "costa_8_sinistra",
+      "name": "Eighth rib.l",
+      "label": "8ª costa sinistra",
+      "kind": "rib",
+      "vertices": 4137,
+      "indices": 24810,
+      "offset": 223776,
+      "bytes": 74442
+    },
+    {
+      "id": "costa_8_dextra",
+      "name": "Eighth rib.r",
+      "label": "8ª costa destra",
+      "kind": "rib",
+      "vertices": 4137,
+      "indices": 24810,
+      "offset": 298218,
+      "bytes": 74442
+    },
+    {
+      "id": "costa_11_sinistra",
+      "name": "Eleventh rib.l",
+      "label": "11ª costa sinistra",
+      "kind": "rib",
+      "vertices": 2519,
+      "indices": 15102,
+      "offset": 372660,
+      "bytes": 45318
+    },
+    {
+      "id": "costa_11_dextra",
+      "name": "Eleventh rib.r",
+      "label": "11ª costa destra",
+      "kind": "rib",
+      "vertices": 2519,
+      "indices": 15102,
+      "offset": 417978,
+      "bytes": 45318
+    },
+    {
+      "id": "costa_5_sinistra",
+      "name": "Fifth rib.l",
+      "label": "5ª costa sinistra",
+      "kind": "rib",
+      "vertices": 4690,
+      "indices": 28128,
+      "offset": 463296,
+      "bytes": 84396
+    },
+    {
+      "id": "costa_5_dextra",
+      "name": "Fifth rib.r",
+      "label": "5ª costa destra",
+      "kind": "rib",
+      "vertices": 4690,
+      "indices": 28128,
+      "offset": 547692,
+      "bytes": 84396
+    },
+    {
+      "id": "costa_1_sinistra",
+      "name": "First rib.l",
+      "label": "1ª costa sinistra",
+      "kind": "rib",
+      "vertices": 1607,
+      "indices": 9630,
+      "offset": 632088,
+      "bytes": 28902
+    },
+    {
+      "id": "costa_1_dextra",
+      "name": "First rib.r",
+      "label": "1ª costa destra",
+      "kind": "rib",
+      "vertices": 1607,
+      "indices": 9630,
+      "offset": 660990,
+      "bytes": 28902
+    },
+    {
+      "id": "costa_4_sinistra",
+      "name": "Fourth rib.l",
+      "label": "4ª costa sinistra",
+      "kind": "rib",
+      "vertices": 4325,
+      "indices": 25938,
+      "offset": 689892,
+      "bytes": 77826
+    },
+    {
+      "id": "costa_4_dextra",
+      "name": "Fourth rib.r",
+      "label": "4ª costa destra",
+      "kind": "rib",
+      "vertices": 4325,
+      "indices": 25938,
+      "offset": 767718,
+      "bytes": 77826
+    },
+    {
+      "id": "discus_intervertebralis_T1_T2",
+      "name": "Intervertebral disc T1-T2",
+      "label": "Disco T1–T2",
+      "kind": "disc",
+      "vertices": 628,
+      "indices": 3756,
+      "offset": 845544,
+      "bytes": 11280
+    },
+    {
+      "id": "discus_intervertebralis_T10_T11",
+      "name": "Intervertebral disc T10-T11",
+      "label": "Disco T10–T11",
+      "kind": "disc",
+      "vertices": 1437,
+      "indices": 8610,
+      "offset": 856824,
+      "bytes": 25842
+    },
+    {
+      "id": "discus_intervertebralis_T11_T12",
+      "name": "Intervertebral disc T11-T12",
+      "label": "Disco T11–T12",
+      "kind": "disc",
+      "vertices": 1698,
+      "indices": 10176,
+      "offset": 882666,
+      "bytes": 30540
+    },
+    {
+      "id": "discus_intervertebralis_T2_T3",
+      "name": "Intervertebral disc T2-T3",
+      "label": "Disco T2–T3",
+      "kind": "disc",
+      "vertices": 664,
+      "indices": 3972,
+      "offset": 913206,
+      "bytes": 11928
+    },
+    {
+      "id": "discus_intervertebralis_T3_T4",
+      "name": "Intervertebral disc T3-T4",
+      "label": "Disco T3–T4",
+      "kind": "disc",
+      "vertices": 682,
+      "indices": 4080,
+      "offset": 925134,
+      "bytes": 12252
+    },
+    {
+      "id": "discus_intervertebralis_T4_T5",
+      "name": "Intervertebral disc T4-T5",
+      "label": "Disco T4–T5",
+      "kind": "disc",
+      "vertices": 817,
+      "indices": 4890,
+      "offset": 937386,
+      "bytes": 14682
+    },
+    {
+      "id": "discus_intervertebralis_T5_T6",
+      "name": "Intervertebral disc T5-T6",
+      "label": "Disco T5–T6",
+      "kind": "disc",
+      "vertices": 871,
+      "indices": 5214,
+      "offset": 952068,
+      "bytes": 15654
+    },
+    {
+      "id": "discus_intervertebralis_T6_T7",
+      "name": "Intervertebral disc T6-T7",
+      "label": "Disco T6–T7",
+      "kind": "disc",
+      "vertices": 1196,
+      "indices": 7164,
+      "offset": 967722,
+      "bytes": 21504
+    },
+    {
+      "id": "discus_intervertebralis_T7_T8",
+      "name": "Intervertebral disc T7-T8",
+      "label": "Disco T7–T8",
+      "kind": "disc",
+      "vertices": 1331,
+      "indices": 7974,
+      "offset": 989226,
+      "bytes": 23934
+    },
+    {
+      "id": "discus_intervertebralis_T8_T9",
+      "name": "Intervertebral disc T8-T9",
+      "label": "Disco T8–T9",
+      "kind": "disc",
+      "vertices": 1447,
+      "indices": 8670,
+      "offset": 1013160,
+      "bytes": 26022
+    },
+    {
+      "id": "discus_intervertebralis_T9_T10",
+      "name": "Intervertebral disc T9-T10",
+      "label": "Disco T9–T10",
+      "kind": "disc",
+      "vertices": 626,
+      "indices": 3744,
+      "offset": 1039182,
+      "bytes": 11244
+    },
+    {
+      "id": "manubrium_sterni",
+      "name": "Manubrium of sternum",
+      "label": "Manubrio dello sterno",
+      "kind": "sternum",
+      "vertices": 1336,
+      "indices": 7986,
+      "offset": 1050426,
+      "bytes": 23988
+    },
+    {
+      "id": "costa_9_sinistra",
+      "name": "Ninth rib.l",
+      "label": "9ª costa sinistra",
+      "kind": "rib",
+      "vertices": 3891,
+      "indices": 23334,
+      "offset": 1074414,
+      "bytes": 70014
+    },
+    {
+      "id": "costa_9_dextra",
+      "name": "Ninth rib.r",
+      "label": "9ª costa destra",
+      "kind": "rib",
+      "vertices": 3891,
+      "indices": 23334,
+      "offset": 1144428,
+      "bytes": 70014
+    },
+    {
+      "id": "costa_2_sinistra",
+      "name": "Second rib.l",
+      "label": "2ª costa sinistra",
+      "kind": "rib",
+      "vertices": 2684,
+      "indices": 16092,
+      "offset": 1214442,
+      "bytes": 48288
+    },
+    {
+      "id": "costa_2_dextra",
+      "name": "Second rib.r",
+      "label": "2ª costa destra",
+      "kind": "rib",
+      "vertices": 2684,
+      "indices": 16092,
+      "offset": 1262730,
+      "bytes": 48288
+    },
+    {
+      "id": "costa_7_sinistra",
+      "name": "Seventh rib.l",
+      "label": "7ª costa sinistra",
+      "kind": "rib",
+      "vertices": 4890,
+      "indices": 29328,
+      "offset": 1311018,
+      "bytes": 87996
+    },
+    {
+      "id": "costa_7_dextra",
+      "name": "Seventh rib.r",
+      "label": "7ª costa destra",
+      "kind": "rib",
+      "vertices": 4890,
+      "indices": 29328,
+      "offset": 1399014,
+      "bytes": 87996
+    },
+    {
+      "id": "costa_6_sinistra",
+      "name": "Sixth rib.l",
+      "label": "6ª costa sinistra",
+      "kind": "rib",
+      "vertices": 5078,
+      "indices": 30396,
+      "offset": 1487010,
+      "bytes": 91260
+    },
+    {
+      "id": "costa_6_dextra",
+      "name": "Sixth rib.r",
+      "label": "6ª costa destra",
+      "kind": "rib",
+      "vertices": 5078,
+      "indices": 30396,
+      "offset": 1578270,
+      "bytes": 91260
+    },
+    {
+      "id": "costa_10_sinistra",
+      "name": "Tenth rib.l",
+      "label": "10ª costa sinistra",
+      "kind": "rib",
+      "vertices": 3515,
+      "indices": 21078,
+      "offset": 1669530,
+      "bytes": 63246
+    },
+    {
+      "id": "costa_10_dextra",
+      "name": "Tenth rib.r",
+      "label": "10ª costa destra",
+      "kind": "rib",
+      "vertices": 3515,
+      "indices": 21078,
+      "offset": 1732776,
+      "bytes": 63246
+    },
+    {
+      "id": "costa_3_sinistra",
+      "name": "Third rib.l",
+      "label": "3ª costa sinistra",
+      "kind": "rib",
+      "vertices": 3492,
+      "indices": 20940,
+      "offset": 1796022,
+      "bytes": 62832
+    },
+    {
+      "id": "costa_3_dextra",
+      "name": "Third rib.r",
+      "label": "3ª costa destra",
+      "kind": "rib",
+      "vertices": 3492,
+      "indices": 20940,
+      "offset": 1858854,
+      "bytes": 62832
+    },
+    {
+      "id": "costa_12_sinistra",
+      "name": "Twelfth rib.l",
+      "label": "12ª costa sinistra",
+      "kind": "rib",
+      "vertices": 1503,
+      "indices": 9006,
+      "offset": 1921686,
+      "bytes": 27030
+    },
+    {
+      "id": "costa_12_dextra",
+      "name": "Twelfth rib.r",
+      "label": "12ª costa destra",
+      "kind": "rib",
+      "vertices": 1503,
+      "indices": 9006,
+      "offset": 1948716,
+      "bytes": 27030
+    },
+    {
+      "id": "vertebra_thoracica_1",
+      "name": "Vertebra T1",
+      "label": "Vertebra T1",
+      "kind": "vertebra",
+      "vertices": 973,
+      "indices": 5838,
+      "offset": 1975746,
+      "bytes": 17514
+    },
+    {
+      "id": "vertebra_thoracica_10",
+      "name": "Vertebra T10",
+      "label": "Vertebra T10",
+      "kind": "vertebra",
+      "vertices": 1529,
+      "indices": 9174,
+      "offset": 1993260,
+      "bytes": 27522
+    },
+    {
+      "id": "vertebra_thoracica_11",
+      "name": "Vertebra T11",
+      "label": "Vertebra T11",
+      "kind": "vertebra",
+      "vertices": 899,
+      "indices": 5394,
+      "offset": 2020782,
+      "bytes": 16182
+    },
+    {
+      "id": "vertebra_thoracica_12",
+      "name": "Vertebra T12",
+      "label": "Vertebra T12",
+      "kind": "vertebra",
+      "vertices": 1293,
+      "indices": 7758,
+      "offset": 2036964,
+      "bytes": 23274
+    },
+    {
+      "id": "vertebra_thoracica_2",
+      "name": "Vertebra T2",
+      "label": "Vertebra T2",
+      "kind": "vertebra",
+      "vertices": 1071,
+      "indices": 6426,
+      "offset": 2060238,
+      "bytes": 19278
+    },
+    {
+      "id": "vertebra_thoracica_3",
+      "name": "Vertebra T3",
+      "label": "Vertebra T3",
+      "kind": "vertebra",
+      "vertices": 1172,
+      "indices": 7032,
+      "offset": 2079516,
+      "bytes": 21096
+    },
+    {
+      "id": "vertebra_thoracica_4",
+      "name": "Vertebra T4",
+      "label": "Vertebra T4",
+      "kind": "vertebra",
+      "vertices": 1108,
+      "indices": 6648,
+      "offset": 2100612,
+      "bytes": 19944
+    },
+    {
+      "id": "vertebra_thoracica_5",
+      "name": "Vertebra T5",
+      "label": "Vertebra T5",
+      "kind": "vertebra",
+      "vertices": 1076,
+      "indices": 6456,
+      "offset": 2120556,
+      "bytes": 19368
+    },
+    {
+      "id": "vertebra_thoracica_6",
+      "name": "Vertebra T6",
+      "label": "Vertebra T6",
+      "kind": "vertebra",
+      "vertices": 890,
+      "indices": 5340,
+      "offset": 2139924,
+      "bytes": 16020
+    },
+    {
+      "id": "vertebra_thoracica_7",
+      "name": "Vertebra T7",
+      "label": "Vertebra T7",
+      "kind": "vertebra",
+      "vertices": 1397,
+      "indices": 8382,
+      "offset": 2155944,
+      "bytes": 25146
+    },
+    {
+      "id": "vertebra_thoracica_8",
+      "name": "Vertebra T8",
+      "label": "Vertebra T8",
+      "kind": "vertebra",
+      "vertices": 868,
+      "indices": 5199,
+      "offset": 2181090,
+      "bytes": 15606
+    },
+    {
+      "id": "vertebra_thoracica_9",
+      "name": "Vertebra T9",
+      "label": "Vertebra T9",
+      "kind": "vertebra",
+      "vertices": 1489,
+      "indices": 8934,
+      "offset": 2196696,
+      "bytes": 26802
+    },
+    {
+      "id": "processus_xiphoideus",
+      "name": "Xiphoid process",
+      "label": "Processo xifoideo",
+      "kind": "sternum",
+      "vertices": 459,
+      "indices": 2742,
+      "offset": 2223498,
+      "bytes": 8238
+    }
+  ],
+  "sha256": "d3de728a416b93b6fcc0b996963e90ce14be7e74df3258dc0cfd0d0f0d59cc6b"
+}

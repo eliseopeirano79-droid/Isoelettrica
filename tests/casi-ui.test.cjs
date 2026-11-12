@@ -26,7 +26,7 @@ function casi(options = {}) {
 test('I 15 casi guidati completano tutte le 66 decisioni e salvano il punteggio', t => {
   const h = casi(); t.after(h.close); const { w } = h;
   let decisions = 0;
-  assert.equal(w.document.querySelectorAll('#nav button').length, 9);
+  assert.equal(w.document.querySelectorAll('#nav button').length, 10);
   assert.equal(w.document.querySelectorAll('#casiHome [data-caso]').length, 15);
   for (const c of w.ISO_CASI_DATI.CASI) {
     h.click('[data-caso="' + c.id + '"]');

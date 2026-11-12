@@ -130,3 +130,18 @@ Il rilascio v46.0 è stato verificato nel browser pubblico, compreso l’aggiorn
 La verifica grafica offline è riproducibile con `tools/esporta-paziente.cjs` e `tools/render-paziente.py`. Richiede, solo per questi strumenti, `@napi-rs/canvas` e Blender 4; non aggiunge dipendenze al sito.
 
 Attribuzioni: PTB-XL — Wagner P et al., PhysioNet, CC BY 4.0. MakeHuman base mesh, default skeleton e macro targets — MakeHuman Community, CC0 1.0.
+
+
+## Ecocardio — anteprima v47.0
+
+La nuova scheda **Ecocardio** apre un laboratorio autonomo con caricamento differito. Il piano azzurro, la sonda e la sezione bidimensionale condividono lo stesso sistema di coordinate: la sezione è l’intersezione dei triangoli dell’atlante con il piano, e cambia con spostamento laterale/verticale, rotazione, inclinazione e basculamento. La profondità modifica il settore visibile, in percentuale relativa all’atlante.
+
+Sono disponibili 11 riferimenti geometrici: PLAX, PSAX ai livelli aortico/mitralico/papillare, A4C/A5C/A2C/A3C, sottocostale quattro camere, cava inferiore toracica e arco soprasternale. I preset sono illustrativi e richiedono revisione specialistica prima di considerarli modelli di acquisizione clinica. Il dizionario locale identifica camere, valvole e vasi; non completa il progetto di nomenclatura totale.
+
+**Anatomia** colora i contorni; **Eco** usa luminosità e grana sintetiche. L’animazione legge il ritmo sinusale dal motore esistente con CardiacClock e applica la stessa deformazione del cuore 3D alle sezioni. **Esercitati** propone un disallineamento, fornisce suggerimenti per il movimento prevalente e verifica un obiettivo geometrico. Il punteggio non misura competenza clinica. Livelli, sonda di riferimento, opacità, camera e tema sono modificabili.
+
+Non ci sono filmati clinici, un modello acustico degli ultrasuoni, Doppler, misure diagnostiche, pressione della sonda o deformazione cutanea. Il torace e le coste sono riferimenti procedurali illustrativi. Il modello sorgente non contiene tutti i lembi e le corde valvolari; i contorni aperti restano aperti e la cava è limitata al tratto toracico. In assenza di WebGL è disponibile una proiezione software semplificata delle superfici, dichiarata nell’interfaccia; il taglio usa comunque la geometria completa.
+
+Anteprima privata: https://isoelettrica-ecocardio-eli.eliseo-peirano.chatgpt.site
+
+Fonti delle finestre e manovre: [ASE 2019](https://www.asecho.org/wp-content/uploads/2019/01/2019_Comprehensive-TTE.pdf), [BSE 2020](https://pmc.ncbi.nlm.nih.gov/articles/PMC7923056/). Geometria e licenze: [attribuzioni](prototipo-cuore/ATTRIBUZIONI.md). Report: [Ecocardio v47](reports/2026-11-12-ecocardio-v47.md).
