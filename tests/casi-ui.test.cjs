@@ -13,7 +13,7 @@ function casi(options = {}) {
   h.patient = { imposta() {}, vitali() {}, effetto() {}, battito() {}, aggiorna() {}, misura() {}, suErrore: null };
   w.ISO_PAZIENTE = { crea: () => options.no3d ? null : h.patient };
   if (options.load) w.ISO_PTBXL.load = options.load;
-  for (const file of ['casi-dati.js', 'casi-reali.js', 'casi-clinici.js']) w.eval(read(file));
+  for (const file of ['casi-dati.js', 'casi-dati-2.js', 'casi-guide.js', 'casi-reali.js', 'casi-clinici.js']) w.eval(read(file));
   w.document.querySelector('#nav [data-v="casi"]').click();
   h.click = selector => {
     const element = w.document.querySelector(selector);
@@ -23,11 +23,11 @@ function casi(options = {}) {
   return h;
 }
 
-test('I 15 casi guidati completano tutte le 66 decisioni e salvano il punteggio', t => {
+test('Tutti i casi guidati (27) completano tutte le decisioni (116) e salvano il punteggio', t => {
   const h = casi(); t.after(h.close); const { w } = h;
   let decisions = 0;
-  assert.equal(w.document.querySelectorAll('#nav button').length, 9);
-  assert.equal(w.document.querySelectorAll('#casiHome [data-caso]').length, 15);
+  assert.equal(w.document.querySelectorAll('#nav button').length, 10);   // con la scheda Eco
+  assert.equal(w.document.querySelectorAll('#casiHome [data-caso]').length, 27);
   for (const c of w.ISO_CASI_DATI.CASI) {
     h.click('[data-caso="' + c.id + '"]');
     for (const p of c.passi) {
@@ -38,8 +38,8 @@ test('I 15 casi guidati completano tutte le 66 decisioni e salvano il punteggio'
     assert.equal(w.document.querySelector('.casi-punti b').textContent, c.passi.length + '/' + c.passi.length);
     h.click('#casiAltri');
   }
-  assert.equal(decisions, 66);
-  assert.equal(Object.keys(JSON.parse(w.localStorage.getItem('iso-casi-v1'))).length, 15);
+  assert.equal(decisions, 116);
+  assert.equal(Object.keys(JSON.parse(w.localStorage.getItem('iso-casi-v1'))).length, 27);
   assert.equal(h.errors.length, 0);
 });
 
@@ -132,7 +132,7 @@ test('Il turno presenta dieci chiamate senza svelare la correzione e salva il ri
   assert.equal(w.document.querySelectorAll('#casiPanel .casi-fb').length, 10);
   assert.match(w.document.querySelector('#casiPanel').textContent, /Fine del turno/);
   assert.equal(JSON.parse(w.localStorage.getItem('iso-casi-v1'))._turno.tot, 10);
-  h.click('#casiAltri'); assert.equal(w.document.querySelectorAll('#casiHome [data-caso]').length, 15);
+  h.click('#casiAltri'); assert.equal(w.document.querySelectorAll('#casiHome [data-caso]').length, 27);
   assert.equal(h.errors.length, 0);
 });
 
@@ -147,4 +147,16 @@ test('Saltare tutte le chiamate produce dieci correzioni e un nuovo turno ripart
   h.click('#casiEsci'); h.click('#casiHome [data-caso]');
   assert.ok(w.document.querySelector('#casiPanel .opts button'));
   assert.equal(h.errors.length, 0);
+});
+
+test('Scheda Guide: sette guide, apertura, collegamento a un caso', t => {
+  const h = casi(); t.after(h.close); const { w } = h;
+  h.click('#casiSchede [data-s="guide"]');
+  assert.equal(w.document.querySelectorAll('[data-guida]').length, 7);
+  h.click('[data-guida="bradicardia"]');
+  assert.ok(w.document.querySelector('.casi-guida h2').textContent.includes('Bradicardia'));
+  assert.ok(w.document.querySelectorAll('.casi-guida .casi-fonti a').length >= 2);
+  h.click('.casi-guida [data-caso="mobitz-2"]');
+  assert.ok(w.document.querySelector('#casiChi').textContent.includes('sincope'));
+  assert.deepEqual(h.errors, []);
 });
