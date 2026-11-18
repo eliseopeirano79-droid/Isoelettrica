@@ -71,7 +71,7 @@ function calcoli(R) {
 function avvia() {
   const APP = root.ISO_APP, DATI = root.ISO_CASI_DATI, vista = $('#v-casi');
   if (!APP || !DATI || !vista) return null;
-  const esc = APP.esc, CASI = DATI.CASI, REALI = root.ISO_CASI_REALI || null, PTB = root.ISO_PTBXL || null;
+  const esc = APP.esc, CASI = DATI.CASI, REALI = root.ISO_CASI_REALI || null, PTB = root.ISO_PTBXL || null, GUIDE = root.ISO_CASI_GUIDE || [];
   const FONTI = Object.assign({ ptbxl: { t: 'PTB-XL 1.0.3 — archivio pubblico di ECG (CC BY 4.0)', r: 'Wagner P et al. Sci Data 2020;7:154', u: 'https://doi.org/10.1038/s41597-020-0495-6' } }, DATI.FONTI, REALI ? REALI.FONTI : {});
   let scheda = 'guidati', richiesta = 0, T = null;   // T: turno di guardia in corso
   const home = $('#casiHome'), run = $('#casiRun'), pannello = $('#casiPanel'), palco = $('#casiStage'), vitali = $('#casiVitali'), evento = $('#casiEvento');
@@ -92,8 +92,12 @@ function avvia() {
     let h = '<h2>Casi clinici</h2><p class="lead">Un paziente, un tracciato che cambia con le tue scelte. Leggi l’ECG, decidi, somministra: ogni decisione ha una conseguenza e una fonte.</p>' +
       '<p class="casi-avviso">Simulazione didattica. Criteri e dosi dell’adulto seguono le linee guida citate in ogni passaggio; non sostituiscono i protocolli locali né il giudizio clinico. I contenuti non sono stati certificati da un cardiologo.</p>';
     h += '<div class="casi-turno"><div><b>Turno di guardia</b><span>Dieci chiamate estratte a caso tra casi e calcoli di dose. Rispondi di seguito: la correzione arriva solo alla fine.' + (fatti._turno ? ' Migliore: ' + fatti._turno.ok + ' su 10.' : '') + '</span></div><button class="btn primary" id="casiTurno">Inizia il turno</button></div>';
-    if (REALI && PTB) h += '<div class="seg casi-schede" id="casiSchede"><button data-s="guidati" class="' + (scheda === 'guidati' ? 'on' : '') + '">Casi guidati · ' + CASI.length + '</button><button data-s="reali" class="' + (scheda === 'reali' ? 'on' : '') + '">ECG reali · ' + REALI.CASI.length + '</button></div>';
-    if (scheda === 'reali' && REALI && PTB) {
+    const bt = (k, t) => '<button data-s="' + k + '" class="' + (scheda === k ? 'on' : '') + '">' + t + '</button>';
+    if ((REALI && PTB) || GUIDE.length) h += '<div class="seg casi-schede" id="casiSchede">' + bt('guidati', 'Casi guidati · ' + CASI.length) + (REALI && PTB ? bt('reali', 'ECG reali · ' + REALI.CASI.length) : '') + (GUIDE.length ? bt('guide', 'Guide · ' + GUIDE.length) : '') + '</div>';
+    if (scheda === 'guide' && GUIDE.length) {
+      h += '<p class="casi-avviso">Schemi di ragionamento da tenere accanto ai casi. Riassumono criteri e dosi già citati nei casi, con le stesse fonti.</p><div class="casi-griglia">' +
+        GUIDE.map(g => '<button class="caso-card" data-guida="' + g.id + '"><span class="riga"><span class="tag">Guida</span><span>' + g.minuti + ' min</span></span><h3>' + esc(g.titolo) + '</h3><span class="chi">' + esc(g.sotto) + '</span></button>').join('') + '</div>';
+    } else if (scheda === 'reali' && REALI && PTB) {
       h += '<p class="casi-avviso reale">Tracciati veri di pazienti, con età, sesso e referto del cardiologo, dall’archivio pubblico PTB-XL (licenza CC BY 4.0). L’archivio non contiene sintomi né decorso: la seconda domanda è generale sul quadro riconosciuto. Alla prima apertura ogni tracciato viene scaricato e verificato; poi resta disponibile offline.</p>' +
         '<div class="casi-azioni" style="margin:0 0 14px"><button class="btn primary" id="casiSorpresa">Tracciato a sorpresa</button></div><div class="casi-griglia">' +
         REALI.CASI.map((r, k) => carta('r' + k, '<span class="riga"><span class="tag">ECG reale</span><span>2 domande</span></span>', 'Tracciato n. ' + r[0], chi({ sesso: r[2], eta: r[1] }), fatti['ptbxl-' + r[0]])).join('') + '</div>';
@@ -103,8 +107,26 @@ function avvia() {
     home.innerHTML = h;
     home.querySelectorAll('[data-caso]').forEach(b => b.addEventListener('click', () => { const id = b.dataset.caso; if (id[0] === 'r' && scheda === 'reali') apriReale(REALI.CASI[+id.slice(1)]); else apri(id); }));
     home.querySelectorAll('#casiSchede button').forEach(b => b.addEventListener('click', () => { scheda = b.dataset.s; elenco(); }));
+    home.querySelectorAll('[data-guida]').forEach(b => b.addEventListener('click', () => guida(b.dataset.guida)));
     $('#casiTurno').addEventListener('click', turno);
     const sor = $('#casiSorpresa'); if (sor) sor.addEventListener('click', () => { const non = REALI.CASI.filter(r => !fatti['ptbxl-' + r[0]]), da = non.length ? non : REALI.CASI; apriReale(da[Math.floor(Math.random() * da.length)]); });
+  }
+
+  /* ---------- Guide ---------- */
+  function guida(id) {
+    const g = GUIDE.find(x => x.id === id); if (!g) return;
+    const titoli = Object.fromEntries(CASI.map(c => [c.id, c.titolo]));
+    home.innerHTML = '<article class="casi-guida"><button class="btn" id="guidaIndietro">← Tutte le guide</button><p class="casi-tipo">Guida · ' + g.minuti + ' min</p><h2>' + esc(g.titolo) + '</h2><p class="lead">' + esc(g.sotto) + '</p>' +
+      g.sezioni.map(z => '<section><h3>' + esc(z.h) + '</h3>' + (z.p ? '<p>' + esc(z.p) + '</p>' : '') + (z.punti ? '<ul>' + z.punti.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') + '</section>').join('') +
+      (g.errori && g.errori.length ? '<section class="errori"><h3>Errori da non fare</h3><ul>' + g.errori.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></section>' : '') +
+      '<section><h3>Mettila in pratica</h3><div class="casi-azioni">' + (g.casi || []).filter(c => titoli[c]).map(c => '<button class="btn" data-caso="' + c + '">Caso: ' + esc(titoli[c]) + '</button>').join('') +
+      (g.tracciati || []).filter(t => APP.byId[t[0]]).map(t => '<button class="btn" data-traccia="' + t[0] + '">Tracciato: ' + esc(t[1]) + '</button>').join('') + '</div></section>' +
+      '<section><h3>Fonti</h3><ul class="casi-fonti">' + fonti(g.fonte).map(x => '<li><a href="' + esc(x.u) + '" target="_blank" rel="noopener">' + esc(x.t) + '</a>. ' + esc(x.r) + '</li>').join('') + '</ul>' +
+      '<p class="casi-avviso">Sintesi didattica: non sostituisce le linee guida originali, i protocolli locali né il giudizio clinico. Non certificata da un cardiologo.</p></section></article>';
+    $('#guidaIndietro').addEventListener('click', elenco);
+    home.querySelectorAll('[data-caso]').forEach(b => b.addEventListener('click', () => apri(b.dataset.caso)));
+    home.querySelectorAll('[data-traccia]').forEach(b => b.addEventListener('click', () => { if (root.ISO_OPEN) root.ISO_OPEN(b.dataset.traccia); }));
+    vista.scrollTop = 0; home.scrollTop = 0; if (home.scrollIntoView) home.scrollIntoView({ block: 'start' });
   }
 
   /* ---------- Turno di guardia ---------- */
