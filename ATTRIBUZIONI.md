@@ -1,0 +1,65 @@
+# Fonte e adattamenti del cuore anatomico
+
+`heart-z-anatomy.glb` e `coronary-paths.json` derivano da **Z-Anatomy — The libre 3D atlas of anatomy — CC BY-SA 4.0**, a sua volta derivato da **BodyParts3D — The Database Center for Life Science — CC BY-SA 2.1 Japan**.
+
+- Fonte: https://github.com/Z-Anatomy/Models-of-human-anatomy
+- Revisione: `2b652413b1116c9119e616eabc1e63af3cc6267d`.
+- Archivio: `Z-Anatomy.zip`, file `Z-Anatomy/Startup.blend`.
+- Licenza del modello adattato e delle curve derivate: https://creativecommons.org/licenses/by-sa/4.0/
+- Licenza BodyParts3D: https://creativecommons.org/licenses/by-sa/2.1/jp/
+- Fonte originale: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
+- Avviso della fonte riportato integralmente in `SOURCE-LICENSE.txt`.
+
+Autori accreditati dalla fonte: Kousaku Okubo (BodyParts3D), Gauthier Kervyn (anatomia e modello), Marcin Zielinski (strumenti Blender), Lluis Vinent (applicazione Unity). L’estrazione non include rene, orecchio interno o altre strutture con attribuzioni diverse nel documento originale.
+
+## Modifiche
+
+Estrazione di cuore, arterie coronarie, vene cardiache selezionate e grandi vasi. Escluse annotazioni, oggetti senza facce e la struttura venosa chiamata `????????`. Curve convertite in mesh a risoluzione ridotta; 41 curve coronariche campionate separatamente. Parte inferiore della cava inferiore rifilata per mantenere il campo cardiaco. Coordinate traslate e scalate uniformemente; conversione da Z verticale a Y verticale, senza specchiatura. Materiali originali rimossi; nomi conservati in `extras.sourceName`. Nessuno script incorporato nel file Blender è stato eseguito.
+
+Il modello contiene **39 oggetti**, 93.967 vertici prima dell’esportazione, 3.817.708 byte, nessuna texture esterna, nessuna animazione precalcolata. `heart-parts.json` conserva inventario e provenienza. Le aggiunte geometriche di questo laboratorio e l’adattamento delle superfici sono rilasciati sotto CC BY-SA 4.0 con le attribuzioni sopra riportate.
+
+Inventario originale: quattro camere, sei oggetti arteriosi coronarici, cinque oggetti venosi cardiaci, undici grandi vasi, nove lembi valvolari e quattro muscoli papillari. I grandi vasi comprendono aorta ascendente e arco, tronco e due arterie polmonari, due cave e quattro vene polmonari.
+
+## Ricostruzioni e limiti
+
+La fonte non contiene i lembi anteriori mitralico e tricuspidale; i nove lembi statici sono conservati nel file ma sostituiti nella scena da undici lembi procedurali animati, quattro anelli e quindici corde illustrative. Le forme, gli ancoraggi e le deformazioni devono essere revisionati anatomicamente. Non costituiscono un apparato valvolare validato; anche l’inventario dei papillari della fonte è incompleto.
+
+La collezione di conduzione della fonte è vuota. Nodi, His, branche, Bachmann e dodici rami di Purkinje sono ricostruzioni indicative. Lo stesso vale per Botallo e i cinque marcatori di apice, setti, fossa ovale ed endocardio. I marcatori nominano punti, non superfici segmentate di quelle strutture.
+
+La revisione v44 offre 125 strutture selezionabili, fra oggetti derivati dalla fonte, ricostruzioni e riferimenti. Questo numero non misura la completezza anatomica. Non comprende ogni vaso, strato, variante o struttura microscopica del cuore.
+
+Contrazione, torsione, restringimenti coronarici e colori tissutali sono visualizzazioni qualitative. Le sezioni non generano superfici di taglio chiuse. Non esiste ancora un allineamento validato ai 17 segmenti cardiaci, ai dispositivi dell’app o ai territori perfusionali. Non sono simulati pressioni, stress meccanici, flussi fisici, rigurgiti o accoppiamento tissutale-elettrofisiologico completo.
+
+La schermata fetale usa le quattro camere adulte come riferimento trasparente; organi e vasi sono disposti convenzionalmente. Il modello di rete conserva i flussi ma non simula streaming preferenziale, pressioni, crescita, anatomia neonatale specifica o cardiopatie congenite complesse.
+
+## Riferimenti fisiologici
+
+I riferimenti orientano topologia e fasi; non validano il simulatore né forniscono i valori numerici dei suoi preset.
+
+- Ciclo cardiaco: https://openstax.org/books/anatomy-and-physiology/pages/19-3-cardiac-cycle
+- Circolazione fetale: https://openstax.org/books/anatomy-and-physiology-2e/pages/20-6-development-of-blood-vessels-and-fetal-circulation
+- Percorsi sistemici e portali: https://openstax.org/books/anatomy-and-physiology-2e/pages/20-5-circulatory-pathways
+- Dotto arterioso pervio: https://www.msdmanuals.com/professional/pediatrics/congenital-cardiovascular-anomalies/patent-ductus-arteriosus-pda
+
+## Integrazione nell’app — 23 settembre 2026
+
+Il GLB è identico al file approvato. Il raccordo polmonare iniziale è stato sostituito nella revisione v44 da `pulmonary-arteries.js`: tronco e due rami hanno una superficie tubulare comune, parete interna, tre lumi e margini distali con spessore. La radice si raccorda all’infundibolo del ventricolo destro. Sono superfici ricostruite di visualizzazione, non una nuova segmentazione clinica della fonte.
+
+`atlas-coronary-map.json` deriva dalle curve e dalle superfici sopra citate, con la stessa licenza CC BY-SA 4.0. Lo strumento `tools/build-atlas-map.cjs` rende riproducibile la mappatura per la sezione Coronarie. Le superfici originali sono suddivise per la sola colorazione; i rami minuti sono attribuiti per prossimità ai percorsi. Ramo del nodo del seno, ramo del nodo AV, PDA, ramo intermedio e due settali posteriori hanno percorsi ricostruiti e indicativi. La fonte non identifica singolarmente ogni ramo del laboratorio clinico preesistente. Non è una mappatura anatomica o perfusionale validata.
+
+Il ventricolo sinistro è ripartito geometricamente in 17 territori per mantenere i controlli esistenti. Nomi e orientamento seguono il modello AHA; asse, confini e corrispondenze arteriose sono approssimazioni di visualizzazione. Fonte primaria: [AHA, Standardized Myocardial Segmentation, 2002](https://www.ahajournals.org/doi/pdf/10.1161/hc0402.102975?download=true). Le arterie di irrorazione variano fra individui. Non sono state modificate le spiegazioni cliniche e le corrispondenze preesistenti dell’app.
+
+
+## Raccordi e ricostruzioni anatomiche — revisione v44
+
+`anatomy-refinements.js` sostituisce in memoria le superfici di aorta ascendente/arco e dei tratti polmonari, aggiunge aorta discendente e tre tronchi epiaortici. `vascular-cuffs.js` seziona i veri manicotti presenti nell’atrio sinistro, elimina soltanto il loro tratto distale e continua entrambe le superfici della parete nelle quattro vene. La cava inferiore usa lo stesso raccordo con l’ostio atriale destro. I bordi esterno e interno condividono i vertici e la deformazione. La revisione sostituisce le precedenti aperture accanto ai manicotti, che lasciavano strutture duplicate. Il Botallo si raccorda alle superfici dell’istmo aortico e della polmonare sinistra prossimale. Sono correzioni di visualizzazione, con unità dell’atlante non calibrate clinicamente. Il GLB originale resta identico.
+
+Le cuspidi semilunari sono ricostruzioni a tasca con inserzioni festonate, lunule e noduli illustrativi. `congenital-morphology.js` aggiunge sette morfologie semplificate reversibili, senza simulazione emodinamica. Le geometrie derivate seguono la licenza CC BY-SA 4.0 e le attribuzioni sopra riportate. Limiti e fonti anatomiche: `../reports/2026-09-23-raccordi-anatomici-v44.md`.
+
+Dettagli della correzione di osti, infundibolo e biforcazione: `../reports/2026-09-23-osti-e-tronco-polmonare-v44.md`. Calibri, lunghezze e spessori sono unità grafiche dell’atlante, non misure del paziente.
+
+## Torace per il laboratorio Eco (v47)
+
+`torace-z-anatomy.glb` deriva dalla stessa fonte e dalla stessa revisione (**Z-Anatomy**, CC BY-SA 4.0, a sua volta da **BodyParts3D**, CC BY-SA 2.1 Japan), file `Z-Anatomy/Startup.blend`. Lo genera `export-torace.py` con la stessa trasformazione di `export-source.py` (scala 20, traslazione fissa, conversione da Z-alto a Y-alto): coste, sterno e cuore conservano quindi i rapporti dell'atlante.
+
+Contenuto (157 oggetti, 52.513 vertici, 1,14 MB): 24 coste, 20 cartilagini costali, manubrio, corpo e processo xifoideo dello sterno, vertebre T1–T12, clavicole, scapole, cinque lobi polmonari, otto segmenti epatici, diaframma e le regioni cutanee di tronco, collo e testa. Modifiche: decimazione (riduzione dei poligoni) per l'uso su tablet, materiali e normali rimossi (ricalcolate nell'app). Inventario e numeri di vertici per oggetto in `torace-parts.json`. Licenza del modello adattato: CC BY-SA 4.0.
