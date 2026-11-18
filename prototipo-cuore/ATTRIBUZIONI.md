@@ -57,3 +57,9 @@ Il ventricolo sinistro è ripartito geometricamente in 17 territori per mantener
 Le cuspidi semilunari sono ricostruzioni a tasca con inserzioni festonate, lunule e noduli illustrativi. `congenital-morphology.js` aggiunge sette morfologie semplificate reversibili, senza simulazione emodinamica. Le geometrie derivate seguono la licenza CC BY-SA 4.0 e le attribuzioni sopra riportate. Limiti e fonti anatomiche: `../reports/2026-09-23-raccordi-anatomici-v44.md`.
 
 Dettagli della correzione di osti, infundibolo e biforcazione: `../reports/2026-09-23-osti-e-tronco-polmonare-v44.md`. Calibri, lunghezze e spessori sono unità grafiche dell’atlante, non misure del paziente.
+
+## Torace per il laboratorio Eco (v47)
+
+`torace-z-anatomy.glb` deriva dalla stessa fonte e dalla stessa revisione (**Z-Anatomy**, CC BY-SA 4.0, a sua volta da **BodyParts3D**, CC BY-SA 2.1 Japan), file `Z-Anatomy/Startup.blend`. Lo genera `export-torace.py` con la stessa trasformazione di `export-source.py` (scala 20, traslazione fissa, conversione da Z-alto a Y-alto): coste, sterno e cuore conservano quindi i rapporti dell'atlante.
+
+Contenuto (157 oggetti, 52.513 vertici, 1,14 MB): 24 coste, 20 cartilagini costali, manubrio, corpo e processo xifoideo dello sterno, vertebre T1–T12, clavicole, scapole, cinque lobi polmonari, otto segmenti epatici, diaframma e le regioni cutanee di tronco, collo e testa. Modifiche: decimazione (riduzione dei poligoni) per l'uso su tablet, materiali e normali rimossi (ricalcolate nell'app). Inventario e numeri di vertici per oggetto in `torace-parts.json`. Licenza del modello adattato: CC BY-SA 4.0.

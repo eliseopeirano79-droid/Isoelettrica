@@ -97,11 +97,13 @@ Modello didattico con rilevazione e cattura ideali: tempi ed esiti esemplificati
 
 Riferimenti: [AHA 2025, Adult Advanced Life Support](https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support), [ESC 2021, Pacing e CRT](https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/cardiac-pacing-and-cardiac-resynchronization-therapy/).
 
-## Casi clinici (v46.2)
+## Casi clinici (v47.0)
 
 La sezione **Casi clinici** comprende casi guidati, ECG reali e un Turno di guardia.
 
-**Casi guidati (15, 66 decisioni).** Lettura dell’ECG, diagnosi, decisione, farmaco e dose, seguito. Il tracciato di ogni fase è generato dal motore con gli scenari esistenti e cambia in continuità sulla stessa striscia quando lo stato del paziente cambia (per esempio fibrillazione ventricolare → scarica → ritmo sinusale). La frequenza mostrata è letta dai battiti generati. Le scelte pericolose mostrano una conseguenza simulata, dichiarata come tale.
+**Casi guidati (27, 116 decisioni).** Dodici casi nuovi nella v47 (`casi-dati-2.js`, file additivo): infarto inferiore con blocco AV e ventricolo destro, infarto posteriore, sottoslivellamento diffuso con aVR, de Winter, ipokaliemia, Mobitz 2, Wenckebach dell’atleta, bradicardia-tachicardia, attività elettrica senza polso da emorragia, ipotermia, ripolarizzazione precoce, inversione degli elettrodi. Lettura dell’ECG, diagnosi, decisione, farmaco e dose, seguito. Il tracciato di ogni fase è generato dal motore con gli scenari esistenti e cambia in continuità sulla stessa striscia quando lo stato del paziente cambia (per esempio fibrillazione ventricolare → scarica → ritmo sinusale). La frequenza mostrata è letta dai battiti generati. Le scelte pericolose mostrano una conseguenza simulata, dichiarata come tale.
+
+**Guide (7).** Metodo di lettura in otto passi, tachicardia, bradicardia, arresto, dolore toracico, ST sopraslivellato non ischemico, potassio. Ogni guida riassume criteri e dosi già citati nei casi, con le stesse fonti, e rimanda ai casi e ai tracciati collegati (`casi-guide.js`).
 
 **ECG reali (96).** Tracciati veri dall’archivio PTB-XL 1.0.3 (CC BY 4.0), con età, sesso e referto originale del cardiologo. `tools/build-casi-reali.py` li sceglie dal catalogo locale: validati da un cardiologo, senza artefatti segnalati, con una sola diagnosi principale a probabilità 100 e nessun’altra affermazione diagnostica; sei per ciascuna di 16 classi. PTB-XL non contiene sintomi, terapia né decorso: la prima domanda chiede il reperto, la seconda è generale sul quadro riconosciuto e non descrive la storia di quel paziente. Il segnale si scarica alla prima apertura dal mirror già usato dall’Atlante, con verifica SHA-256, e resta poi disponibile offline.
 
@@ -111,11 +113,12 @@ La sezione **Casi clinici** comprende casi guidati, ECG reali e un Turno di guar
 
 Sono forme illustrative, con colorazione procedurale: non sono persone fotorealistiche, non includono una mimica completa né un modello anatomico interno, e non simulano l’emodinamica o la fisica completa dei tessuti.
 
-Fonti cliniche: ESC 2023 (sindromi coronariche acute), ESC 2019 (tachicardie sopraventricolari), ESC 2024 (fibrillazione atriale), ESC 2022 (aritmie ventricolari), ESC 2021 (stimolazione), ESC 2019 (embolia polmonare), ESC 2025 (miocardite e pericardite), ERC 2025 (supporto avanzato e circostanze speciali), AHA/ACCF/HRS 2009 (criteri ECG).
+Fonti cliniche: Resuscitation Council UK 2025 (adattamento delle linee guida ERC 2025 sulle circostanze speciali: ipotermia, ipokaliemia), AHA/ACC/HRS 2007 (standardizzazione dell’ECG), ESC 2023 (sindromi coronariche acute), ESC 2019 (tachicardie sopraventricolari), ESC 2024 (fibrillazione atriale), ESC 2022 (aritmie ventricolari), ESC 2021 (stimolazione), ESC 2019 (embolia polmonare), ESC 2025 (miocardite e pericardite), ERC 2025 (supporto avanzato e circostanze speciali), AHA/ACCF/HRS 2009 (criteri ECG).
 
 | File | Responsabilità |
 | --- | --- |
-| `casi-dati.js` | Casi guidati: stati del paziente, domande, commenti, fonti |
+| `casi-dati.js`, `casi-dati-2.js` | Casi guidati: stati del paziente, domande, commenti, fonti (la seconda serie si aggiunge alla prima senza modificarla) |
+| `casi-guide.js` | Guide di ragionamento della scheda Guide |
 | `casi-reali.js` | Elenco dei tracciati PTB-XL e domande per classe (generato) |
 | `casi-paziente.js`, `casi-paziente-aspetto.js`, `paziente-corpo.bin` | Scena 3D, corporature, capelli, abiti e biancheria |
 | `casi-clinici.js` | Svolgimento, punteggio, collegamento a monitor e motore tramite `window.ISO_APP` |
@@ -130,3 +133,33 @@ Il rilascio v46.0 è stato verificato nel browser pubblico, compreso l’aggiorn
 La verifica grafica offline è riproducibile con `tools/esporta-paziente.cjs` e `tools/render-paziente.py`. Richiede, solo per questi strumenti, `@napi-rs/canvas` e Blender 4; non aggiunge dipendenze al sito.
 
 Attribuzioni: PTB-XL — Wagner P et al., PhysioNet, CC BY 4.0. MakeHuman base mesh, default skeleton e macro targets — MakeHuman Community, CC0 1.0.
+
+## Laboratorio Eco (v47.0)
+
+Nuova scheda **Eco**: un ecocardiogramma simulato a partire dal cuore anatomico già presente nell’app (`prototipo-cuore/heart-z-anatomy.glb`, Z-Anatomy, CC BY-SA 4.0).
+
+- **Immagine.** Il piano del fascio taglia le superfici del modello. La parete è ricostruita in pixel come chiusura morfologica (dilatazione e poi erosione di metà spessore, distanza chamfer 3-4): la cavità resta nera, la parete grigia con grana sintetica. Pericardio brillante, parete toracica in campo vicino, fegato nella finestra sottocostale, scala in centimetri.
+- **Proiezioni (9).** Parasternale asse lungo, asse corto a base, mitrale, papillari e apice, apicale 4, 2 e 3 camere, sottocostale. Due camere a +70° dalla quattro camere, dove il piano non incontra più le camere destre; tre camere attraverso il centro dell’anello aortico; assi corti di base e mitrale perpendicolari all’anello. La sonda è appoggiata sulla cute del torace: la profondità risultante è di 16–19 cm. Rotazione e inclinazione della sonda sono libere.
+- **Movimento.** Accorciamento radiale e longitudinale del ventricolo sinistro attorno alla linea mediana della cavità, in fase con un ECG schematico. Valvole ricostruite dagli anelli stimati sul modello (il modello d’origine non ha i lembi anteriori di mitrale e tricuspide): atrioventricolari con onda E e onda A, semilunari aperte in eiezione; «bocca di pesce» mitralica e «Y» aortica negli assi corti.
+- **Quadri (5).** Normale, versamento pericardico (16 mm, moderato), ipertrofia ventricolare sinistra, cardiomiopatia dilatata, acinesia del territorio dell’interventricolare anteriore. La frazione d’eiezione del modello è mostrata con la classe ASE/EACVI 2015. Versamento e infarto anteriore aprono il caso clinico collegato.
+- **Localizzatore 3D.** Torace anatomico di Z-Anatomy estratto dalla stessa scena del cuore con la stessa trasformazione (`prototipo-cuore/torace-z-anatomy.glb`, generato da `prototipo-cuore/export-torace.py`): 24 coste, cartilagini, sterno, vertebre toraciche, clavicole, scapole, fegato, polmoni, diaframma e cute di tronco e testa, nei rapporti reali col cuore. Strati attivabili (pelle, polmoni, fegato), sonda con repere e ventaglio del fascio.
+- **Comandi dell'ecografo.** Profondità (8–24 cm, torna automatica al cambio di proiezione), guadagno, calibro (immagine ferma, due misure in cm sul piano del fascio, con l'indicazione di dove si misura il ventricolo sinistro), M-mode a schermo diviso (la linea tratteggiata si sposta toccando l'immagine; quattro secondi per schermata, tacche ogni 5 cm).
+- **Confronto con esami reali.** Ogni proiezione ha il collegamento a un esame transtoracico normale con strutture etichettate su Radiopaedia (asse lungo 62652, assi corti 62654, quattro camere 62756, sottocostale 154437; due e tre camere dalla voce «transthoracic echocardiography»). Sono solo collegamenti: nessuna immagine viene copiata. I dataset aperti con clip reali (EchoNet-Dynamic, CAMUS) non permettono la ridistribuzione in un'app.
+- **Finestre acustiche.** Parasternale al 3°–4° spazio intercostale, circa 1,5 cm a sinistra del margine sternale, comune a tutte le viste parasternali; apicale sull'apice; sottocostale sotto lo xifoide. La sonda poggia sulla cute misurata sull'atlante.
+
+Fonti: ASE 2019 per le proiezioni (Mitchell C et al. J Am Soc Echocardiogr 2019;32:1–64), ASE/EACVI 2015 per frazione d’eiezione e spessori (Lang RM et al. J Am Soc Echocardiogr 2015;28:1–39), ESC 2015 per la classificazione del versamento (Adler Y et al. Eur Heart J 2015;36:2921–2964).
+
+**Verifica di coerenza (v47).** `tests/eco-coerenza.test.cjs` controlla, vista per vista, che cosa la sonda incontra: disposizione delle camere secondo le convenzioni ASE (per esempio asse lungo con ventricolo destro vicino alla sonda e aorta a destra, due camere senza camere destre, quattro camere senza aorta, fegato come finestra sottocostale), misure telediastoliche in asse lungo (diametro del ventricolo sinistro 4,2–5,8 cm, setto e parete posteriore 0,4–1,3 cm, rapporto setto/parete < 1,3), anelli valvolari nei limiti dell'adulto, nessuna sonda appoggiata su un osso e centro del settore libero da ombre costali, continuità dell'immagine a ogni grado di rotazione o inclinazione. `tools/verifica-eco.py` ripete la misura sui pixel del fotogramma nel browser: setto 0,64 cm, ventricolo sinistro 5,01 cm, parete posteriore 1,08 cm (pericardio escluso).
+
+**Scelte di costruzione.** Scala: 8 cm fra apice endocardico e centro della mitrale; con questa scala anello aortico, anello mitralico, diametro del ventricolo e larghezza del torace risultano normali in modo indipendente. Proiezioni definite dai punti di repere dell'ecografista (apice, mitrale, aorta, tricuspide); finestre acustiche scelte fra le coste vere; nelle viste apicali il fascio è inclinato nel proprio piano (+18°, +8°, −8°) perché la sonda cada in uno spazio intercostale. Correzione dichiarata del modello: la superficie settale del ventricolo destro di BodyParts3D dista fino a 1 cm dal ventricolo sinistro e darebbe un setto quasi doppio della parete posteriore; i soli vertici settali del ventricolo destro sono avvicinati.
+
+**Fisica dell'immagine.** Superfici costali brillanti con ombra acustica dietro, calcolate dalle coste vere nel piano del fascio; bordi più brillanti quando sono perpendicolari al fascio e quasi assenti quando sono paralleli; risoluzione laterale che peggiora con la profondità; attenuazione con compensazione; parete toracica o fegato in campo vicino.
+
+**Limiti dichiarati.** Non è un’ecografia reale: niente fisica degli ultrasuoni (attenuazione, ombre, riverberi), niente Doppler, tessitura sintetica, movimento geometrico e non emodinamico. Nelle viste apicali a due e tre camere il modello mostra anche vene polmonari e seno coronarico, quindi l’immagine è più «affollata» di quella reale. Il muscolo papillare anterolaterale è fuso con la parete nella mesh d'origine: in quattro camere e in asse corto la parete laterale appare più spessa (1,5–2,5 cm). Il polmone del modello è in inspirazione e la sua interposizione non viene disegnata (in un esame reale oscura spesso parte del settore). Le valvole sono ricostruzioni procedurali. Non rivista da un cardiologo né da un ecocardiografista. Verifica su iPad reale non eseguita: 60 fotogrammi al secondo nel browser di prova con rendering software; il ciclo si ferma quando la scheda non è visibile.
+
+| File | Responsabilità |
+| --- | --- |
+| `eco.js` | Taglio delle superfici, reperi, anelli valvolari, proiezioni, deformazione, immagine, localizzatore 3D |
+| `prototipo-cuore/torace-z-anatomy.glb`, `torace-parts.json`, `export-torace.py` | Scheletro toracico e visceri di contesto (Z-Anatomy, CC BY-SA 4.0) e lo script che li estrae |
+| `eco.css` | Impaginazione della scheda |
+| `tests/eco.test.cjs` | Proiezioni, profondità, sonda sulla cute, valvole, ciclo, frazione d’eiezione, quadri |

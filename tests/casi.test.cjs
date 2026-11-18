@@ -7,7 +7,8 @@ const E = require(path.join(root, 'engine.js'));
 global.window = global; global.ECG = E;
 try { global.ISO_IPERTROFIE = require(path.join(root, 'ipertrofie.js')); } catch (_) {}
 let D = require(path.join(root, 'data.js')); if (!D.SCENARIOS) D = global.ISO_DATA;
-const { CASI, FONTI } = require(path.join(root, 'casi-dati.js'));
+const { CASI, FONTI } = require(path.join(root, 'casi-dati-2.js'));   // seconda serie: carica e amplia casi-dati.js
+const GUIDE = require(path.join(root, 'casi-guide.js'));
 const { frequenza } = require(path.join(root, 'casi-clinici.js'));
 const byId = Object.fromEntries(D.SCENARIOS.map(s => [s.id, s]));
 function cfg(stato) {
@@ -23,7 +24,7 @@ test('Ogni caso ha identificatore unico, paziente, introduzione e punti chiave',
     assert.ok(['M', 'F'].includes(c.paziente.sesso) && c.paziente.eta >= 18, c.id);
     assert.ok(c.passi.length >= 4, c.id);
   }
-  assert.ok(CASI.length >= 15);
+  assert.ok(CASI.length >= 27);
 });
 
 test('Ogni stato usa uno scenario esistente con parametri dentro i limiti del laboratorio', () => {
@@ -89,14 +90,14 @@ test('Il primo passo fissa lo stato iniziale e ogni stato dichiarato viene usato
   }
 });
 
-test('Le fonti hanno titolo, riferimento e DOI, e sono tutte citate', () => {
+test('Le fonti hanno titolo, riferimento e indirizzo (DOI o sito ufficiale), e sono tutte citate', () => {
   const citate = new Set(); CASI.forEach(c => c.passi.forEach(p => p.fonte.forEach(f => citate.add(f))));
-  for (const [id, f] of Object.entries(FONTI)) { assert.ok(f.t && f.r && /^https:\/\/doi\.org\/10\./.test(f.u), id); assert.ok(citate.has(id), 'fonte mai citata: ' + id); }
+  for (const [id, f] of Object.entries(FONTI)) { assert.ok(f.t && f.r && /^https:\/\/(doi\.org\/10\.|www\.resus\.org\.uk\/)/.test(f.u), id); assert.ok(citate.has(id), 'fonte mai citata: ' + id); }
 });
 
 test('Il modulo non modifica motore e dati: nessuna scrittura su ECG o ISO_DATA', () => {
   const fs = require('node:fs');
-  for (const f of ['casi-clinici.js', 'casi-paziente.js', 'casi-dati.js', 'casi-reali.js']) {
+  for (const f of ['casi-clinici.js', 'casi-paziente.js', 'casi-dati.js', 'casi-dati-2.js', 'casi-guide.js', 'casi-reali.js']) {
     const s = fs.readFileSync(path.join(root, f), 'utf8');
     assert.ok(!/ISO_DATA\s*[.[][^=]*=[^=]|\.SCENARIOS\.(push|splice)|ECG\.[A-Za-z]+\s*=[^=]/.test(s), f);
   }
@@ -180,4 +181,24 @@ test('I calcoli di dose danno il risultato esatto, una sola risposta corretta e 
 test('Ogni passo di ogni caso ha uno stato definito anche se estratto da solo', () => {
   for (const c of CASI) c.passi.forEach((p, i) => { const n = statoAl(c, i); assert.ok(c.stati[n], c.id + ' passo ' + (i + 1) + ': ' + n); });
   const fa = CASI.find(c => c.id === 'arresto-fv'); assert.equal(statoAl(fa, 1), 'rcp'); assert.equal(statoAl(fa, 4), 'rosc');
+});
+
+test('Guide: sezioni, fonti dichiarate, casi e tracciati collegati esistenti', () => {
+  assert.ok(GUIDE.length >= 7);
+  const ids = new Set(), casi = new Set(CASI.map(c => c.id));
+  for (const g of GUIDE) {
+    assert.ok(!ids.has(g.id), g.id); ids.add(g.id);
+    assert.ok(g.titolo && g.sotto && g.sezioni.length >= 4 && g.errori.length >= 3, g.id);
+    for (const z of g.sezioni) assert.ok(z.h && (z.p || (z.punti && z.punti.length)), g.id + ': ' + z.h);
+    assert.ok(g.fonte.length >= 1, g.id); for (const f of g.fonte) assert.ok(FONTI[f] && /^https:/.test(FONTI[f].u), g.id + ': fonte ' + f);
+    for (const c of g.casi) assert.ok(casi.has(c), g.id + ': caso ' + c);
+    for (const t of g.tracciati) assert.ok(byId[t[0]], g.id + ': tracciato ' + t[0]);
+  }
+});
+
+test('Seconda serie: i casi nuovi non sostituiscono né duplicano quelli della prima', () => {
+  const prima = require(path.join(root, 'casi-dati.js')).CASI;
+  assert.equal(prima, CASI);
+  assert.equal(new Set(CASI.map(c => c.id)).size, CASI.length);
+  for (const id of ['stemi-anteriore', 'brugada', 'stemi-inferiore-vd', 'inversione-elettrodi']) assert.ok(CASI.some(c => c.id === id), id);
 });
