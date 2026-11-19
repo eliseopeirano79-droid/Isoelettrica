@@ -14,6 +14,7 @@ const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a
 const len = a => Math.hypot(a[0], a[1], a[2]), norm = a => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
 const orto = (a, n) => sub(a, mul(n, dot(a, n)));           // componente di a perpendicolare a n (n unitario)
 const ruota = (a, b, g) => add(mul(a, Math.cos(g)), mul(b, Math.sin(g)));
+const giro = (v, k, g) => add(add(mul(v, Math.cos(g)), mul(cross(k, v), Math.sin(g))), mul(k, dot(k, v) * (1 - Math.cos(g))));   // Rodrigues: v ruotato di g attorno all'asse unitario k
 
 /* ---------- geometria ---------- */
 /* Unisce i vertici coincidenti: senza, i bordi condivisi non si riconoscono e i contorni restano aperti. */
@@ -426,9 +427,51 @@ function pianoCuore(G, id) {
   /* assi corti: dalla stessa finestra la sonda ruota di 90° e si inclina verso il livello voluto
      (valvola aortica, mitrale, muscoli papillari, apice) */
   const v = id === 'psax-ao' ? vv('aortica') : id === 'psax-mv' ? vv('mitrale') : null;
-  const c0 = id === 'psax-ao' ? (v ? v.c : A.ao) : id === 'psax-mv' ? (v ? add(v.c, mul(v.n, 0.35 * v.r)) : lungo(0.85)) : lungo(id === 'psax-pm' ? 0.5 : 0.22);
-  const d = norm(sub(c0, Wp)); let u = norm(orto(nL, d)); if (u[0] < 0) u = mul(u, -1);   // sinistra del paziente a destra dello schermo
-  return { o: Wp, d, u, prof: 16 * CM };
+  const c0 = id === 'psax-ao' ? (v ? v.c : A.ao) : id === 'psax-mv' ? (v ? add(v.c, mul(v.n, 0.5 * v.r)) : lungo(0.85)) : lungo(id === 'psax-pm' ? 0.5 : 0.22);
+  /* l'ecografista angola la sonda finché il ventricolo è rotondo: il piano è perpendicolare all'asse lungo del
+     ventricolo sinistro (alla radice aortica per l'asse corto della base) e passa per il livello voluto */
+  const ax = id === 'psax-ao' && v ? norm(v.n) : A.asse;
+  if (!Tr) { const d = norm(sub(c0, Wp)); let u = norm(orto(nL, d)); if (u[0] < 0) u = mul(u, -1); return { o: Wp, d, u, prof: 16 * CM }; }
+  const F2 = finestraCorta(G, id, c0, ax, W), d = F2.d; let u = norm(cross(F2.n, d)); if (u[0] < 0) u = mul(u, -1);   // sinistra del paziente a destra dello schermo
+  return { o: F2.W, d, u, prof: 16 * CM };
+}
+/* Asse corto: l'ecografista fa scivolare la sonda nella zona parasternale sinistra (1–7 cm dalla linea mediana,
+   da 4 cm sotto a 5,5 cm sopra il centro del cuore) e la angola finché il ventricolo è rotondo. Fra i punti della
+   cute di quella zona si sceglie quello da cui il piano per il bersaglio è il più perpendicolare all'asse
+   (asse lungo del ventricolo; radice aortica per la base) e il settore (±24°, il centro pesa di più) non incontra
+   coste, cartilagini o sterno fra la cute e il bersaglio; a parità, il più vicino alla finestra standard. Senza scheletro (G.ossa) conta solo l'angolo. */
+function finestraCorta(G, id, c0, ax, Wst) {
+  const Tr = G.Tr, cm = Tr.cm, ossa = G.ossa && G.ossa.length ? G.ossa : null, key = id + (ossa ? '+o' : '');
+  const cache = G._fin || (G._fin = {}); if (cache[key]) return cache[key];
+  const pelle = (dx, dy) => { const X = Tr.x0 + dx * cm, xr = (X - Tr.x0) / Tr.a; return [X, Tr.hc[1] + dy * cm, Tr.zc + Tr.b * Math.sqrt(Math.max(0, 1 - xr * xr))]; };
+  const cand = [];
+  for (let dx = 1; dx <= 7.01; dx += 0.5) for (let dy = -4; dy <= 5.51; dy += 0.5) {
+    const W = pelle(dx, dy), d = norm(sub(c0, W)), n0 = orto(ax, d); if (len(n0) < 1e-6) continue;
+    const n = norm(n0), obl = Math.acos(Math.min(1, Math.abs(dot(n, ax)))) * 180 / Math.PI;
+    cand.push({ W, d, n, obl, sc: obl + 0.3 * len(sub(W, Wst)) / cm });
+  }
+  cand.sort((a, b) => a.sc - b.sc);
+  const bloccati = c => {             // raggi del centro del settore che incontrano osso fra la cute e il bersaglio
+    const e1 = c.d, e2 = norm(cross(c.n, c.d)), seg = [], Ls = len(sub(c0, c.W));
+    for (const m of ossa) for (const ch of taglia(m, c.W, c.n, true)) {
+      const p = ch.p, k = p.length / 3; let prev = null;
+      for (let s = 0; s < k; s++) { const w = [p[3 * s] - c.W[0], p[3 * s + 1] - c.W[1], p[3 * s + 2] - c.W[2]], q = [dot(w, e1), dot(w, e2)];
+        if (prev && Math.hypot(q[0] - prev[0], q[1] - prev[1]) < cm) seg.push(prev, q); prev = q; }
+    }
+    let nb = 0;
+    for (let h = -24; h <= 24; h += 3) {
+      const r = [Math.cos(h * Math.PI / 180), Math.sin(h * Math.PI / 180)];
+      for (let i = 0; i < seg.length; i += 2) {
+        const a = seg[i], b = seg[i + 1], e = [b[0] - a[0], b[1] - a[1]], den = r[0] * e[1] - r[1] * e[0]; if (Math.abs(den) < 1e-12) continue;
+        const t = (a[0] * e[1] - a[1] * e[0]) / den, u = (a[0] * r[1] - a[1] * r[0]) / den;
+        if (t > 0.05 * cm && t < Ls && u >= 0 && u <= 1) { nb += Math.abs(h) <= 9 ? 3 : 1; break; }
+      }
+    }
+    return nb;
+  };
+  let scelto = cand[0];
+  if (ossa) { let best = Infinity; for (const c of cand.slice(0, 160)) { if (c.sc > best) break; const k = bloccati(c), sc = c.sc + 2.5 * k; if (sc < best) { best = sc; scelto = c; } } }
+  return (cache[key] = scelto);
 }
 /* applica rotazione attorno all'asse del fascio e inclinazione attorno all'asse laterale */
 function orienta(P, rot, incl) {
@@ -436,7 +479,111 @@ function orienta(P, rot, incl) {
   return { o: P.o, d, u, n: norm(cross(d, u)), prof: P.prof };
 }
 
-const API = { REALE, INCLINAZIONE, FINESTRA, correggiSetto, assi, salda, taglia, unisci, tipoDi, reperi, deforma, contrazione, piano, orienta, valvole, apertura, torace, ingresso, frazione, classeFE, VISTE, QUADRI };
+/* ---------- valvulopatie ----------
+   Soglie dalle linee guida (fonte per ogni lesione); i valori del modello (vmax, apertura, getto) sono scelti
+   dentro ciascun intervallo e i test controllano che le misure simulate ricadano nell'intervallo del grado. */
+const VALVULOPATIE = [
+  { id: 'sa', nome: 'Stenosi aortica', valv: 'aortica', tipo: 'stenosi', fonte: 'eacvi-ase-2017',
+    criteri: ['Velocità di picco', 'Gradiente medio', 'Area valvolare'],
+    gradi: { lieve: { val: ['< 3,0 m/s', '< 20 mmHg', '> 1,5 cm²'], vmax: 2.75, ap: 0.8, sp: 1, ipert: 0, lim: { vmax: [2.0, 2.99], mg: [0, 19.9] } },
+      moderata: { val: ['3,0–3,9 m/s', '20–39 mmHg', '1,0–1,5 cm²'], vmax: 3.5, ap: 0.55, sp: 1.8, ipert: 0.25, lim: { vmax: [3.0, 3.99], mg: [20, 39.9] } },
+      severa: { val: ['≥ 4,0 m/s', '≥ 40 mmHg', '≤ 1,0 cm²'], vmax: 4.7, ap: 0.3, sp: 2.6, ipert: 0.5, lim: { vmax: [4.0, 9], mg: [40, 200] } } },
+    testo: 'Lembi ispessiti e calcifici che si aprono poco in sistole; la parete del ventricolo sinistro si ispessisce (sovraccarico di pressione). Al color Doppler il flusso in aorta è un mosaico turbolento. Il Doppler continuo dall’apice (cinque o tre camere), parallelo al flusso, misura la velocità di picco; il gradiente si ricava con Bernoulli semplificato (4v²).' },
+  { id: 'ia', nome: 'Insufficienza aortica', valv: 'aortica', tipo: 'insufficienza', fonte: 'ase-2017-rig',
+    criteri: ['Vena contracta', 'EROA', 'Volume rigurgitante'],
+    gradi: { lieve: { val: ['< 0,3 cm', '< 0,10 cm²', '< 30 mL'], vc: 0.2, L: 1.6, gap: 0, dil: 0, fine: 3.6 },
+      moderata: { val: ['0,3–0,6 cm', '0,10–0,29 cm²', '30–59 mL'], vc: 0.45, L: 3.4, gap: 0.08, dil: 0.08, fine: 2.9 },
+      severa: { val: ['> 0,6 cm', '≥ 0,30 cm²', '≥ 60 mL'], vc: 0.75, L: 5.5, gap: 0.16, dil: 0.18, fine: 1.8 } },
+    testo: 'Getto diastolico dalla valvola aortica nel ventricolo sinistro, in asse lungo parasternale e in apicale tre camere. La larghezza del getto alla sua origine (vena contracta) è il criterio più rapido. Al Doppler continuo il segnale diastolico è tanto più ripido quanto più il rigurgito è grave; nelle forme severe il ventricolo sinistro si dilata (sovraccarico di volume).' },
+  { id: 'sm', nome: 'Stenosi mitralica', valv: 'mitrale', tipo: 'stenosi', fonte: 'eae-ase-2009',
+    criteri: ['Area valvolare', 'Gradiente medio'],
+    gradi: { lieve: { val: ['> 1,5 cm²', '< 5 mmHg'], vmax: 1.45, tau: 0.35, ap: 0.7, sp: 1.2, lim: { mg: [1, 4.9] } },
+      moderata: { val: ['1,0–1,5 cm²', '5–10 mmHg'], vmax: 1.95, tau: 0.9, ap: 0.45, sp: 2, lim: { mg: [5, 10] } },
+      severa: { val: ['< 1,0 cm²', '> 10 mmHg'], vmax: 2.45, tau: 1.6, ap: 0.25, sp: 2.8, lim: { mg: [10.1, 40] } } },
+    testo: 'Lembi ispessiti con apertura a cupola («doming») e orifizio ridotto in asse corto alla mitrale; l’atrio sinistro si dilata. Al Doppler continuo la velocità diastolica è alta e cala lentamente: il gradiente medio dipende dalla frequenza cardiaca.' },
+  { id: 'im', nome: 'Insufficienza mitralica', valv: 'mitrale', tipo: 'insufficienza', fonte: 'ase-2017-rig',
+    criteri: ['Vena contracta', 'EROA', 'Volume rigurgitante', 'Frazione rigurgitante'],
+    gradi: { lieve: { val: ['< 0,3 cm', '< 0,20 cm²', '< 30 mL', '< 30%'], vc: 0.2, L: 1.8, gap: 0, dil: 0, dens: 0.35 },
+      moderata: { val: ['0,3–0,69 cm', '0,20–0,39 cm²', '30–59 mL', '30–49%'], vc: 0.5, L: 3.6, gap: 0.08, dil: 0.06, dens: 0.65 },
+      severa: { val: ['≥ 0,7 cm', '≥ 0,40 cm²', '≥ 60 mL', '≥ 50%'], vc: 0.85, L: 5.6, gap: 0.16, dil: 0.15, dens: 1 } },
+    testo: 'Getto sistolico dal ventricolo all’atrio sinistro, con una zona di convergenza emisferica (PISA) sul versante ventricolare. Si guarda in quattro camere, due camere e asse lungo. Al Doppler continuo il segnale sistolico è tanto più denso quanto più il rigurgito è grave; nelle forme severe atrio e ventricolo sinistro si dilatano.' },
+  { id: 'it', nome: 'Insufficienza tricuspidale', valv: 'tricuspide', tipo: 'insufficienza', fonte: 'ase-2017-rig',
+    criteri: ['Vena contracta', 'EROA', 'Volume rigurgitante'],
+    gradi: { lieve: { val: ['< 0,3 cm', '—', '—'], vc: 0.2, L: 1.6, gap: 0, dens: 0.35 },
+      moderata: { val: ['0,3–0,69 cm', '—', '—'], vc: 0.5, L: 3.2, gap: 0.08, dens: 0.65 },
+      severa: { val: ['≥ 0,7 cm', '≥ 0,40 cm²', '≥ 45 mL'], vc: 0.85, L: 5.2, gap: 0.16, dens: 1 } },
+    testo: 'Getto sistolico dal ventricolo all’atrio destro, in quattro camere, afflusso del ventricolo destro e asse corto alla base. La velocità del getto al Doppler continuo stima la pressione sistolica del ventricolo destro, non la gravità del rigurgito.' }
+];
+/* Velocità dei flussi attraverso una valvola in un istante del ciclo (fase 0 = R): componenti in m/s,
+   dir +1 nel verso del flusso anterogrado (normale della valvola), −1 rigurgito; dens = intensità del segnale. */
+function velocita(valv, les, f) {
+  const out = [], liscio = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  /* onda a campana fra a e b con il picco alla frazione pk della durata (forma beta normalizzata) */
+  const campana = (a, b, x, pk, k = 2.4) => { if (x <= a || x >= b) return 0; const s = (x - a) / (b - a), al = pk * k, be = (1 - pk) * k; return Math.pow(s, al) * Math.pow(1 - s, be) / (Math.pow(pk, al) * Math.pow(1 - pk, be)); };
+  const L = les && les.valv === valv ? les : null, g = L ? L.g : null;
+  if (valv === 'aortica') {
+    const vm = L && L.tipo === 'stenosi' ? g.vmax : 1.1, pk = L && L.tipo === 'stenosi' ? 0.3 + 0.2 * (1 - g.ap) : 0.3;
+    out.push({ v: vm * campana(0.07, 0.37, f, pk), dir: 1, dens: 1 });
+    if (L && L.tipo === 'insufficienza' && f > 0.40) { const s = (f - 0.40) / 0.58; if (s < 1) out.push({ v: (4.4 - (4.4 - g.fine) * s) * liscio(0.40, 0.43, f), dir: -1, dens: 0.4 + 0.6 * (g.vc / 0.8) }); }
+  } else if (valv === 'mitrale' || valv === 'tricuspide') {
+    const k = valv === 'mitrale' ? 1 : 0.62;
+    if (L && L.tipo === 'stenosi') { const s = (f - 0.44) / 0.54; if (s > 0 && s < 1) out.push({ v: g.vmax * liscio(0.44, 0.47, f) * Math.exp(-s / g.tau) * (1 + 0.25 * liscio(0.84, 0.9, f)), dir: 1, dens: 1 }); }
+    else out.push({ v: k * (0.8 * campana(0.44, 0.66, f, 0.3) + 0.5 * campana(0.84, 0.99, f, 0.4)), dir: 1, dens: 1 });
+    if (L && L.tipo === 'insufficienza') out.push({ v: (valv === 'mitrale' ? 5.0 : 2.6) * campana(0.05, 0.42, f, 0.4), dir: -1, dens: g.dens });
+  }
+  return out.filter(c => c.v > 0.02);
+}
+/* misure del Doppler continuo sul ciclo simulato: velocità di picco e gradiente medio (Bernoulli 4v²) del flusso indicato */
+function misureCW(valv, les, dir) {
+  let vmax = 0, s = 0, n = 0;
+  for (let i = 0; i < 1000; i++) { const c = velocita(valv, les, i / 1000).find(x => x.dir === dir); if (!c) continue; vmax = Math.max(vmax, c.v); s += 4 * c.v * c.v; n++; }
+  return { vmax, picco: 4 * vmax * vmax, medio: n ? s / n : 0 };
+}
+
+/* ---------- sonda libera ----------
+   La sonda è un oggetto: punto di contatto sulla cute (o), direzione del fascio (d) e repere (u, lato dello schermo).
+   Le proiezioni standard sono bersagli; l'immagine è sempre il taglio della posizione corrente. */
+/* rotazione attorno al fascio, ventaglio (il piano spazza le strutture) e basculamento (il fascio si piega nel piano) */
+function orienta3(P, rot, fan, rock) {
+  let d = P.d, u = norm(giro(P.u, d, rot));
+  d = norm(giro(d, u, -fan));                          // stesso verso di orienta()
+  const n = norm(cross(d, u)); d = norm(giro(d, n, rock)); u = norm(giro(u, n, rock));
+  return { o: P.o, d, u, n: norm(cross(d, u)), prof: P.prof };
+}
+/* normale interna della cute (cilindro ellittico del torace) in un punto */
+function normalePelle(Tr, p) { return norm([-(p[0] - Tr.x0) / (Tr.a * Tr.a), 0, -(p[2] - Tr.zc) / (Tr.b * Tr.b)]); }
+/* punto della cute colpito da un raggio (dalla telecamera): il primo ingresso, entro collo e addome */
+function suPelle(Tr, ro, rd) {
+  const t = ingresso(Tr, ro, rd); if (t === null || t < 0) return null;
+  const p = add(ro, mul(rd, t)); if (p[1] > Tr.giugulo + 2 * Tr.cm || p[1] < Tr.basso) return null; return p;
+}
+/* la sonda scivola sulla cute mantenendo lo stesso angolo rispetto alla superficie */
+function scivola(Tr, P, p) {
+  const n0 = normalePelle(Tr, P.o), n1 = normalePelle(Tr, p), ax = cross(n0, n1), s = len(ax), c = dot(n0, n1);
+  if (s < 1e-9) return Object.assign({}, P, { o: p });
+  const a = norm(ax), g = Math.atan2(s, c);
+  return Object.assign({}, P, { o: p, d: norm(giro(P.d, a, g)), u: norm(giro(P.u, a, g)) });
+}
+/* Guida verso la proiezione bersaglio: prima la posizione, poi la rotazione, poi l'inclinazione.
+   x del modello: verso la sinistra del paziente; y: verso la testa. */
+function guida(Pc, Pt, Tr) {
+  const cm = Tr.cm, dp = sub(Pt.o, Pc.o), dx = dp[0] / cm, dy = dp[1] / cm, dist = len(dp) / cm;
+  const tu = orto(Pt.u, Pc.d), rotG = Math.atan2(dot(cross(Pc.u, tu), Pc.d), dot(Pc.u, norm(tu))) * 180 / Math.PI;
+  const incG = Math.acos(Math.max(-1, Math.min(1, dot(Pc.d, Pt.d)))) * 180 / Math.PI;
+  const r = { dist, rot: rotG, incl: incG, ok: false, titolo: '', dettaglio: '' };
+  if (dist > 1.5) {
+    const v = []; if (Math.abs(dy) > 0.8) v.push(dy > 0 ? 'verso la testa' : 'verso i piedi'); if (Math.abs(dx) > 0.8) v.push(dx > 0 ? 'verso la sinistra del paziente' : 'verso la destra del paziente');
+    r.titolo = 'Fai scivolare la sonda ' + (v.join(' e ') || 'sulla finestra giusta'); r.dettaglio = 'Circa ' + dist.toFixed(0) + ' cm: trascina la sonda sulla pelle.'; return r;
+  }
+  if (Math.abs(rotG) > 12) { r.titolo = 'Ruota la sonda in senso ' + (rotG > 0 ? 'orario' : 'antiorario'); r.dettaglio = 'Circa ' + Math.round(Math.abs(rotG)) + '°, guardando la sonda dall’alto (anello blu o cursore «Ruota»).'; return r; }
+  if (incG > 8) {
+    const dd = sub(Pt.d, Pc.d), v = []; if (Math.abs(dd[1]) > 0.05) v.push(dd[1] > 0 ? 'verso la testa' : 'verso i piedi'); if (Math.abs(dd[0]) > 0.05) v.push(dd[0] > 0 ? 'verso la sinistra del paziente' : 'verso la destra del paziente');
+    r.titolo = 'Inclina il fascio ' + (v.join(' e ') || ''); r.dettaglio = 'Circa ' + Math.round(incG) + '°: trascina la coda della sonda (o i cursori «Ventaglio» e «Bascula»).'; return r;
+  }
+  r.ok = true; r.titolo = 'Proiezione allineata'; r.dettaglio = 'Ora ottimizza profondità e guadagno e osserva le strutture.'; return r;
+}
+
+const API = { VALVULOPATIE, velocita, misureCW, orienta3, normalePelle, suPelle, scivola, guida, REALE, INCLINAZIONE, FINESTRA, correggiSetto, assi, salda, taglia, unisci, tipoDi, reperi, deforma, contrazione, piano, orienta, valvole, apertura, torace, ingresso, frazione, classeFE, VISTE, QUADRI };
 if (typeof module !== 'undefined' && module.exports) { module.exports = API; return; }
 
 /* ====================================================================== interfaccia */
@@ -449,31 +596,48 @@ const MEZZO = Math.PI / 4;      // semiapertura del settore: 45°
 function avvia() {
   const vista = $('#v-eco'); if (!vista || !root.THREE || !root.THREE.GLTFLoader) return;
   const T = root.THREE;
+  const FINESTRE = [['Parasternale', ['plax', 'psax-ao', 'psax-mv', 'psax-pm', 'psax-ap']], ['Apicale', ['a4c', 'a2c', 'a3c']], ['Sottocostale', ['sub']]];
   vista.innerHTML =
-    '<div class="eco-left"><div class="eco-schermo" id="ecoSchermo"><canvas id="ecoTela"></canvas><canvas id="ecoMM" class="eco-mm"></canvas><div class="eco-stato" id="ecoStato">Carico il modello del cuore…</div></div>' +
-    '<p class="eco-nota">Simulazione geometrica a scopo didattico: non è un’ecografia reale. Sezione calcolata dal modello anatomico Z-Anatomy (CC BY-SA 4.0); tessitura e movimento sono sintetici, le valvole sono ricostruite (il modello non ha i lembi anteriori). Niente Doppler. Non certificata da un cardiologo.</p></div>' +
-    '<div class="eco-right"><div class="eco-3d"><canvas id="eco3d"></canvas><span>Trascina per ruotare · il ventaglio è il fascio</span><div class="eco-strati" id="ecoStrati"><button data-s="pelle" class="on">Pelle</button><button data-s="polmone">Polmoni</button><button data-s="fegato" class="on">Fegato</button></div></div>' +
-    '<div class="eco-viste" id="ecoViste">' + VISTE.map(v => '<button data-v="' + v.id + '">' + esc(v.breve) + '</button>').join('') + '</div>' +
-    '<div class="eco-quadri"><span>Quadro</span><div id="ecoQuadri">' + QUADRI.map(q => '<button data-q="' + q.id + '">' + esc(q.nome) + '</button>').join('') + '</div><div class="eco-quadro-testo" id="ecoQTesto"></div></div>' +
-    '<div class="eco-ctl">' +
-    '<label>Ruota la sonda <output id="ecoRotV">0°</output><input type="range" id="ecoRot" min="-90" max="90" value="0" step="1"></label>' +
-    '<label>Inclina <output id="ecoIncV">0°</output><input type="range" id="ecoInc" min="-30" max="30" value="0" step="1"></label>' +
-    '<label>Profondità <output id="ecoProfV">auto</output><input type="range" id="ecoProf" min="8" max="24" value="16" step="1"></label>' +
-    '<label>Guadagno <output id="ecoGuaV">0</output><input type="range" id="ecoGua" min="-10" max="10" value="0" step="1"></label>' +
-    '<label>Frequenza <output id="ecoFcV">70/min</output><input type="range" id="ecoFc" min="40" max="150" value="70" step="1"></label>' +
-    '<label>Contrattilità <output id="ecoCoV">normale</output><input type="range" id="ecoCo" min="10" max="120" value="100" step="5"></label>' +
-    '<div class="eco-riga"><button class="btn" id="ecoEt">Etichette</button><button class="btn" id="ecoPausa">Pausa</button><button class="btn" id="ecoZero">Azzera sonda</button><button class="btn" id="ecoCal">Calibro</button><button class="btn" id="ecoMMb">M-mode</button></div>' +
-    '<p class="eco-aiuto" id="ecoAiuto"></p></div>' +
-    '<div class="eco-testo" id="ecoTesto"></div></div>';
+    '<div class="eco-3dpane"><canvas id="eco3d"></canvas>' +
+      '<div class="eco-3dtop"><h3 id="eco3dTitolo"></h3><div class="eco-strati" id="ecoStrati"><button data-s="fantasma" class="on" title="Sonda fantasma sulla proiezione bersaglio">Fantasma</button><button data-s="pelle" class="on">Pelle</button><button data-s="polmone">Polmoni</button><button data-s="fegato" class="on">Fegato</button></div></div>' +
+      '<span class="eco-3dhint">Trascina la sonda: scivola · anello blu: ruota · coda nera: inclina · sfondo: gira la vista · pizzica: zoom</span></div>' +
+    '<div class="eco-main">' +
+      '<div class="eco-guida" id="ecoGuida"><b>Carico il modello…</b><span></span></div>' +
+      '<div class="eco-schermo" id="ecoSchermo"><canvas id="ecoTela"></canvas><canvas id="ecoMM" class="eco-mm"></canvas><div class="eco-cwtxt" id="ecoCWTesto"></div><div class="eco-stato" id="ecoStato">Carico il modello del cuore…</div></div>' +
+      '<div class="eco-pannello">' +
+        '<div class="eco-ctl">' +
+        '<label>Ruota <output id="ecoRotV">0°</output><input type="range" id="ecoRot" min="-180" max="180" value="0" step="1"></label>' +
+        '<label>Ventaglio <output id="ecoFanV">0°</output><input type="range" id="ecoFan" min="-45" max="45" value="0" step="1"></label>' +
+        '<label>Bascula <output id="ecoIncV">0°</output><input type="range" id="ecoInc" min="-45" max="45" value="0" step="1"></label>' +
+        '<label>Profondità <output id="ecoProfV">auto</output><input type="range" id="ecoProf" min="8" max="24" value="16" step="1"></label>' +
+        '</div>' +
+        '<div class="eco-viste" id="ecoViste">' + FINESTRE.map(([n, ids]) => '<div class="eco-fin"><span>' + esc(n) + '</span><div>' + ids.map(id => { const v = VISTE.find(x => x.id === id); return '<button data-v="' + id + '">' + esc(v.breve) + '</button>'; }).join('') + '</div></div>').join('') + '</div>' +
+        '<div class="eco-riga"><button class="btn" id="ecoZero" title="Porta la sonda sulla proiezione bersaglio">Posiziona</button><button class="btn" id="ecoAllena" title="La sonda parte fuori posizione: trova la proiezione seguendo la guida">Allenati</button><button class="btn" id="ecoPausa">Pausa</button><button class="btn" id="ecoEt">Etichette</button><button class="btn" id="ecoOssa" title="Ombre e riflessi di coste e sterno">Coste</button><button class="btn" id="ecoCal">Calibro</button><button class="btn" id="ecoMMb">M-mode</button><button class="btn" id="ecoColor" title="Color Doppler: rosso verso la sonda, blu in allontanamento, mosaico = turbolenza">Color</button><button class="btn" id="ecoCW" title="Doppler continuo lungo la linea tratteggiata">Doppler CW</button></div>' +
+        '<p class="eco-aiuto" id="ecoAiuto"></p>' +
+        '<div class="eco-ctl">' +
+        '<label>Guadagno <output id="ecoGuaV">0</output><input type="range" id="ecoGua" min="-10" max="10" value="0" step="1"></label>' +
+        '<label>Frequenza <output id="ecoFcV">70/min</output><input type="range" id="ecoFc" min="40" max="150" value="70" step="1"></label>' +
+        '<label>Contrattilità <output id="ecoCoV">normale</output><input type="range" id="ecoCo" min="10" max="120" value="100" step="5"></label>' +
+        '</div>' +
+        '<div class="eco-quadri"><span>Quadro</span><div id="ecoQuadri">' + QUADRI.map(q => '<button data-q="' + q.id + '">' + esc(q.nome) + '</button>').join('') + '</div><div class="eco-quadro-testo" id="ecoQTesto"></div></div>' +
+        '<div class="eco-quadri"><span>Valvulopatia</span><div id="ecoValv"><button data-l="" class="on">Nessuna</button>' + VALVULOPATIE.map(l => '<button data-l="' + l.id + '">' + esc(l.nome) + '</button>').join('') + '</div>' +
+          '<div id="ecoGradi" class="eco-gradi"><button data-g="lieve">Lieve</button><button data-g="moderata" class="on">Moderata</button><button data-g="severa">Severa</button></div><div class="eco-quadro-testo" id="ecoVTesto"></div></div>' +
+        '<div class="eco-testo" id="ecoTesto"></div>' +
+        '<p class="eco-nota">Simulazione geometrica a scopo didattico: non è un’ecografia reale. Sezione calcolata dal modello anatomico Z-Anatomy (CC BY-SA 4.0); tessitura e movimento sono sintetici, le valvole sono ricostruite (il modello non ha i lembi anteriori). Color Doppler e Doppler continuo sono modelli didattici: le velocità sono scelte dentro gli intervalli delle linee guida, non misurate. Non certificata da un cardiologo.</p>' +
+      '</div>' +
+    '</div>';
 
   const tela = $('#ecoTela'), cx = tela.getContext('2d'), stato = $('#ecoStato');
   const masc = document.createElement('canvas'), mx = masc.getContext('2d');
   let W = 0, H = 0, S = 1, ox = 0, oy = 0, grana = [], sfondo = null;
-  let M = null, G = null, V = [], P = null, sfoc = null, ossaM = [], posEt = [], profUtente = 0, guadagno = 0, calibro = false, misure = [], mmodo = false, mmAng = 0, sezione = [], idVista = 'a4c', rot = 0, incl = 0, fc = 70, contr = 1, etichette = true, pausa = false;
+  let M = null, G = null, V = [], P = null, sfoc = null, ossaM = [], posEt = [], profUtente = 0, guadagno = 0, coste = true, calibro = false, misure = [], mmodo = false, mmAng = 0, sezione = [], idVista = 'a4c', rot = 0, incl = 0, fan = 0, posa = null, bersP = null, mosso = false, fantasma = true, esercizio = false, sporcoP = false, sondaG = null, lesione = null, grado = 'moderata', colore = false, doppler = false, fc = 70, contr = 1, etichette = true, pausa = false;
   let fase = 0, ultimo = 0, attiva = false, raf = 0, quadro = 0, sporco3d = true, idQuadro = 'normale';
   const FONTI_ECO = {
     'ase-2015': { t: 'ASE/EACVI 2015 — Quantificazione delle camere cardiache', r: 'Lang RM et al. J Am Soc Echocardiogr 2015;28:1–39', u: 'https://doi.org/10.1016/j.echo.2014.10.003' },
-    'esc-peri-2015': { t: 'ESC 2015 — Malattie del pericardio', r: 'Adler Y et al. Eur Heart J 2015;36:2921–2964', u: 'https://doi.org/10.1093/eurheartj/ehv318' }
+    'esc-peri-2015': { t: 'ESC 2015 — Malattie del pericardio', r: 'Adler Y et al. Eur Heart J 2015;36:2921–2964', u: 'https://doi.org/10.1093/eurheartj/ehv318' },
+    'eacvi-ase-2017': { t: 'EACVI/ASE 2017 — Valutazione ecocardiografica della stenosi aortica', r: 'Baumgartner H et al. J Am Soc Echocardiogr 2017;30:372–392', u: 'https://www.asecho.org/guideline/update-of-aortic-valve-stenosis/' },
+    'ase-2017-rig': { t: 'ASE 2017 — Valutazione non invasiva dei rigurgiti valvolari nativi', r: 'Zoghbi WA et al. J Am Soc Echocardiogr 2017;30:303–371', u: 'https://www.asecho.org/wp-content/uploads/2017/04/2017VavularRegurgitationGuideline.pdf' },
+    'eae-ase-2009': { t: 'EAE/ASE 2009 — Valutazione ecocardiografica delle stenosi valvolari', r: 'Baumgartner H et al. J Am Soc Echocardiogr 2009;22:1–23', u: 'https://doi.org/10.1016/j.echo.2008.11.029' }
   };
   let r3 = null, scena = null, cam = null, ventaglio = null, sonda3 = null, az = 0.6, el = 0.25, raggio = 6, bersaglio = null;
 
@@ -506,7 +670,8 @@ function avvia() {
   /* ----- sezione ----- */
   function aggiorna() {
     if (!G) return;
-    P = orienta(piano(G, idVista), rot * Math.PI / 180, incl * Math.PI / 180); if (profUtente) P.prof = profUtente * G.Tr.cm; scala();
+    const D = Math.PI / 180; if (!posa) posa = piano(G, idVista); if (!bersP) bersP = piano(G, idVista);
+    P = orienta3(posa, rot * D, fan * D, incl * D); if (profUtente) P.prof = profUtente * G.Tr.cm; scala(); guidaUI();
     sezione = [];
     for (const m of M) { const c = taglia(m, P.o, P.n); if (c.length) sezione.push({ tipo: m.tipo, nome: m.nome, catene: c }); }
     /* etichette: baricentro della sezione realmente visibile di ogni camera (cade nella cavità) */
@@ -521,6 +686,12 @@ function avvia() {
     if (va && Math.abs(dot(P.n, va.n)) > 0.55) {
       const t = dot(sub(P.o, va.c), P.n) / dot(P.n, va.n);
       if (Math.abs(t) < 0.8 * va.r) { const c3 = add(va.c, mul(va.n, t)), w = sub(c3, P.o); posEt = posEt.filter(e => e[0] !== 'Ao' && e[0] !== 'VS' || Math.hypot(e[1] - dot(w, P.u), e[2] - dot(w, P.d)) > 2 * va.r); posEt.push(['Ao', dot(w, P.u), dot(w, P.d), 1e6]); }
+    }
+    /* asse corto alla mitrale o alla tricuspide: il pezzo d'atrio tagliato dietro l'anello non è una camera visibile */
+    for (const [vn, et] of [['mitrale', 'AS'], ['tricuspide', 'AD']]) {
+      const vv = V.find(v => v.nome === vn); if (!vv || Math.abs(dot(P.n, vv.n)) < 0.55) continue;
+      const t = dot(sub(P.o, vv.c), P.n) / dot(P.n, vv.n), w = sub(add(vv.c, mul(vv.n, t)), P.o);
+      posEt = posEt.filter(e => e[0] !== et || Math.hypot(e[1] - dot(w, P.u), e[2] - dot(w, P.d)) > 1.6 * vv.r);
     }
     /* etichette troppo vicine: resta quella della sezione più estesa */
     posEt.sort((a, b) => b[3] - a[3]);
@@ -611,7 +782,7 @@ function avvia() {
     [['rgba(170,170,170,.35)', 0.7], ['rgba(205,205,205,.75)', 0.9], ['rgba(245,245,245,1)', 1.4]].forEach(([col, lw], i) => { mx.strokeStyle = col; mx.lineWidth = lw; mx.stroke(lumi[i]); });
     mx.lineCap = 'butt';
     disegnaValvole(c, 0.5);
-    disegnaOmbre(mx, 0.5);      // coste: superficie brillante e ombra acustica, sotto la grana
+    if (coste) disegnaOmbre(mx, 0.5);      // coste: superficie brillante e ombra acustica, sotto la grana (disattivabile per studiare l'anatomia)
     cx.setTransform(1, 0, 0, 1, 0, 0); cx.globalCompositeOperation = 'source-over'; cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H);
     cx.save(); settore(cx, 1); cx.clip();
     cx.imageSmoothingEnabled = true; cx.drawImage(masc, 0, 0, W, H);
@@ -628,9 +799,11 @@ function avvia() {
     cx.globalCompositeOperation = 'lighter'; cx.globalAlpha = 0.55; cx.drawImage(sfondo, ((quadro * 7) % 9) - 4, ((quadro * 5) % 7) - 3, W + 8, H + 6); cx.globalAlpha = 1;
     const vic = cx.createRadialGradient(ox, oy, 0, ox, oy, 26); vic.addColorStop(0, 'rgba(230,230,230,.9)'); vic.addColorStop(1, 'rgba(230,230,230,0)'); cx.fillStyle = vic; cx.fillRect(ox - 30, oy - 4, 60, 34);
     if (guadagno < 0) { cx.fillStyle = 'rgba(0,0,0,' + (-guadagno / 13) + ')'; cx.fillRect(0, 0, W, H); }
+    cx.globalCompositeOperation = 'source-over'; if (colore) disegnaColore();
     cx.restore(); cx.globalCompositeOperation = 'source-over';
     if (mmodo && !pausa) campionaMM(dtUltimo);      // prima delle sovrimpressioni: si campiona solo l'immagine
-    disegnaMisure(); if (mmodo) lineaM();
+    if (doppler && !pausa) campionaCW(dtUltimo);
+    disegnaMisure(); if (mmodo || doppler) lineaM();
     /* scala di profondità: una tacca ogni decimo della profondità */
     const px = Math.max(11, Math.round(W / 58)), cmS = G.Tr.cm * S, profCm = P.prof / G.Tr.cm;
     cx.strokeStyle = 'rgba(255,255,255,.45)'; cx.lineWidth = 1; cx.beginPath();
@@ -641,11 +814,12 @@ function avvia() {
     { const fe = frazione(contr, G.q.acin); cx.textAlign = 'left'; cx.fillStyle = 'rgba(255,217,94,.9)'; cx.fillText('FE simulata ≈ ' + Math.round(fe * 100) + '% · ' + classeFE(fe), 10, 8 + px * 1.4);
       if (G.q.vers) { cx.fillStyle = 'rgba(255,255,255,.75)'; cx.fillText('Versamento ' + G.q.vers + ' mm', 10, 8 + px * 2.7); } }
     cx.font = '600 ' + px + 'px system-ui,-apple-system,sans-serif'; cx.textBaseline = 'top'; cx.fillStyle = 'rgba(255,255,255,.85)';
-    const v = VISTE.find(x => x.id === idVista); cx.textAlign = 'left'; cx.fillText(v.nome, 10, 8);
+    const v = VISTE.find(x => x.id === idVista), gg = bersP ? guida(P, bersP, G.Tr) : { ok: true }; cx.textAlign = 'left'; cx.fillText(gg.ok ? v.nome : 'Sonda libera · bersaglio ' + v.breve, 10, 8);
     cx.textAlign = 'right'; cx.textBaseline = 'top'; cx.fillText(Math.round(fc) + '/min', W - 10, 8);
     /* repere dello schermo */
     cx.beginPath(); cx.arc(ox + Math.sin(MEZZO) * 26 + 10, oy + 4, 4, 0, 7); cx.fillStyle = '#6fd3ff'; cx.fill();
     if (etichette) scritte(c, px);
+    if (colore) barraColore(px);
     ecg(px);
   }
   /* Parete = chiusura morfologica delle superfici tagliate: si dilatano di metà spessore (tratto spesso)
@@ -677,24 +851,38 @@ function avvia() {
   function pareti(c) {
     const k = 1 / 3, w = Math.ceil(W * k), h = Math.ceil(H * k);
     if (pm.width !== w || pm.height !== h) { pm.width = w; pm.height = h; buf = null; }
-    const R = Math.max(1, Math.round(0.052 * G.L * S * k));
+    /* la chiusura deve coprire lo spessore di parete anche in sistole, quando la parete si ispessisce:
+       altrimenti al centro del miocardio resta un falso «buco» */
+    const R = Math.max(1, Math.round(0.052 * G.L * S * k * (1 + 0.7 * Math.max(0, c))));
     px2.setTransform(1, 0, 0, 1, 0, 0); px2.globalCompositeOperation = 'source-over'; px2.fillStyle = '#000'; px2.fillRect(0, 0, w, h);
     px2.strokeStyle = '#fff'; px2.fillStyle = '#fff'; px2.lineWidth = 2 * R + 1; px2.lineJoin = 'round'; px2.lineCap = 'round';
     for (const s of sezione) {
-      if (s.tipo === 'valv' || s.tipo === 'cor') continue;
+      if (s.tipo === 'valv' || s.tipo === 'cor' || s.tipo === 'pap') continue;
       px2.beginPath(); for (const cat of s.catene) traccia(px2, cat, c, k); px2.stroke();
     }
-    const im = px2.getImageData(0, 0, w, h), D = im.data, n = w * h;
+    let im = px2.getImageData(0, 0, w, h), D = im.data; const n = w * h;
     if (!buf || buf.length !== n) { buf = new Uint8Array(n); sil = new Uint8Array(n); per = new Uint8Array(n); }
     for (let i = 0; i < n; i++) buf[i] = D[i * 4] > 127 ? 1 : 0;
     erosione(buf, w, h, R);
+    /* muscoli papillari a parte: riempiti dove la sezione è chiusa, senza la chiusura che li salderebbe alla parete */
+    px2.fillStyle = '#000'; px2.fillRect(0, 0, w, h); px2.fillStyle = '#fff'; px2.strokeStyle = '#fff'; px2.lineWidth = 1.5;
+    for (const s of sezione) if (s.tipo === 'pap') for (const cat of s.catene) { px2.beginPath(); traccia(px2, cat, c, k); if (cat.chiusa) px2.fill(); else px2.stroke(); }
+    im = px2.getImageData(0, 0, w, h); D = im.data;
+    for (let i = 0; i < n; i++) if (D[i * 4] > 127) buf[i] = 1;
     const cmK = G.Tr.cm * S * k, Q = G.q;
     if (Q.ipert > 0) dilatazione(buf, w, h, Math.round(Q.ipert * cmK * 0.5));
     /* sagoma del cuore (chiusura ampia: riempie le cavità), poi pericardio a distanza «versamento» */
     sil.set(buf); const Rb = Math.round(0.3 * G.L * S * k); dilatazione(sil, w, h, Rb); erosione(sil, w, h, Rb);
     const e = Math.round((Q.vers || 0) / 10 * cmK), t = Math.max(1, Math.round(0.22 * cmK));
     per.set(sil); dilatazione(per, w, h, e + t); if (e > 0) dilatazione(sil, w, h, e);
-    for (let i = 0; i < n; i++) { const v = buf[i] ? 132 : per[i] && !sil[i] ? 205 : 0; D[i * 4] = D[i * 4 + 1] = D[i * 4 + 2] = v; D[i * 4 + 3] = 255; }
+    /* livelli d'eco: bordo del miocardio più brillante (interfaccia sangue-tessuto), miocardio, pericardio,
+       tessuti attorno al cuore a bassa intensità; sangue e versamento neri */
+    for (let i = 0; i < n; i++) {
+      let v;
+      if (buf[i]) v = (buf[i - 1] === 0 || buf[i + 1] === 0 || buf[i - w] === 0 || buf[i + w] === 0) ? 170 : 128;
+      else v = per[i] && !sil[i] ? 205 : sil[i] ? 0 : 40;
+      D[i * 4] = D[i * 4 + 1] = D[i * 4 + 2] = v; D[i * 4 + 3] = 255;
+    }
     px2.putImageData(im, 0, 0);
   }
   /* coordinate di schermo (scala k) di un punto 3D, dopo la deformazione del ciclo */
@@ -704,7 +892,10 @@ function avvia() {
   function disegnaValvole(c, k) {
     mx.strokeStyle = 'rgb(242,242,242)'; mx.lineCap = 'round';
     for (const v of V) {
-      const o = apertura(v.tipo, fase), n = v.n, cn = dot(P.n, n);
+      /* valvulopatia: la stenosi apre meno e ispessisce i lembi; nel rigurgito i lembi non combaciano del tutto */
+      const les = lesione && lesione.valv === v.nome ? lesione : null; let o = apertura(v.tipo, fase);
+      if (les && les.tipo === 'stenosi') o *= les.g.ap; if (les && les.tipo === 'insufficienza') o = Math.max(o, les.g.gap || 0);
+      const spess = les && les.tipo === 'stenosi' ? 1 + 0.6 * les.g.sp : 1, n = v.n, cn = dot(P.n, n);
       /* 1. il piano taglia l'anello: due cerniere da cui partono i lembi (assi lunghi) */
       const e1 = norm(orto(Math.abs(n[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0], n)), e2 = cross(n, e1);
       const A = v.r * dot(e1, P.n), B = v.r * dot(e2, P.n), rhs = -dot(sub(v.c, P.o), P.n), R = Math.hypot(A, B);
@@ -718,7 +909,7 @@ function avvia() {
           const fuori = norm(sub(h, v.c)), aperto = add(h, add(mul(n, lung * 0.97), mul(fuori, v.tipo === 'sl' ? -0.12 * v.r : 0.1 * lung)));
           const chiuso = add(coapt, mul(fuori, 0.03 * v.r)), punta = add(mul(chiuso, 1 - o), mul(aperto, o)), ctrl = add(mul(add(h, punta), 0.5), mul(n, (1 - o) * 0.18 * v.r));
           const a = schermo(h, c, k), q = schermo(ctrl, c, k), b = schermo(punta, c, k);
-          mx.lineWidth = v.nome === 'mitrale' ? 1.5 : 1.2; mx.beginPath(); curva(mx, a, q, b); mx.stroke();
+          mx.lineWidth = (v.nome === 'mitrale' ? 1.5 : 1.2) * spess; mx.beginPath(); curva(mx, a, q, b); mx.stroke();
         });
         continue;
       }
@@ -734,7 +925,7 @@ function avvia() {
         const ang = v.cus.map(q => { const w = sub(q, cc); return Math.atan2(dot(w, f2), dot(w, f1)); }).sort((a, b) => a - b);
         const com = ang.map((a, i) => { const b = i + 1 < ang.length ? ang[i + 1] : ang[0] + 2 * Math.PI; return (a + b) / 2; });
         const centro3 = schermo(cc, c, k);
-        mx.lineWidth = 1.3;
+        mx.lineWidth = 1.3 * spess;
         for (let i = 0; i < com.length; i++) {
           const a = com[i], b = com[(i + 1) % com.length] + (i + 1 === com.length ? 2 * Math.PI : 0), m = (a + b) / 2;
           const pa = schermo(sul(a, 0, v.r), c, k), pb = schermo(sul(b, 0, v.r), c, k), mid = [(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2];
@@ -744,7 +935,7 @@ function avvia() {
       } else {
         const asse = v.avanti ? norm(orto(sub(v.avanti, cc), P.n)) : f1, trasv = norm(cross(P.n, asse)), prof = 1 - Math.max(0, dist) / (1.1 * v.r);
         const ry = v.r * (0.04 + 0.62 * o * prof), rx = v.r * 0.88;
-        mx.lineWidth = 1.5;
+        mx.lineWidth = 1.5 * spess;
         [1, -1].forEach(sg => { mx.beginPath(); for (let i = 0; i <= 24; i++) { const t = Math.PI * i / 24, p = schermo(add(cc, add(mul(trasv, rx * Math.cos(t)), mul(asse, sg * ry * Math.sin(t)))), c, k); if (i) mx.lineTo(p[0], p[1]); else mx.moveTo(p[0], p[1]); } mx.stroke(); });
       }
     }
@@ -773,28 +964,55 @@ function avvia() {
   /* ----- localizzatore 3D ----- */
   function crea3d(gltf) {
     const c = $('#eco3d'); r3 = new T.WebGLRenderer({ canvas: c, antialias: true, alpha: true }); r3.setPixelRatio(Math.min(root.devicePixelRatio || 1, 1.5));
-    scena = new T.Scene(); cam = new T.PerspectiveCamera(32, 1, 0.1, 100);
-    scena.add(new T.AmbientLight(0xffffff, 0.75)); const l = new T.DirectionalLight(0xffffff, 0.9); l.position.set(2, 4, 5); scena.add(l);
-    gltf.scene.traverse(o => { if (o.isMesh) { o.material = new T.MeshLambertMaterial({ color: /ventricle/i.test(o.name) ? 0xb5524f : /atrium/i.test(o.name) ? 0xc9837a : /aorta/i.test(o.name) ? 0xd9443f : /pulmonary|vena|vein/i.test(o.name) ? 0x5f7fb8 : 0xcfa58f, transparent: true, opacity: 0.86 }); } });
+    scena = new T.Scene(); cam = new T.PerspectiveCamera(30, 1, 0.1, 100);
+    scena.add(new T.AmbientLight(0xffffff, 0.7)); const l = new T.DirectionalLight(0xffffff, 0.95); l.position.set(2, 4, 5); scena.add(l);
+    const l2 = new T.DirectionalLight(0xbfd4ff, 0.35); l2.position.set(-3, 1, -2); scena.add(l2);
+    gltf.scene.traverse(o => { if (o.isMesh) { o.material = new T.MeshLambertMaterial({ color: /ventricle/i.test(o.name) ? 0xc0605a : /atrium/i.test(o.name) ? 0xd38f84 : /aorta/i.test(o.name) ? 0xd9443f : /pulmonary|vena|vein/i.test(o.name) ? 0x6f8fc8 : 0xd8b09a, transparent: true, opacity: 0.9 }); } });
     scena.add(gltf.scene); scena.add(corpo());
-    ventaglio = new T.Mesh(new T.BufferGeometry(), new T.MeshBasicMaterial({ color: 0x6fd3ff, transparent: true, opacity: 0.42, side: T.DoubleSide, depthWrite: false }));
+    ventaglio = new T.Mesh(new T.BufferGeometry(), new T.MeshBasicMaterial({ color: 0x6fd3ff, transparent: true, opacity: 0.38, side: T.DoubleSide, depthWrite: false }));
     scena.add(ventaglio);
-    sonda3 = sonda(G.Tr.cm); scena.add(sonda3);
-    bersaglio = new T.Vector3().fromArray(add(G.Tr.hc, [-1 * G.Tr.cm, -1 * G.Tr.cm, 0])); raggio = 72 * G.Tr.cm;
+    sonda3 = sonda(G.Tr.cm, false); scena.add(sonda3); sondaG = sonda(G.Tr.cm, true); sondaG.traverse(o => { o.renderOrder = 20; }); scena.add(sondaG);
+    bersaglio = new T.Vector3().fromArray(add(G.Tr.hc, [-1 * G.Tr.cm, 0, 0])); raggio = 84 * G.Tr.cm;
     inquadra();
-    let giu = null;
-    c.addEventListener('pointerdown', e => { giu = [e.clientX, e.clientY]; c.setPointerCapture(e.pointerId); });
-    c.addEventListener('pointermove', e => { if (!giu) return; az -= (e.clientX - giu[0]) * 0.01; el = Math.max(-1.3, Math.min(1.3, el + (e.clientY - giu[1]) * 0.01)); giu = [e.clientX, e.clientY]; sporco3d = true; });
-    const su = () => { giu = null; }; c.addEventListener('pointerup', su); c.addEventListener('pointercancel', su);
+    /* maniglie: la presa scivola sulla cute, l'anello ruota, la coda inclina; fuori dalla sonda si gira la vista */
+    const rc = new T.Raycaster(), ndc = new T.Vector2(), punti = new Map(); let modo = null, ult = null, dist0 = 0, r0 = 0;
+    const raggioDa = e => { const b = c.getBoundingClientRect(); ndc.set((e.clientX - b.left) / b.width * 2 - 1, -((e.clientY - b.top) / b.height) * 2 + 1); rc.setFromCamera(ndc, cam); return rc.ray; };
+    const colpisci = e => {
+      raggioDa(e); const h = rc.intersectObject(sonda3, true)[0];
+      if (h) { let o = h.object; while (o && !o.name) o = o.parent; return o && o.name ? o.name : 'presa'; }
+      const b = c.getBoundingClientRect(), q = new T.Vector3().fromArray(P.o).project(cam), sx = (q.x + 1) / 2 * b.width + b.left, sy = (1 - q.y) / 2 * b.height + b.top;
+      return Math.hypot(e.clientX - sx, e.clientY - sy) < 46 ? 'presa' : 'orbita';      // tocco vicino alla sonda: la si afferra
+    };
+    c.addEventListener('pointerdown', e => {
+      c.setPointerCapture(e.pointerId); punti.set(e.pointerId, [e.clientX, e.clientY]);
+      if (punti.size === 2) { const [a, b] = [...punti.values()]; dist0 = Math.hypot(a[0] - b[0], a[1] - b[1]); r0 = raggio; modo = 'zoom'; return; }
+      modo = G && P ? colpisci(e) : 'orbita'; ult = [e.clientX, e.clientY]; c.classList.toggle('presa', modo !== 'orbita');
+    });
+    c.addEventListener('pointermove', e => {
+      if (!punti.has(e.pointerId)) return; punti.set(e.pointerId, [e.clientX, e.clientY]);
+      if (modo === 'zoom' && punti.size === 2) { const [a, b] = [...punti.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); raggio = Math.max(25 * G.Tr.cm, Math.min(110 * G.Tr.cm, r0 * dist0 / Math.max(10, d))); sporco3d = true; return; }
+      if (!ult) return; const dx = e.clientX - ult[0], dy = e.clientY - ult[1]; ult = [e.clientX, e.clientY];
+      if (modo === 'orbita') { az -= dx * 0.01; el = Math.max(-1.3, Math.min(1.3, el + dy * 0.01)); sporco3d = true; }
+      else if (modo === 'presa') { const ry = raggioDa(e), p = suPelle(G.Tr, ry.origin.toArray(), ry.direction.toArray()); if (p) { posa = scivola(G.Tr, posa, p); mosso = true; sporcoP = true; } }
+      else if (modo === 'anello') { angoli(rot + dx * 0.6, fan, incl); mosso = true; sporcoP = true; }
+      else if (modo === 'coda') { angoli(rot, fan - dy * 0.3, incl + dx * 0.3); mosso = true; sporcoP = true; }
+    });
+    const su = e => { punti.delete(e.pointerId); if (!punti.size) { modo = null; ult = null; c.classList.remove('presa'); } };
+    c.addEventListener('pointerup', su); c.addEventListener('pointercancel', su);
+    c.addEventListener('wheel', e => { e.preventDefault(); raggio = Math.max(25 * G.Tr.cm, Math.min(110 * G.Tr.cm, raggio * (1 + e.deltaY * 0.001))); sporco3d = true; }, { passive: false });
     posaVentaglio();
+  }
+  function posa3(obj, Q) {
+    obj.position.fromArray(Q.o);
+    const y = mul(Q.d, -1), z = cross(Q.u, y), m = new T.Matrix4().makeBasis(new T.Vector3().fromArray(Q.u), new T.Vector3().fromArray(y), new T.Vector3().fromArray(z)); obj.quaternion.setFromRotationMatrix(m);
   }
   function posaVentaglio() {
     const v = [P.o[0], P.o[1], P.o[2]], n = 24, R = P.prof * 0.92;
     for (let i = 0; i <= n; i++) { const a = -MEZZO + 2 * MEZZO * i / n, p = add(P.o, add(mul(P.d, Math.cos(a) * R), mul(P.u, Math.sin(a) * R))); v.push(p[0], p[1], p[2]); }
     const idx = []; for (let i = 1; i <= n; i++) idx.push(0, i, i + 1);
     const g = ventaglio.geometry; g.setAttribute('position', new T.Float32BufferAttribute(v, 3)); g.setIndex(idx); g.computeBoundingSphere();
-    sonda3.position.fromArray(P.o);
-    const y = mul(P.d, -1), z = cross(P.u, y), m = new T.Matrix4().makeBasis(new T.Vector3().fromArray(P.u), new T.Vector3().fromArray(y), new T.Vector3().fromArray(z)); sonda3.quaternion.setFromRotationMatrix(m);
+    posa3(sonda3, P); if (sondaG && bersP) posa3(sondaG, bersP);
+    if (bersaglio) bersaglio.fromArray(add(mul(G.Tr.hc, 0.62), mul(P.o, 0.38)));     // la vista segue la sonda senza perdere il cuore
   }
   /* Torace anatomico di Z-Anatomy (CC BY-SA 4.0), estratto dalla stessa scena del cuore con la stessa
      trasformazione: coste, cartilagini, sterno, vertebre, clavicole e scapole sono nella posizione reale. */
@@ -802,7 +1020,7 @@ function avvia() {
     osso: { color: 0xeadfc8, opacity: 0.92, ordine: 1 }, vertebra: { color: 0xe2d6bd, opacity: 0.92, ordine: 1 },
     cartilagine: { color: 0xc9dde4, opacity: 0.75, ordine: 1 }, fegato: { color: 0x9b4b40, opacity: 0.55, ordine: 2 },
     diaframma: { color: 0xb0645a, opacity: 0.18, ordine: 3 }, polmone: { color: 0xf2b3b8, opacity: 0.14, ordine: 4 },
-    pelle: { color: 0xc49a80, opacity: 0.16, ordine: 6 }
+    pelle: { color: 0xb88a70, opacity: 0.26, ordine: 6 }
   };
   const gruppi = {}, visibili = { pelle: true, polmone: false, fegato: true, diaframma: false };
   function corpo() {
@@ -819,20 +1037,31 @@ function avvia() {
           ossaM.push(salda(pos, o.geometry.index.array));
         }
       });
-      g.add(gltf.scene); sporco3d = true; calcolaOmbre();
+      g.add(gltf.scene); sporco3d = true; if (G) { G._fin = {}; bersP = null; if (!mosso) posa = null; aggiorna(); } else calcolaOmbre();   // con lo scheletro la sonda cerca lo spazio intercostale
     }, undefined, () => {});
     return g;
   }
   function strato(k, on) { visibili[k] = on; (gruppi[k] || []).forEach(o => { o.visible = on; }); if (k === 'polmone') (gruppi.diaframma || []).forEach(o => { o.visible = on; }); sporco3d = true; }
-  function sonda(cm) {
-    const g = new T.Group(), bianco = new T.MeshLambertMaterial({ color: 0xeef1f5 }), nero = new T.MeshLambertMaterial({ color: 0x1d2128 });
-    const corpo = new T.Mesh(new T.CylinderGeometry(1.1 * cm, 1.4 * cm, 7 * cm, 24), bianco); corpo.scale.set(1.25, 1, 0.75); corpo.position.y = 3.5 * cm; g.add(corpo);
-    const testa = new T.Mesh(new T.BoxGeometry(2.4 * cm, 0.6 * cm, 1.3 * cm), nero); testa.position.y = 0.3 * cm; g.add(testa);
-    const cavo = new T.Mesh(new T.CylinderGeometry(0.35 * cm, 0.35 * cm, 6 * cm, 12), nero); cavo.position.y = 10 * cm; g.add(cavo);
-    const repere = new T.Mesh(new T.SphereGeometry(0.35 * cm, 12, 8), new T.MeshBasicMaterial({ color: 0x3aa8ff })); repere.position.set(1.45 * cm, 1.6 * cm, 0); g.add(repere);
+  /* sonda settoriale: impugnatura affusolata a sezione ellittica, lente nera, repere blu sul lato del marcatore,
+     coda nera (maniglia per inclinare) e anello tratteggiato (maniglia per ruotare) */
+  function sonda(cm, ghost) {
+    const g = new T.Group(), mat = col => ghost ? new T.MeshBasicMaterial({ color: 0x5fdcff, transparent: true, opacity: 0.55, depthWrite: false, depthTest: false }) : new T.MeshPhongMaterial({ color: col, shininess: 60, specular: 0x444444 });
+    const prof = [[0, 0], [1.08, 0], [1.28, 0.3], [1.34, 1.1], [1.2, 2.5], [0.9, 4.3], [0.74, 6.1], [0.76, 7.3], [0.58, 8.1], [0, 8.3]].map(([r, y]) => new T.Vector2(r * cm, y * cm));
+    const presa = new T.Group(); presa.name = 'presa'; g.add(presa);
+    const corpo = new T.Mesh(new T.LatheGeometry(prof, 48), mat(0xf2f4f7)); corpo.scale.set(1.35, 1, 0.62); presa.add(corpo);
+    const lente = new T.Mesh(new T.BoxGeometry(2.75 * cm, 0.28 * cm, 1.1 * cm), mat(0x1b1f26)); lente.position.y = 0.12 * cm; presa.add(lente);
+    const rep = new T.Mesh(new T.BoxGeometry(0.22 * cm, 1.3 * cm, 0.55 * cm), ghost ? mat(0) : new T.MeshBasicMaterial({ color: 0x3aa8ff })); rep.position.set(1.78 * cm, 1.0 * cm, 0); presa.add(rep);
+    const coda = new T.Group(); coda.name = 'coda'; g.add(coda);
+    const ct = new T.Mesh(new T.CylinderGeometry(0.42 * cm, 0.55 * cm, 3 * cm, 20), mat(0x1b1f26)); ct.position.y = 9.7 * cm; coda.add(ct);
+    const cv = new T.Mesh(new T.CylinderGeometry(0.28 * cm, 0.28 * cm, 6 * cm, 12), mat(0x23272e)); cv.position.y = 14 * cm; coda.add(cv);
+    if (!ghost) {
+      const an = new T.Group(); an.name = 'anello'; an.position.y = 4.4 * cm; g.add(an);
+      const mt = new T.MeshBasicMaterial({ color: 0x3a7bff });
+      for (let i = 0; i < 28; i += 2) { const a = i / 28 * 2 * Math.PI, d = new T.Mesh(new T.BoxGeometry(0.95 * cm, 0.34 * cm, 0.34 * cm), mt); d.position.set(Math.cos(a) * 3.1 * cm, 0, Math.sin(a) * 3.1 * cm); d.rotation.y = -a + Math.PI / 2; an.add(d); }
+    }
     return g;
   }
-  function inquadra() { const v = idVista; az = v[0] === 'a' ? 0.75 : v === 'sub' ? 0.15 : -0.1; el = v === 'sub' ? -0.12 : 0.12; sporco3d = true; }
+  function inquadra() { const v = idVista; az = v[0] === 'a' ? 0.85 : v === 'sub' ? 0.1 : 0.25; el = v === 'sub' ? -0.05 : 0.22; sporco3d = true; }
   function rendi3d() {
     if (!r3) return; const c = r3.domElement, b = c.parentElement.getBoundingClientRect(), w = Math.max(120, Math.round(b.width)), h = Math.max(120, Math.round(b.height));
     if (c.width !== Math.round(w * r3.getPixelRatio()) || c.height !== Math.round(h * r3.getPixelRatio())) { r3.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
@@ -845,7 +1074,7 @@ function avvia() {
     raf = 0; if (!attiva) return;
     const dt = Math.min(0.1, (ora - ultimo) / 1000 || 0); ultimo = ora;
     if (!pausa) { fase = (fase + dt * fc / 60) % 1; quadro++; }
-    dtUltimo = dt; misura(); if (G) { disegna(); if (sporco3d) rendi3d(); }
+    dtUltimo = dt; misura(); if (G) { if (sporcoP) { sporcoP = false; aggiorna(); } disegna(); if (sporco3d) rendi3d(); }
     raf = requestAnimationFrame(ciclo);
   }
   function mostra(on) {
@@ -855,7 +1084,7 @@ function avvia() {
   function scegliQuadro(id) {
     const q = QUADRI.find(x => x.id === id) || QUADRI[0]; idQuadro = q.id;
     contr = q.p.contr; fc = q.p.fc;
-    if (G) { G.q = { dil: q.p.dil, ipert: q.p.ipert, vers: q.p.vers, acin: q.p.acin }; }
+    if (G) { G.q = { dil: q.p.dil, ipert: q.p.ipert, vers: q.p.vers, acin: q.p.acin }; if (lesione) { G.q.dil += lesione.g.dil || 0; G.q.ipert += lesione.g.ipert || 0; } }
     $('#ecoFc').value = fc; $('#ecoFcV').textContent = fc + '/min'; $('#ecoCo').value = Math.round(contr * 100); etichettaContr();
     document.querySelectorAll('#ecoQuadri button').forEach(b => b.classList.toggle('on', b.dataset.q === q.id));
     const f = q.fonte && FONTI_ECO[q.fonte];
@@ -885,7 +1114,7 @@ function avvia() {
       if (u && !u[1]) u[1] = c; else { if (misure.length >= 2) misure = []; misure.push([c, null]); }
       aiuto(); return;
     }
-    if (mmodo) { const c = aCm(ev); if (c[1] > 0) { mmAng = Math.max(-MEZZO, Math.min(MEZZO, Math.atan2(c[0], c[1]))); azzeraMM(); } }
+    if (mmodo || doppler) { const c = aCm(ev); if (c[1] > 0) { mmAng = Math.max(-MEZZO, Math.min(MEZZO, Math.atan2(c[0], c[1]))); azzeraMM(); cwT = 0; } }
   });
   /* ---- M-mode: la linea scelta campionata a ogni fotogramma e fatta scorrere nel tempo ---- */
   const mm = $('#ecoMM'), mmx = mm.getContext('2d'), col = document.createElement('canvas'), colx = col.getContext('2d');
@@ -907,17 +1136,125 @@ function avvia() {
     if ((mmT += dt) > 0.5) { mmT = 0; mmx.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 1; i * G.Tr.cm * S * k < h; i++) if (i % 5 === 0) mmx.fillRect(w - 3, i * G.Tr.cm * S * k, 3, 1); }
   }
   let mmAcc = 0, mmT = 0, dtUltimo = 0;
+  /* ---- color Doppler: flussi normali e getti patologici come forme nel piano; rosso verso la sonda, blu in
+     allontanamento, mosaico dove la velocità supera il limite di Nyquist (turbolenza, aliasing) ---- */
+  const NYQ = 0.65;
+  let mosaico = null;
+  function motivoMosaico() {
+    const c = document.createElement('canvas'); c.width = c.height = 48; const g = c.getContext('2d'), pal = ['#ffe14d', '#3cf2ff', '#28d05a', '#ff3b2f', '#2f6bff', '#ffffff', '#ff9b2f'];
+    for (let y = 0; y < 48; y += 2) for (let x = 0; x < 48; x += 3) { g.fillStyle = pal[Math.floor(casuale(x, y, 7) * pal.length)]; g.fillRect(x, y, 3, 2); }
+    return cx.createPattern(c, 'repeat');
+  }
+  function sc3(p) { const w = sub(p, P.o); return [dot(w, P.u) * S + ox, dot(w, P.d) * S + oy]; }
+  /* direzione del flusso anterogrado: il riempimento va dall'anello atrioventricolare verso la punta, l'eiezione
+     dalla punta verso la valvola aortica (le linee di flusso del ventricolo sinistro convergono sull'efflusso) */
+  function flusso(v) { const A = assi(G); return v.tipo === 'sl' ? norm(add(mul(norm(sub(v.c, A.apE)), 0.7), mul(v.n, 0.3))) : norm(add(mul(norm(sub(A.apE, v.c)), 0.75), mul(v.n, 0.25))); }
+  function getti() {
+    const out = [], cm = G.Tr.cm, vv = nm => V.find(v => v.nome === nm);
+    for (const nm of ['mitrale', 'tricuspide', 'aortica']) {
+      const v = vv(nm); if (!v) continue; const c = velocita(nm, lesione, fase).find(x => x.dir === 1); if (!c) continue;
+      const st = lesione && lesione.valv === nm && lesione.tipo === 'stenosi', fd = flusso(v);
+      if (st) out.push({ o: v.c, d: fd, L: 4.5 * cm, w0: Math.max(0.25 * cm, 2 * lesione.g.ap * v.r * 0.5), w1: 1.6 * cm, v: c.v, pisa: 0.5 * cm });
+      else if (nm === 'aortica') out.push({ o: sub(v.c, mul(fd, 2.0 * cm)), d: fd, L: 4.4 * cm, w0: 1.2 * cm, w1: 1.5 * cm, v: c.v });
+      else out.push({ o: v.c, d: fd, L: (nm === 'mitrale' ? 4.6 : 3.8) * cm * Math.min(1, 0.35 + c.v / 0.8), w0: 1.1 * v.r, w1: 0.8 * v.r, v: c.v });
+    }
+    if (lesione && lesione.tipo === 'insufficienza') {
+      const v = vv(lesione.valv), c = v && velocita(lesione.valv, lesione, fase).find(x => x.dir === -1);
+      if (c) { const e = Math.min(1, c.v / (lesione.valv === 'mitrale' ? 4 : lesione.valv === 'aortica' ? 3.5 : 2.2)), g = lesione.g;
+        out.push({ o: v.c, d: mul(flusso(v), -1), L: g.L * cm * (0.35 + 0.65 * e), w0: g.vc * cm, w1: (g.vc + g.L * 0.42) * cm, v: c.v, pisa: (0.25 + 0.9 * g.vc) * cm }); }
+    }
+    return out;
+  }
+  function disegnaColore() {
+    if (!mosaico) mosaico = motivoMosaico();
+    for (const j of getti()) {
+      const dpl = dot(sub(j.o, P.o), P.n), half = Math.max(j.w0, j.w1) / 2, vis = 1 - Math.abs(dpl) / (half + 0.5 * G.Tr.cm); if (vis <= 0.05) continue;
+      const dIn = orto(j.d, P.n), li = len(dIn), a = sc3(j.o);
+      const turb = j.v > 1.4 * NYQ, mid = add(j.o, mul(j.d, j.L / 2)), verso = dot(j.d, norm(sub(mid, P.o))) < 0;
+      const lam = Math.min(1, j.v / NYQ), col = verso ? 'rgba(' + Math.round(150 + 105 * lam) + ',' + Math.round(40 + 120 * lam * lam) + ',30,' : 'rgba(40,' + Math.round(90 + 100 * lam * lam) + ',' + Math.round(170 + 85 * lam) + ',';
+      cx.save(); cx.globalAlpha = 0.85 * Math.min(1, vis * 1.4);
+      if (j.pisa) {   /* convergenza del flusso a monte dell'orifizio: anelli di aliasing */
+        const rr = j.pisa * S * Math.min(1, vis * 1.5), up = sc3(add(j.o, mul(j.d, -0.01)));
+        const gr = cx.createRadialGradient(a[0], a[1], 0, a[0], a[1], rr); gr.addColorStop(0, 'rgba(255,230,80,.95)'); gr.addColorStop(0.45, verso ? 'rgba(40,120,255,.9)' : 'rgba(255,60,40,.9)'); gr.addColorStop(1, verso ? 'rgba(40,90,220,.0)' : 'rgba(220,40,30,0)');
+        const ang = Math.atan2(a[1] - up[1], a[0] - up[0]); cx.fillStyle = gr; cx.beginPath(); cx.moveTo(a[0], a[1]); cx.arc(a[0], a[1], rr, ang + Math.PI / 2, ang + 3 * Math.PI / 2); cx.closePath(); cx.fill();
+      }
+      if (li < 0.3) { cx.fillStyle = turb ? mosaico : col + '0.85)'; cx.beginPath(); cx.arc(a[0], a[1], j.w1 / 2 * S * vis, 0, 7); cx.fill(); cx.restore(); continue; }   // getto che attraversa il piano: macchia
+      const L2 = j.L * li, b = sc3(add(j.o, mul(norm(dIn), L2))), ax = [b[0] - a[0], b[1] - a[1]], la = Math.hypot(...ax) || 1, pr = [-ax[1] / la, ax[0] / la];
+      const w0 = j.w0 / 2 * S * vis, w1 = j.w1 / 2 * S * vis;
+      cx.beginPath(); cx.moveTo(a[0] + pr[0] * w0, a[1] + pr[1] * w0); cx.lineTo(b[0] + pr[0] * w1, b[1] + pr[1] * w1);
+      cx.quadraticCurveTo(b[0] + ax[0] / la * w1 * 1.4, b[1] + ax[1] / la * w1 * 1.4, b[0] - pr[0] * w1, b[1] - pr[1] * w1); cx.lineTo(a[0] - pr[0] * w0, a[1] - pr[1] * w0); cx.closePath();
+      if (turb) { cx.translate((quadro * 5) % 48, (quadro * 3) % 48); cx.fillStyle = mosaico; cx.translate(-((quadro * 5) % 48), -((quadro * 3) % 48)); }
+      else { const gr = cx.createLinearGradient(a[0], a[1], b[0], b[1]); gr.addColorStop(0, col + '0.95)'); gr.addColorStop(1, col + '0.25)'); cx.fillStyle = gr; }
+      cx.fill(); cx.restore();
+    }
+  }
+  function barraColore(px) {
+    const x = 16, y0 = oy + 56, h = 90, gr = cx.createLinearGradient(0, y0, 0, y0 + h);
+    gr.addColorStop(0, '#ffe24a'); gr.addColorStop(0.25, '#e8402c'); gr.addColorStop(0.5, '#000'); gr.addColorStop(0.75, '#2c64e8'); gr.addColorStop(1, '#4af0ff');
+    cx.fillStyle = gr; cx.fillRect(x - 6, y0, 6, h); cx.font = '500 ' + Math.round(px * 0.75) + 'px system-ui,sans-serif'; cx.fillStyle = 'rgba(255,255,255,.75)'; cx.textAlign = 'left'; cx.textBaseline = 'middle';
+    cx.fillText('+' + Math.round(NYQ * 100), x + 4, y0 + 4); cx.fillText('−' + Math.round(NYQ * 100) + ' cm/s', x + 4, y0 + h - 4);
+  }
+  /* ---- Doppler continuo lungo la linea: spettro velocità–tempo della valvola attraversata ---- */
+  function lineaDir() { return norm(add(mul(P.d, Math.cos(mmAng)), mul(P.u, Math.sin(mmAng)))); }
+  function valvolaSullaLinea() {
+    const dl = lineaDir(); let best = null, bd = 1.6 * G.Tr.cm;
+    for (const v of V) { if (!['aortica', 'mitrale', 'tricuspide'].includes(v.nome)) continue; const w = sub(v.c, P.o), t = dot(w, dl); if (t <= 0) continue; const pd = len(sub(w, mul(dl, t))); if (pd < bd) { bd = pd; best = v; } }
+    return best;
+  }
+  let cwT = 0, cwV = null;
+  function campionaCW(dt) {
+    const r = mm.getBoundingClientRect(), dpr = Math.min(root.devicePixelRatio || 1, 1.5), w = Math.max(60, Math.round(r.width * dpr)), h = Math.max(40, Math.round(r.height * dpr));
+    if (mm.width !== w || mm.height !== h) { mm.width = w; mm.height = h; azzeraMM(); }
+    if ((cwT -= dt) <= 0) { cwT = 0.4; cwV = valvolaSullaLinea(); testoCW(); }
+    mmAcc += dt * w / 3; const dx = Math.floor(mmAcc); if (dx < 1) return; mmAcc -= dx;
+    mmx.drawImage(mm, -dx, 0); mmx.fillStyle = '#000'; mmx.fillRect(w - dx, 0, dx, h);
+    const base = h * 0.5, kv = h * 0.46 / 6;
+    mmx.fillStyle = 'rgba(120,200,255,.55)'; mmx.fillRect(w - dx, base, dx, 1);
+    if (cwV) {
+      const dl = lineaDir();
+      for (const c of velocita(cwV.nome, lesione, fase)) {
+        const vm = -c.v * dot(mul(flusso(cwV), c.dir), dl), y = base - vm * kv, a = Math.min(1, c.dens);
+        for (let xx = w - dx; xx < w; xx++) {
+          const top = Math.min(base, y), bot = Math.max(base, y), hh = bot - top; if (hh < 1) continue;
+          mmx.fillStyle = 'rgba(200,200,200,' + (0.18 * a) + ')'; mmx.fillRect(xx, top, 1, hh);
+          for (let k = 0; k < 6; k++) { const yy = vm > 0 ? y + Math.random() * hh * 0.35 : y - Math.random() * hh * 0.35; mmx.fillStyle = 'rgba(255,255,255,' + (0.55 * a * Math.random()) + ')'; mmx.fillRect(xx, yy, 1, 2); }
+          mmx.fillStyle = 'rgba(255,255,255,' + (0.9 * a) + ')'; mmx.fillRect(xx, y - (vm > 0 ? 0 : 1), 1, 2);
+        }
+      }
+    }
+    if ((mmT += dt) > 0.5) { mmT = 0; mmx.fillStyle = 'rgba(255,255,255,.35)'; for (let v = -6; v <= 6; v++) mmx.fillRect(w - (v % 2 ? 3 : 7), base - v * kv, v % 2 ? 3 : 7, 1); }
+  }
+  function testoCW() {
+    const el = $('#ecoCWTesto'); if (!el) return;
+    if (!cwV) { el.innerHTML = '<b>Doppler continuo</b> Porta la linea tratteggiata attraverso una valvola (tocca l’immagine). Dall’apice il fascio è quasi parallelo ai flussi. Scala ±6 m/s; sopra la linea di base i flussi verso la sonda.'; return; }
+    const dl = lineaDir(), nome = { aortica: 'Valvola aortica', mitrale: 'Valvola mitrale', tricuspide: 'Valvola tricuspide' }[cwV.nome];
+    const ang = Math.acos(Math.min(1, Math.abs(dot(flusso(cwV), dl)))) * 180 / Math.PI, cs = Math.cos(ang * Math.PI / 180), parti = [];
+    for (const dir of [1, -1]) {
+      const m = misureCW(cwV.nome, lesione, dir); if (m.vmax < 0.05) continue; const v = m.vmax * cs;
+      const lab = dir === 1 ? (cwV.nome === 'aortica' ? 'eiezione' : 'riempimento') : 'rigurgito';
+      parti.push(lab + ': Vmax ' + v.toFixed(1).replace('.', ',') + ' m/s · picco ' + Math.round(4 * v * v) + ' mmHg' + (dir === 1 && lesione && lesione.valv === cwV.nome && lesione.tipo === 'stenosi' ? ' · medio ' + Math.round(m.medio * cs * cs) + ' mmHg' : ''));
+    }
+    el.innerHTML = '<b>' + nome + ' · angolo con il flusso ' + Math.round(ang) + '°</b> ' + esc(parti.join(' — ')) + (ang > 20 ? ' <em>Il fascio non è parallelo al flusso: la velocità è sottostimata (×cos ' + Math.round(ang) + '°).</em>' : '');
+  }
   function aiuto() {
     const a = $('#ecoAiuto');
     a.textContent = calibro ? (misure.length && !misure[misure.length - 1][1] ? 'Tocca il secondo punto.' : 'Calibro: immagine ferma. Tocca due punti sull’immagine; per il diametro del ventricolo sinistro misura in telediastole, da endocardio a endocardio, perpendicolare all’asse, alle punte dei lembi mitralici.')
+      : doppler ? 'Doppler continuo: la linea tratteggiata è il fascio. Tocca l’immagine per farla passare da una valvola; lo spettro scorre sotto, le misure sono in alto a sinistra. Per misurare bene il fascio deve essere parallelo al flusso: dall’apice per aortica, mitrale e tricuspide.'
       : mmodo ? 'M-mode: la linea tratteggiata è il fascio campionato nel tempo (sotto). Tocca l’immagine per spostarla. In asse lungo, attraverso le punte mitraliche, mostra setto, cavità e parete posteriore che si avvicinano in sistole.' : '';
+  }
+  /* guida verso la proiezione bersaglio, sopra l'immagine */
+  function guidaUI() {
+    const el = $('#ecoGuida'); if (!el || !P || !bersP) return; const g = guida(P, bersP, G.Tr);
+    if (esercizio && g.ok) { esercizio = false; g.titolo = 'Trovata! Proiezione allineata'; g.dettaglio = 'Ottimo. Premi «Allenati» per un’altra prova o scegli un’altra proiezione.'; }
+    el.innerHTML = '<b>' + esc(g.titolo) + '</b><span>' + esc(g.dettaglio) + '</span>'; el.classList.toggle('ok', g.ok);
+    if (sondaG) { sondaG.visible = fantasma && !g.ok; sporco3d = true; }
   }
   function testo() {
     const v = VISTE.find(x => x.id === idVista);
     $('#ecoTesto').innerHTML = '<h3>' + esc(v.nome) + '</h3><p><b>Come si ottiene.</b> ' + esc(v.sonda) + '</p><p><b>Che cosa vedi.</b> ' + esc(v.vedi) + '</p><p><b>Che cosa si valuta</b></p><ul>' + v.valuta.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
       (REALE[idVista] ? '<p><a class="btn" href="' + REALE[idVista] + '" target="_blank" rel="noopener">Confronta con un esame reale ↗</a></p><p class="eco-fonte">Il collegamento apre un esame transtoracico normale su Radiopaedia, con le strutture etichettate. Confrontalo con la simulazione: forma e posizione delle camere coincidono, l’aspetto dell’immagine reale no (grana, artefatti, contrasto).</p>' : '') +
       '<p class="eco-fonte">Proiezioni standard secondo le raccomandazioni ASE 2019 per l’ecocardiogramma transtoracico: <a href="https://doi.org/10.1016/j.echo.2018.06.004" target="_blank" rel="noopener">Mitchell C et al. J Am Soc Echocardiogr 2019;32:1–64</a>.</p>';
-    document.querySelectorAll('#ecoViste button').forEach(b => b.classList.toggle('on', b.dataset.v === idVista));
+    document.querySelectorAll('#ecoViste button').forEach(b => b.classList.toggle('on', b.dataset.v === idVista)); $('#eco3dTitolo').textContent = v.nome;
   }
   function carica() {
     avvia.caricato = true;
@@ -930,32 +1267,73 @@ function avvia() {
           for (let i = 0; i < src.count; i++) { v.fromBufferAttribute(src, i).applyMatrix4(o.matrixWorld); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z; }
           const m = salda(pos, g.index.array); m.nome = o.name.replace(/_/g, ' '); m.tipo = tipoDi(m.nome); M.push(m);
         });
-        G = reperi(M); if (!G) throw new Error('modello senza le quattro camere'); correggiSetto(M, G); V = valvole(M, G); G.V = V; G.Tr = torace(G);
+        G = reperi(M); if (!G) throw new Error('modello senza le quattro camere'); correggiSetto(M, G); V = valvole(M, G); G.V = V; G.Tr = torace(G); G.ossa = ossaM;
         scegliQuadro(idQuadro); aggiorna(); crea3d(gltf); stato.hidden = true; vista.dataset.pronto = '1';
       } catch (e) { stato.textContent = 'Non riesco a preparare il modello: ' + e.message; }
     }, undefined, () => { stato.textContent = 'Modello del cuore non disponibile. Controlla la connessione e riapri la scheda.'; avvia.caricato = false; });
   }
 
   /* ----- comandi ----- */
-  $('#ecoViste').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; idVista = b.dataset.v; inquadra(); profUtente = 0; $('#ecoProfV').textContent = 'auto'; misure = []; azzeraMM(); rot = incl = 0; $('#ecoRot').value = 0; $('#ecoInc').value = 0; $('#ecoRotV').textContent = '0°'; $('#ecoIncV').textContent = '0°'; testo(); aggiorna(); });
-  $('#ecoRot').addEventListener('input', e => { rot = +e.target.value; $('#ecoRotV').textContent = rot + '°'; aggiorna(); });
-  $('#ecoInc').addEventListener('input', e => { incl = +e.target.value; $('#ecoIncV').textContent = incl + '°'; aggiorna(); });
+  /* angoli della sonda: cursori e maniglie 3D restano allineati */
+  function angoli(r0, f0, i0) {
+    rot = Math.max(-180, Math.min(180, Math.round(r0))); fan = Math.max(-45, Math.min(45, Math.round(f0))); incl = Math.max(-45, Math.min(45, Math.round(i0)));
+    $('#ecoRot').value = rot; $('#ecoFan').value = fan; $('#ecoInc').value = incl; $('#ecoRotV').textContent = rot + '°'; $('#ecoFanV').textContent = fan + '°'; $('#ecoIncV').textContent = incl + '°';
+  }
+  function posiziona() { posa = null; bersP = null; mosso = false; esercizio = false; angoli(0, 0, 0); sporcoP = true; }
+  $('#ecoViste').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; idVista = b.dataset.v; inquadra(); profUtente = 0; $('#ecoProfV').textContent = 'auto'; misure = []; azzeraMM(); posiziona(); testo(); aggiorna(); });
+  $('#ecoRot').addEventListener('input', e => { angoli(+e.target.value, fan, incl); mosso = true; sporcoP = true; });
+  $('#ecoFan').addEventListener('input', e => { angoli(rot, +e.target.value, incl); mosso = true; sporcoP = true; });
+  $('#ecoInc').addEventListener('input', e => { angoli(rot, fan, +e.target.value); mosso = true; sporcoP = true; });
+  $('#ecoAllena').addEventListener('click', () => {
+    /* la sonda parte spostata di 2–4 cm, ruotata e inclinata: si ritrova la proiezione seguendo la guida */
+    if (!G) return; posa = piano(G, idVista); bersP = piano(G, idVista); const cm = G.Tr.cm, a = Math.random() * 2 * Math.PI, r = (2 + 2 * Math.random()) * cm;
+    const p = suPelle(G.Tr, add(add(posa.o, [Math.cos(a) * r, Math.sin(a) * r, 0]), mul(normalePelle(G.Tr, posa.o), -30 * cm)), normalePelle(G.Tr, posa.o));
+    if (p) posa = scivola(G.Tr, posa, p);
+    const sg = () => (Math.random() < 0.5 ? -1 : 1); angoli(sg() * (25 + 30 * Math.random()), sg() * (6 + 10 * Math.random()), 0); mosso = true; esercizio = true; sporcoP = true;
+  });
   $('#ecoFc').addEventListener('input', e => { fc = +e.target.value; $('#ecoFcV').textContent = fc + '/min'; });
   $('#ecoCo').addEventListener('input', e => { contr = +e.target.value / 100; etichettaContr(); });
-  $('#ecoStrati').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const on = !b.classList.contains('on'); b.classList.toggle('on', on); strato(b.dataset.s, on); });
+  $('#ecoStrati').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const on = !b.classList.contains('on'); b.classList.toggle('on', on); if (b.dataset.s === 'fantasma') { fantasma = on; sporco3d = true; guidaUI(); } else strato(b.dataset.s, on); });
   $('#ecoQuadri').addEventListener('click', e => { const b = e.target.closest('button'); if (b) scegliQuadro(b.dataset.q); });
   $('#ecoEt').addEventListener('click', e => { etichette = !etichette; e.target.classList.toggle('on', etichette); }); $('#ecoEt').classList.add('on');
+  $('#ecoOssa').addEventListener('click', e => { coste = !coste; e.target.classList.toggle('on', coste); }); $('#ecoOssa').classList.add('on');
   $('#ecoPausa').addEventListener('click', e => { pausa = !pausa; e.target.textContent = pausa ? 'Riprendi' : 'Pausa'; });
   $('#ecoProf').addEventListener('input', e => { profUtente = +e.target.value; $('#ecoProfV').textContent = profUtente + ' cm'; aggiorna(); azzeraMM(); });
   $('#ecoGua').addEventListener('input', e => { guadagno = +e.target.value; $('#ecoGuaV').textContent = (guadagno > 0 ? '+' : '') + guadagno; });
   $('#ecoCal').addEventListener('click', e => { calibro = !calibro; e.target.classList.toggle('on', calibro); if (calibro) { pausa = true; $('#ecoPausa').textContent = 'Riprendi'; } else misure = []; aiuto(); });
-  $('#ecoMMb').addEventListener('click', e => { mmodo = !mmodo; e.target.classList.toggle('on', mmodo); $('#ecoSchermo').classList.toggle('mmodo', mmodo); W = 0; misura(); azzeraMM(); aiuto(); });
-  $('#ecoZero').addEventListener('click', () => { rot = incl = 0; $('#ecoRot').value = 0; $('#ecoInc').value = 0; $('#ecoRotV').textContent = '0°'; $('#ecoIncV').textContent = '0°'; aggiorna(); });
+  function pannello() { $('#ecoSchermo').classList.toggle('mmodo', mmodo || doppler); $('#ecoSchermo').classList.toggle('cw', doppler); $('#ecoMMb').classList.toggle('on', mmodo); $('#ecoCW').classList.toggle('on', doppler); W = 0; misura(); azzeraMM(); aiuto(); }
+  $('#ecoMMb').addEventListener('click', () => { mmodo = !mmodo; if (mmodo) doppler = false; pannello(); });
+  $('#ecoCW').addEventListener('click', () => {
+    doppler = !doppler; if (doppler) { mmodo = false;
+      /* la linea parte sulla valvola malata (o sulla mitrale), se è nel piano */
+      const v = V.find(x => x.nome === (lesione ? lesione.valv : 'mitrale')); if (v && P) { const w = sub(v.c, P.o); mmAng = Math.max(-MEZZO, Math.min(MEZZO, Math.atan2(dot(w, P.u), dot(w, P.d)))); }
+      cwT = 0; }
+    pannello();
+  });
+  $('#ecoColor').addEventListener('click', e => { colore = !colore; e.target.classList.toggle('on', colore); });
+  function scegliLesione(id) {
+    const L = VALVULOPATIE.find(x => x.id === id); lesione = L ? Object.assign({}, L, { g: L.gradi[grado], grado }) : null;
+    document.querySelectorAll('#ecoValv button').forEach(b => b.classList.toggle('on', b.dataset.l === (L ? L.id : '')));
+    document.querySelectorAll('#ecoGradi button').forEach(b => b.classList.toggle('on', b.dataset.g === grado)); $('#ecoGradi').hidden = !L;
+    scegliQuadro(idQuadro); testoValv(); cwT = 0;
+  }
+  function testoValv() {
+    const el = $('#ecoVTesto'); if (!lesione) { el.innerHTML = ''; return; } const L = lesione, f = FONTI_ECO[L.fonte];
+    el.innerHTML = '<p><b>' + esc(L.nome) + ' ' + esc(L.grado) + '.</b> ' + esc(L.testo) + '</p>' +
+      '<table class="eco-tab"><tr><th></th><th>Lieve</th><th>Moderata</th><th>Severa</th></tr>' + L.criteri.map((c, i) => '<tr><td>' + esc(c) + '</td>' + ['lieve', 'moderata', 'severa'].map(k => '<td' + (k === L.grado ? ' class="on"' : '') + '>' + esc(L.gradi[k].val[i]) + '</td>').join('') + '</tr>').join('') + '</table>' +
+      '<p class="eco-fonte">Prova: accendi «Color» e «Doppler CW». Fonte: <a href="' + esc(f.u) + '" target="_blank" rel="noopener">' + esc(f.t) + '</a>. ' + esc(f.r) + '. I valori del modello sono scelti dentro gli intervalli del grado; nella pratica la gravità si stabilisce integrando più parametri.</p>';
+  }
+  $('#ecoValv').addEventListener('click', e => { const b = e.target.closest('button'); if (b) scegliLesione(b.dataset.l); });
+  $('#ecoGradi').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; grado = b.dataset.g; scegliLesione(lesione ? lesione.id : ''); });
+  $('#ecoGradi').hidden = true;
+  $('#ecoZero').addEventListener('click', () => { posiziona(); aggiorna(); });
   testo(); scegliQuadro('normale');
   new MutationObserver(() => mostra(vista.classList.contains('on'))).observe(vista, { attributes: true, attributeFilter: ['class'] });
   root.addEventListener('resize', () => { sporco3d = true; });
   if (vista.classList.contains('on')) mostra(true);
   root.ISO_ECO = { _masc: masc, _fase: f => { fase = f; },
+    /* per i test: posizione della sonda sullo schermo (pixel della pagina) */
+    _sonda: () => { if (!cam || !P) return null; const c = $('#eco3d').getBoundingClientRect(), q = new T.Vector3().fromArray(P.o).project(cam); return [(q.x + 1) / 2 * c.width + c.left, (1 - q.y) / 2 * c.height + c.top]; },
     /* per i test: coordinate di schermo (pixel della tela) di un punto 3D, assi e scala */
     _geo: () => { const A = assi(G), sc = p => { const w = sub(p, P.o); return [(dot(w, P.u) * S + ox), (dot(w, P.d) * S + oy), dot(w, P.n) / G.Tr.cm]; };
       return { cmPx: G.Tr.cm * S, W, H, apE: sc(A.apE), mi: sc(A.mi), ao: sc(A.ao), lungo: z => sc(add(A.apE, mul(A.asse, z * A.Lc))), asse: [dot(A.asse, P.u), dot(A.asse, P.d)], etichette: posEt.map(e => e[0]) }; }, stato: () => ({ pronto: !!G, vista: idVista, catene: sezione.reduce((s, x) => s + x.catene.length, 0), fase }), vista: id => { const b = document.querySelector('#ecoViste button[data-v="' + id + '"]'); if (b) b.click(); } };

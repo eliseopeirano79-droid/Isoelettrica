@@ -134,3 +134,19 @@ test('ogni proiezione ha un esame reale di confronto (solo collegamento Radiopae
   const E = require('../eco.js');
   for (const v of E.VISTE) assert.match(E.REALE[v.id] || '', /^https:\/\/radiopaedia\.org\//, v.id);
 });
+
+test('Valvulopatie: le misure Doppler simulate cadono negli intervalli del grado (EACVI/ASE 2017, EAE/ASE 2009)', () => {
+  const E = require('../eco.js');
+  for (const L of E.VALVULOPATIE) {
+    for (const [k, g] of Object.entries(L.gradi)) {
+      assert.equal(g.val.length, L.criteri.length, L.id + ' ' + k + ': un valore per criterio');
+      const les = { valv: L.valv, tipo: L.tipo, g }, m = E.misureCW(L.valv, les, L.tipo === 'stenosi' ? 1 : -1);
+      assert.ok(m.vmax > 0, L.id + ' ' + k + ': flusso presente');
+      if (g.lim && g.lim.vmax) assert.ok(m.vmax >= g.lim.vmax[0] && m.vmax <= g.lim.vmax[1], L.id + ' ' + k + ' Vmax ' + m.vmax.toFixed(2));
+      if (g.lim && g.lim.mg) assert.ok(m.medio >= g.lim.mg[0] && m.medio <= g.lim.mg[1], L.id + ' ' + k + ' gradiente medio ' + m.medio.toFixed(1));
+    }
+  }
+  /* senza valvulopatia: niente rigurgiti, eiezione aortica e riempimento mitralico normali */
+  for (const v of ['aortica', 'mitrale', 'tricuspide']) assert.equal(E.misureCW(v, null, -1).vmax, 0, v);
+  assert.ok(E.misureCW('aortica', null, 1).vmax < 1.5 && E.misureCW('mitrale', null, 1).vmax < 1.2);
+});
