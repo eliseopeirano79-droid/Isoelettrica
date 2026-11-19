@@ -63,24 +63,27 @@ function taglia(m, o, nrm, grezzo) {
   for (let i = 0; i < n; i++) if (!visto[i]) { const c = cammina(i); if (c.length >= 9) catene.push({ p: new Float32Array(c), chiusa: true }); }
   return grezzo ? catene : unisci(catene);
 }
-/* La stessa parete arriva spesso in più tratti aperti (superficie esterna e interna, interrotte all'orifizio).
-   Li concatena per vicinanza degli estremi: ne esce un anello che racchiude la sola parete. */
-function unisci(catene) {
-  const aperte = catene.filter(c => !c.chiusa), chiuse = catene.filter(c => c.chiusa);
-  if (aperte.length < 2) return catene;
-  const fine = (c, testa) => { const p = c.p, i = testa ? 0 : p.length - 3; return [p[i], p[i + 1], p[i + 2]]; };
+/* Le superfici anatomiche possono essere aperte agli orifizi. Non si devono chiudere per
+   vicinanza generica: il raccordo introdurrebbe una parete attraverso la cavità (anche di 10 cm).
+   Si saldano soltanto estremi coincidenti entro la tolleranza numerica, in unità del modello. */
+function unisci(catene, tolleranza = 1e-4) {
+  const resto = catene.filter(c => !c.chiusa).map(c => c.p), out = catene.filter(c => c.chiusa);
+  const estremo = (p, testa) => { const i = testa ? 0 : p.length - 3; return [p[i], p[i + 1], p[i + 2]]; };
   const rovescia = p => { const r = new Float32Array(p.length); for (let i = 0; i < p.length; i += 3) { const j = p.length - 3 - i; r[i] = p[j]; r[i + 1] = p[j + 1]; r[i + 2] = p[j + 2]; } return r; };
-  const resto = aperte.slice(), out = chiuse.slice();
   while (resto.length) {
-    let pezzi = [resto.shift().p];
+    let p = resto.shift();
     for (;;) {
-      const coda = fine({ p: pezzi[pezzi.length - 1] }, false); let best = -1, inv = false, dmin = Infinity;
-      resto.forEach((c, k) => { const a = len(sub(fine(c, true), coda)), b = len(sub(fine(c, false), coda)); if (a < dmin) { dmin = a; best = k; inv = false; } if (b < dmin) { dmin = b; best = k; inv = true; } });
-      if (best < 0) break;
-      const c = resto.splice(best, 1)[0]; pezzi.push(inv ? rovescia(c.p) : c.p);
+      let best = null;
+      for (let k = 0; k < resto.length; k++) for (const testaP of [false, true]) for (const testaQ of [true, false]) {
+        const distanza = len(sub(estremo(p, testaP), estremo(resto[k], testaQ)));
+        if (distanza <= tolleranza && (!best || distanza < best.distanza)) best = { k, testaP, testaQ, distanza };
+      }
+      if (!best) break;
+      if (best.testaP) p = rovescia(p);
+      let q = resto.splice(best.k, 1)[0]; if (!best.testaQ) q = rovescia(q);
+      const r = new Float32Array(p.length + q.length); r.set(p); r.set(q, p.length); p = r;
     }
-    let n = 0; pezzi.forEach(p => n += p.length); const p = new Float32Array(n); n = 0; pezzi.forEach(q => { p.set(q, n); n += q.length; });
-    out.push({ p, chiusa: true });
+    out.push({ p, chiusa: p.length >= 9 && len(sub(estremo(p, true), estremo(p, false))) <= tolleranza });
   }
   return out;
 }
@@ -139,7 +142,8 @@ function reperi(M) {
 /* Correzione dichiarata del modello: nella mesh BodyParts3D la superficie settale del ventricolo destro è irregolare
    e dista fino a 1 cm dall'epicardio settale del sinistro. Riempito come tessuto, il setto risulterebbe spesso quasi il
    doppio della parete posteriore (quadro da ipertrofia settale asimmetrica). Qui i soli vertici settali del VD vengono
-   avvicinati all'epicardio del VS, riducendo lo spazio dell'85%; la parete libera del VD resta com'è. */
+   avvicinati all'epicardio del VS, riducendo lo spazio del 35%; la parete libera del VD resta com'è.
+   Quota illustrativa ricalibrata sulle sole interfacce reali dopo la rimozione dei raccordi artificiali. */
 function correggiSetto(M, G, quota) {
   const LV = M.find(m => /^Left ventricle/.test(m.nome)), RV = M.find(m => /^Right ventricle/.test(m.nome));
   if (!LV || !RV || RV._setto) return 0;
@@ -147,7 +151,7 @@ function correggiSetto(M, G, quota) {
   const coord = (P, i) => { const w = [P[i] - O[0], P[i + 1] - O[1], P[i + 2] - O[2]], z = dot(w, a), r = sub(w, mul(a, z)), rho = len(r);
     return { z, rho, r, iz: Math.floor((z / L + 0.1) / 1.4 * NZ), ia: Math.floor((Math.atan2(dot(r, e2), dot(r, e1)) + Math.PI) / (2 * Math.PI) * NA) % NA }; };
   for (let i = 0; i < LV.pos.length; i += 3) { const q = coord(LV.pos, i); if (q.iz >= 0 && q.iz < NZ) { const k = q.iz * NA + q.ia; if (q.rho > epi[k]) epi[k] = q.rho; } }
-  const gapMax = 0.24 * L, f = quota === undefined ? 0.85 : quota; let mossi = 0;
+  const gapMax = 0.24 * L, f = quota === undefined ? 0.35 : quota; let mossi = 0;
   for (let i = 0; i < RV.pos.length; i += 3) {
     const q = coord(RV.pos, i); if (q.iz < 0 || q.iz >= NZ) continue;
     const R = epi[q.iz * NA + q.ia]; if (!R || q.rho <= R || q.rho > R + gapMax) continue;
@@ -605,6 +609,8 @@ function avvia() {
       '<div class="eco-guida" id="ecoGuida"><b>Carico il modello…</b><span></span></div>' +
       '<div class="eco-schermo" id="ecoSchermo"><canvas id="ecoTela"></canvas><canvas id="ecoMM" class="eco-mm"></canvas><div class="eco-cwtxt" id="ecoCWTesto"></div><div class="eco-stato" id="ecoStato">Carico il modello del cuore…</div></div>' +
       '<div class="eco-pannello">' +
+        '<div class="eco-bmode-comandi"><label>Immagine <select id="ecoMotore"><option value="classico">B-mode classico</option><option value="nuovo">Nuovo B-mode sperimentale</option></select></label><span id="ecoMotoreStato" role="status">Canvas 2D</span></div>' +
+        '<details class="eco-bmode-avanzati"><summary>Formazione dell’immagine</summary><p>Il nuovo B-mode lega la grana al tessuto e applica una risposta impulsiva ridotta. La geometria resta quella attuale; non è ancora una simulazione acustica volumetrica completa.</p><div class="eco-ctl"><label>Gamma dinamica <output id="ecoDbV">60 dB</output><input id="ecoDb" type="range" min="40" max="80" value="60"></label><label>Fuoco <output id="ecoFuocoV">10 cm</output><input id="ecoFuoco" type="range" min="2" max="24" value="10"></label></div><label class="eco-bmode-check"><input id="ecoRiverbero" type="checkbox" checked> Riverbero di campo vicino (modello)</label><div class="eco-tgc">' + Array.from({length:8}, (_, i) => '<label>TGC ' + (i+1) + '<input type="range" class="ecoTgc" aria-label="Correzione TGC zona ' + (i+1) + ' in dB" min="-12" max="12" value="0"></label>').join('') + '</div><p class="eco-fonte">TGC: compensazione automatica più correzione per otto zone. Parametri acustici del modello e diffusori: <a href="https://field-ii.dk/program_code/matlab_8.20/m_files/users_guide.pdf" target="_blank" rel="noopener">Jensen, Field II user’s guide, 2014</a>. Implementazione semplificata originale, non Field II.</p></details>' +
         '<div class="eco-ctl">' +
         '<label>Ruota <output id="ecoRotV">0°</output><input type="range" id="ecoRot" min="-180" max="180" value="0" step="1"></label>' +
         '<label>Ventaglio <output id="ecoFanV">0°</output><input type="range" id="ecoFan" min="-45" max="45" value="0" step="1"></label>' +
@@ -612,7 +618,7 @@ function avvia() {
         '<label>Profondità <output id="ecoProfV">auto</output><input type="range" id="ecoProf" min="8" max="24" value="16" step="1"></label>' +
         '</div>' +
         '<div class="eco-viste" id="ecoViste">' + FINESTRE.map(([n, ids]) => '<div class="eco-fin"><span>' + esc(n) + '</span><div>' + ids.map(id => { const v = VISTE.find(x => x.id === id); return '<button data-v="' + id + '">' + esc(v.breve) + '</button>'; }).join('') + '</div></div>').join('') + '</div>' +
-        '<div class="eco-riga"><button class="btn" id="ecoZero" title="Porta la sonda sulla proiezione bersaglio">Posiziona</button><button class="btn" id="ecoAllena" title="La sonda parte fuori posizione: trova la proiezione seguendo la guida">Allenati</button><button class="btn" id="ecoPausa">Pausa</button><button class="btn" id="ecoEt">Etichette</button><button class="btn" id="ecoOssa" title="Ombre e riflessi di coste e sterno">Coste</button><button class="btn" id="ecoCal">Calibro</button><button class="btn" id="ecoMMb">M-mode</button><button class="btn" id="ecoColor" title="Color Doppler: rosso verso la sonda, blu in allontanamento, mosaico = turbolenza">Color</button><button class="btn" id="ecoCW" title="Doppler continuo lungo la linea tratteggiata">Doppler CW</button></div>' +
+        '<div class="eco-riga"><button class="btn" id="ecoZero" title="Porta la sonda sulla proiezione bersaglio">Posiziona</button><button class="btn" id="ecoAllena" title="La sonda parte fuori posizione: trova la proiezione seguendo la guida">Allenati</button><button class="btn" id="ecoPausa">Pausa</button><button class="btn" id="ecoTD" title="Ferma il modello in telediastole">Telediastole</button><button class="btn" id="ecoTS" title="Ferma il modello in telesistole">Telesistole</button><button class="btn" id="ecoEt">Etichette</button><button class="btn" id="ecoOssa" title="Ombre e riflessi di coste e sterno">Coste</button><button class="btn" id="ecoCal">Calibro</button><button class="btn" id="ecoMMb">M-mode</button><button class="btn" id="ecoColor" title="Color Doppler: rosso verso la sonda, blu in allontanamento, mosaico = turbolenza">Color</button><button class="btn" id="ecoCW" title="Doppler continuo lungo la linea tratteggiata">Doppler CW</button></div>' +
         '<p class="eco-aiuto" id="ecoAiuto"></p>' +
         '<div class="eco-ctl">' +
         '<label>Guadagno <output id="ecoGuaV">0</output><input type="range" id="ecoGua" min="-10" max="10" value="0" step="1"></label>' +
@@ -632,6 +638,8 @@ function avvia() {
   let W = 0, H = 0, S = 1, ox = 0, oy = 0, grana = [], sfondo = null;
   let M = null, G = null, V = [], P = null, sfoc = null, ossaM = [], posEt = [], profUtente = 0, guadagno = 0, coste = true, calibro = false, misure = [], mmodo = false, mmAng = 0, sezione = [], idVista = 'a4c', rot = 0, incl = 0, fan = 0, posa = null, bersP = null, mosso = false, fantasma = true, esercizio = false, sporcoP = false, sondaG = null, lesione = null, grado = 'moderata', colore = false, doppler = false, fc = 70, contr = 1, etichette = true, pausa = false;
   let fase = 0, ultimo = 0, attiva = false, raf = 0, quadro = 0, sporco3d = true, idQuadro = 'normale';
+  let local2d = null, bmode = null, nuovoBmode = false, gammaDb = 60, fuoco = 10, riverbero = true;
+  const tgc = new Float32Array(8);
   const FONTI_ECO = {
     'ase-2015': { t: 'ASE/EACVI 2015 — Quantificazione delle camere cardiache', r: 'Lang RM et al. J Am Soc Echocardiogr 2015;28:1–39', u: 'https://doi.org/10.1016/j.echo.2014.10.003' },
     'esc-peri-2015': { t: 'ESC 2015 — Malattie del pericardio', r: 'Adler Y et al. Eur Heart J 2015;36:2921–2964', u: 'https://doi.org/10.1093/eurheartj/ehv318' },
@@ -785,7 +793,13 @@ function avvia() {
     if (coste) disegnaOmbre(mx, 0.5);      // coste: superficie brillante e ombra acustica, sotto la grana (disattivabile per studiare l'anatomia)
     cx.setTransform(1, 0, 0, 1, 0, 0); cx.globalCompositeOperation = 'source-over'; cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H);
     cx.save(); settore(cx, 1); cx.clip();
-    cx.imageSmoothingEnabled = true; cx.drawImage(masc, 0, 0, W, H);
+    cx.imageSmoothingEnabled = true;
+    if (nuovoBmode && bmode) {
+      const r = bmode.render(masc, { G, P, fase, contr: c, ox: ox * .5, oy: oy * .5, scala: S * .5, gammaDb, gain: guadagno * 2, focus: fuoco, riverbero, tgc: Array.from(tgc), geometryKey: [idVista, idQuadro, coste, lesione && lesione.id, grado] });
+      cx.drawImage(r.canvas, 0, 0, W, H);
+      $('#ecoMotoreStato').textContent = r.motore + (r.motore === 'WebGL2' ? '' : ' · risoluzione ridotta') + (r.mancati > 0 ? ' · inversione non convergente in ' + r.mancati + ' campioni' : '');
+    } else {
+    cx.drawImage(masc, 0, 0, W, H);
     if (guadagno > 0) { cx.globalCompositeOperation = 'lighter'; cx.globalAlpha = guadagno / 12; cx.drawImage(masc, 0, 0, W, H); cx.globalAlpha = 1; cx.globalCompositeOperation = 'source-over'; }
     {   /* risoluzione laterale che peggiora con la profondità: in campo lontano si sovrappone una copia sfocata */
       if (!sfoc) { sfoc = document.createElement('canvas'); }
@@ -799,6 +813,7 @@ function avvia() {
     cx.globalCompositeOperation = 'lighter'; cx.globalAlpha = 0.55; cx.drawImage(sfondo, ((quadro * 7) % 9) - 4, ((quadro * 5) % 7) - 3, W + 8, H + 6); cx.globalAlpha = 1;
     const vic = cx.createRadialGradient(ox, oy, 0, ox, oy, 26); vic.addColorStop(0, 'rgba(230,230,230,.9)'); vic.addColorStop(1, 'rgba(230,230,230,0)'); cx.fillStyle = vic; cx.fillRect(ox - 30, oy - 4, 60, 34);
     if (guadagno < 0) { cx.fillStyle = 'rgba(0,0,0,' + (-guadagno / 13) + ')'; cx.fillRect(0, 0, W, H); }
+    }
     cx.globalCompositeOperation = 'source-over'; if (colore) disegnaColore();
     cx.restore(); cx.globalCompositeOperation = 'source-over';
     if (mmodo && !pausa) campionaMM(dtUltimo);      // prima delle sovrimpressioni: si campiona solo l'immagine
@@ -1063,6 +1078,7 @@ function avvia() {
   }
   function inquadra() { const v = idVista; az = v[0] === 'a' ? 0.85 : v === 'sub' ? 0.1 : 0.25; el = v === 'sub' ? -0.05 : 0.22; sporco3d = true; }
   function rendi3d() {
+    if (local2d) { local2d.disegna(); sporco3d = false; return; }
     if (!r3) return; const c = r3.domElement, b = c.parentElement.getBoundingClientRect(), w = Math.max(120, Math.round(b.width)), h = Math.max(120, Math.round(b.height));
     if (c.width !== Math.round(w * r3.getPixelRatio()) || c.height !== Math.round(h * r3.getPixelRatio())) { r3.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
     cam.position.set(bersaglio.x + raggio * Math.cos(el) * Math.sin(az), bersaglio.y + raggio * Math.sin(el), bersaglio.z + raggio * Math.cos(el) * Math.cos(az)); cam.lookAt(bersaglio);
@@ -1268,12 +1284,34 @@ function avvia() {
           const m = salda(pos, g.index.array); m.nome = o.name.replace(/_/g, ' '); m.tipo = tipoDi(m.nome); M.push(m);
         });
         G = reperi(M); if (!G) throw new Error('modello senza le quattro camere'); correggiSetto(M, G); V = valvole(M, G); G.V = V; G.Tr = torace(G); G.ossa = ossaM;
-        scegliQuadro(idQuadro); aggiorna(); crea3d(gltf); stato.hidden = true; vista.dataset.pronto = '1';
+        scegliQuadro(idQuadro); aggiorna();
+        try { crea3d(gltf); }
+        catch (e) {
+          r3 = null; cam = null; ventaglio = null;
+          const old = $('#eco3d'), c = document.createElement('canvas'); c.id = old.id; old.replaceWith(c);
+          if (root.ISO_ECO_2D) local2d = root.ISO_ECO_2D.crea(c, () => ({ G, P, M, ossa: ossaM, bersP, fantasma }), p => { posa = scivola(G.Tr, posa, p); mosso = true; sporcoP = sporco3d = true; });
+          corpo();
+          document.querySelector('.eco-3dhint').textContent = 'Localizzatore 2D: WebGL non disponibile. Trascina la sonda; ruota e inclina con i cursori.';
+          document.querySelectorAll('#ecoStrati button').forEach(b => { if (b.dataset.s !== 'fantasma') { b.disabled = true; b.title = 'Livello disponibile nella vista 3D'; } });
+          if (!local2d) document.querySelector('.eco-3dhint').textContent = 'Localizzatore non disponibile. Ecografia e cursori restano utilizzabili.';
+        }
+        stato.hidden = true; vista.dataset.pronto = '1';
       } catch (e) { stato.textContent = 'Non riesco a preparare il modello: ' + e.message; }
     }, undefined, () => { stato.textContent = 'Modello del cuore non disponibile. Controlla la connessione e riapri la scheda.'; avvia.caricato = false; });
   }
 
   /* ----- comandi ----- */
+  $('#ecoMotore').addEventListener('change', e => {
+    nuovoBmode = e.target.value === 'nuovo';
+    if (nuovoBmode && !bmode && root.ISO_ECO_BMODE) bmode = root.ISO_ECO_BMODE.creaRenderer(document, deforma);
+    if (nuovoBmode && !bmode) { nuovoBmode = false; e.target.value = 'classico'; $('#ecoMotoreStato').textContent = 'Nuovo motore non disponibile · Canvas 2D'; }
+    else if (!nuovoBmode) $('#ecoMotoreStato').textContent = 'Canvas 2D';
+    azzeraMM();
+  });
+  $('#ecoDb').addEventListener('input', e => { gammaDb = +e.target.value; $('#ecoDbV').textContent = gammaDb + ' dB'; });
+  $('#ecoFuoco').addEventListener('input', e => { fuoco = +e.target.value; $('#ecoFuocoV').textContent = fuoco + ' cm'; });
+  $('#ecoRiverbero').addEventListener('change', e => { riverbero = e.target.checked; });
+  document.querySelectorAll('.ecoTgc').forEach((el, i) => el.addEventListener('input', e => { tgc[i] = +e.target.value; }));
   /* angoli della sonda: cursori e maniglie 3D restano allineati */
   function angoli(r0, f0, i0) {
     rot = Math.max(-180, Math.min(180, Math.round(r0))); fan = Math.max(-45, Math.min(45, Math.round(f0))); incl = Math.max(-45, Math.min(45, Math.round(i0)));
@@ -1298,6 +1336,9 @@ function avvia() {
   $('#ecoEt').addEventListener('click', e => { etichette = !etichette; e.target.classList.toggle('on', etichette); }); $('#ecoEt').classList.add('on');
   $('#ecoOssa').addEventListener('click', e => { coste = !coste; e.target.classList.toggle('on', coste); }); $('#ecoOssa').classList.add('on');
   $('#ecoPausa').addEventListener('click', e => { pausa = !pausa; e.target.textContent = pausa ? 'Riprendi' : 'Pausa'; });
+  function fermaFase(f) { fase = f; pausa = true; $('#ecoPausa').textContent = 'Riprendi'; }
+  $('#ecoTD').addEventListener('click', () => fermaFase(0));
+  $('#ecoTS').addEventListener('click', () => fermaFase(.34));
   $('#ecoProf').addEventListener('input', e => { profUtente = +e.target.value; $('#ecoProfV').textContent = profUtente + ' cm'; aggiorna(); azzeraMM(); });
   $('#ecoGua').addEventListener('input', e => { guadagno = +e.target.value; $('#ecoGuaV').textContent = (guadagno > 0 ? '+' : '') + guadagno; });
   $('#ecoCal').addEventListener('click', e => { calibro = !calibro; e.target.classList.toggle('on', calibro); if (calibro) { pausa = true; $('#ecoPausa').textContent = 'Riprendi'; } else misure = []; aiuto(); });
@@ -1333,10 +1374,10 @@ function avvia() {
   if (vista.classList.contains('on')) mostra(true);
   root.ISO_ECO = { _masc: masc, _fase: f => { fase = f; },
     /* per i test: posizione della sonda sullo schermo (pixel della pagina) */
-    _sonda: () => { if (!cam || !P) return null; const c = $('#eco3d').getBoundingClientRect(), q = new T.Vector3().fromArray(P.o).project(cam); return [(q.x + 1) / 2 * c.width + c.left, (1 - q.y) / 2 * c.height + c.top]; },
+    _sonda: () => { if (!P) return null; const c = $('#eco3d').getBoundingClientRect(); if (local2d) { const q = root.ISO_ECO_2D.proietta(P.o, G.Tr, $('#eco3d').width, $('#eco3d').height); return [c.left + q[0] * c.width / $('#eco3d').width, c.top + q[1] * c.height / $('#eco3d').height]; } if (!cam) return null; const q = new T.Vector3().fromArray(P.o).project(cam); return [(q.x + 1) / 2 * c.width + c.left, (1 - q.y) / 2 * c.height + c.top]; },
     /* per i test: coordinate di schermo (pixel della tela) di un punto 3D, assi e scala */
     _geo: () => { const A = assi(G), sc = p => { const w = sub(p, P.o); return [(dot(w, P.u) * S + ox), (dot(w, P.d) * S + oy), dot(w, P.n) / G.Tr.cm]; };
-      return { cmPx: G.Tr.cm * S, W, H, apE: sc(A.apE), mi: sc(A.mi), ao: sc(A.ao), lungo: z => sc(add(A.apE, mul(A.asse, z * A.Lc))), asse: [dot(A.asse, P.u), dot(A.asse, P.d)], etichette: posEt.map(e => e[0]) }; }, stato: () => ({ pronto: !!G, vista: idVista, catene: sezione.reduce((s, x) => s + x.catene.length, 0), fase }), vista: id => { const b = document.querySelector('#ecoViste button[data-v="' + id + '"]'); if (b) b.click(); } };
+      return { cmPx: G.Tr.cm * S, W, H, apE: sc(A.apE), mi: sc(A.mi), ao: sc(A.ao), lungo: z => sc(add(A.apE, mul(A.asse, z * A.Lc))), asse: [dot(A.asse, P.u), dot(A.asse, P.d)], etichette: posEt.map(e => e[0]) }; }, stato: () => ({ pronto: !!G, vista: idVista, catene: sezione.reduce((s, x) => s + x.catene.length, 0), fase, localizzatore: local2d ? '2d' : r3 ? '3d' : 'assente', bmode: bmode && bmode.stato() }), vista: id => { const b = document.querySelector('#ecoViste button[data-v="' + id + '"]'); if (b) b.click(); } };
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();
 })(typeof self !== 'undefined' ? self : this);

@@ -2170,7 +2170,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(loc
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v47.1 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v47.2 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento(true);
   });
   if (cr) cr.addEventListener('dblclick', () => {

@@ -1,0 +1,632 @@
+[
+  {
+    "categoria": "Atri",
+    "strumento": "RA size",
+    "id": "#ra-size",
+    "aperto": true,
+    "esempio_nel_ciclo": false,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Atri",
+    "strumento": "Right atrial pressure · IVC & hepatic flow",
+    "id": "#rap",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 1
+  },
+  {
+    "categoria": "Atri",
+    "strumento": "LA size · volume index",
+    "id": "#la-size",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Atri",
+    "strumento": "Left atrial pressure · E/e′",
+    "id": "#lap-ee",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Atri",
+    "strumento": "Left atrial pressure · MR velocity",
+    "id": "#lap-mr",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo destro",
+    "strumento": "RV size",
+    "id": "#rv-size-calc",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Ventricolo destro",
+    "strumento": "RV function & coupling",
+    "id": "#rv-function-calc",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 1
+  },
+  {
+    "categoria": "Ventricolo destro",
+    "strumento": "RV myocardial performance index",
+    "id": "#mpi",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo destro",
+    "strumento": "RVSP and PASP · TR velocity",
+    "id": "#rvsp",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Ventricolo destro",
+    "strumento": "Pulmonary artery pressures",
+    "id": "#pa-pressure",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo destro",
+    "strumento": "Mean PA pressure · RVOT acceleration time",
+    "id": "#mpap-rvot",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo destro",
+    "strumento": "Pulmonary vascular resistance",
+    "id": "#pvr",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "LV linear dimensions",
+    "id": "#lv-linear",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "LV volumes",
+    "id": "#lv-volume-index",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "Wall thickness & mass",
+    "id": "#lv-mass",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "LV ejection fraction",
+    "id": "#lv-ef",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "LV strain · GLS & serial change",
+    "id": "#lv-gls",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "Wall-motion score index",
+    "id": "#wmsi",
+    "aperto": true,
+    "esempio_nel_ciclo": false,
+    "risultato_presente": true,
+    "input_visibili": 0
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "Fractional shortening",
+    "id": "#fractional-shortening",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "LVOT stroke volume & cardiac output",
+    "id": "#lvot-flow",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Ventricolo sinistro",
+    "strumento": "Left ventricular pressures",
+    "id": "#lv-pressure",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Valvola aortica",
+    "strumento": "Aortic size & index",
+    "id": "#aortic-size",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Valvola aortica",
+    "strumento": "Aortic stenosis · continuity & stress",
+    "id": "#aortic-stenosis",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 6
+  },
+  {
+    "categoria": "Valvola aortica",
+    "strumento": "Aortic regurgitation · PISA",
+    "id": "#ar-pisa",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Valvola aortica",
+    "strumento": "Aortic regurgitation · continuity",
+    "id": "#ar-continuity",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Valvola aortica",
+    "strumento": "Aortic prosthesis · EOA, DVI, PPM",
+    "id": "#aortic-prosthesis",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 7
+  },
+  {
+    "categoria": "Valvola aortica",
+    "strumento": "Surgical aortic prosthesis · obstruction",
+    "id": "#aortic-prosthesis-screen",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Valvola aortica",
+    "strumento": "Aortic prosthesis · serial comparison",
+    "id": "#aortic-prosthesis-serial",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 6
+  },
+  {
+    "categoria": "Valvola mitrale",
+    "strumento": "Mitral valve area · pressure half-time",
+    "id": "#mitral-pht",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 1
+  },
+  {
+    "categoria": "Valvola mitrale",
+    "strumento": "Mitral valve area · continuity",
+    "id": "#mitral-continuity",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Valvola mitrale",
+    "strumento": "Mitral stenosis · PISA valve area",
+    "id": "#mitral-pisa",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Valvola mitrale",
+    "strumento": "Mitral regurgitation · PISA",
+    "id": "#mr-pisa",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Valvola mitrale",
+    "strumento": "Mitral regurgitation · continuity",
+    "id": "#mr-continuity",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Valvola mitrale",
+    "strumento": "Mitral prosthesis · EOA, DVI, PPM",
+    "id": "#mitral-prosthesis",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Valvola mitrale",
+    "strumento": "Mitral prosthesis · obstruction",
+    "id": "#mitral-prosthesis-screen",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 6
+  },
+  {
+    "categoria": "Valvola tricuspide",
+    "strumento": "Tricuspid stenosis · significance",
+    "id": "#tricuspid-stenosis",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Valvola tricuspide",
+    "strumento": "Tricuspid regurgitation · quantification",
+    "id": "#tr-pisa",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Valvola polmonare",
+    "strumento": "Pulmonic stenosis · peak gradient",
+    "id": "#pulmonic-stenosis",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 1
+  },
+  {
+    "categoria": "Valvola polmonare",
+    "strumento": "Pulmonic regurgitation · continuity",
+    "id": "#pulmonic-regurg",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Sinus rhythm · general pathway",
+    "id": "#diastolic-sinus",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Atrial fibrillation",
+    "id": "#diastolic-af",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Sinus tachycardia",
+    "id": "#diastolic-tachycardia",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Moderate/severe MAC",
+    "id": "#diastolic-mac",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Significant mitral regurgitation",
+    "id": "#diastolic-mr",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Mitral stenosis",
+    "id": "#diastolic-ms",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Hypertrophic cardiomyopathy",
+    "id": "#diastolic-hcm",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Restrictive cardiomyopathy",
+    "id": "#diastolic-restrictive",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Pulmonary hypertension",
+    "id": "#diastolic-ph",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Heart transplant · sinus rhythm",
+    "id": "#diastolic-transplant",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "LV assist device",
+    "id": "#diastolic-lvad",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 5
+  },
+  {
+    "categoria": "Diastologia",
+    "strumento": "Diastolic exercise echo",
+    "id": "#diastolic-exercise",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Pericardio",
+    "strumento": "Pericardial effusion · size",
+    "id": "#effusion-size",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 1
+  },
+  {
+    "categoria": "Pericardio",
+    "strumento": "Mitral inflow · respiratory variation",
+    "id": "#mitral-respiratory",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Pericardio",
+    "strumento": "Tricuspid inflow · respiratory variation",
+    "id": "#tricuspid-respiratory",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Pericardio",
+    "strumento": "LVOT · respiratory variation",
+    "id": "#lvot-respiratory",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Pericardio",
+    "strumento": "Hepatic vein · expiratory reversal",
+    "id": "#hepatic-expiratory-reversal",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Pericardio",
+    "strumento": "Annulus reversus · medial / lateral e′",
+    "id": "#annulus-reversus",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Fisica e superficie corporea",
+    "strumento": "Wave relationships",
+    "id": "#wave-relations",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Fisica e superficie corporea",
+    "strumento": "Acoustic impedance and intensity",
+    "id": "#acoustic",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Fisica e superficie corporea",
+    "strumento": "Pulse repetition and Nyquist",
+    "id": "#pulse-repetition",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Fisica e superficie corporea",
+    "strumento": "Pulse length and near field",
+    "id": "#pulse-geometry",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 3
+  },
+  {
+    "categoria": "Fisica e superficie corporea",
+    "strumento": "Doppler equation",
+    "id": "#doppler-equation",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Fisica e superficie corporea",
+    "strumento": "Poiseuille flow",
+    "id": "#poiseuille",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Fisica e superficie corporea",
+    "strumento": "Body surface area · height and weight",
+    "id": "#bsa",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Shunt e congenite",
+    "strumento": "Qp/Qs · Doppler stroke volumes",
+    "id": "#qpqs",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Shunt e congenite",
+    "strumento": "ASD · anatomy, shunt & Doppler",
+    "id": "#asd",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 4
+  },
+  {
+    "categoria": "Shunt e congenite",
+    "strumento": "VSD · size & right-heart pressure",
+    "id": "#vsd-pressure",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Shunt e congenite",
+    "strumento": "PDA · shunt & PA pressure",
+    "id": "#pda-pressure",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Shunt e congenite",
+    "strumento": "Coarctation · anatomy & gradients",
+    "id": "#coarctation",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 2
+  },
+  {
+    "categoria": "Shunt e congenite",
+    "strumento": "Fontan · circulation & gradients",
+    "id": "#fontan-gradient",
+    "aperto": true,
+    "esempio_nel_ciclo": true,
+    "risultato_presente": true,
+    "input_visibili": 1
+  }
+]

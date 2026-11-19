@@ -50,7 +50,9 @@ test('Parasternale asse lungo: misure telediastoliche lungo la linea standard (A
     let pe = [-ax[1] / l, ax[0] / l]; if (pe[1] < 0) pe = [-pe[0], -pe[1]];
     const a = [c[0] - pe[0] * 8, c[1] - pe[1] * 8], b = [c[0] + pe[0] * 8, c[1] + pe[1] * 8];
     const xs = incroci(Pv, VS, a, b), xr = incroci(Pv, VD, a, b);
-    assert.ok(xs.length >= 4, 'z ' + z + ': ventricolo sinistro attraversato da parte a parte');
+    // Endocardio settale, endocardio posteriore, epicardio posteriore. La superficie settale
+    // destra si legge dal VD: un quarto incrocio non va inventato chiudendo una mesh aperta.
+    assert.ok(xs.length >= 3, 'z ' + z + ': presenti le tre interfacce reali necessarie alle misure');
     const endoSetto = xs[xs.length - 3], endoPost = xs[xs.length - 2], epiPost = xs[xs.length - 1], setttoVD = xr.filter(x => x < endoSetto).pop();
     const lvid = endoPost - endoSetto, pw = epiPost - endoPost, ivs = endoSetto - setttoVD;
     assert.ok(lvid >= 4.2 && lvid <= 5.8, 'z ' + z + ': diametro telediastolico ' + lvid.toFixed(2) + ' cm (normale 4,2–5,8)');

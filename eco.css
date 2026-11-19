@@ -73,3 +73,17 @@
 .eco-cwtxt em{color:#ffd95e;font-style:normal}
 .eco-schermo.cw .eco-cwtxt{display:block}
 .eco-schermo.mmodo{height:min(66vh,660px)}
+.eco-bmode-comandi{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.eco-bmode-comandi label{display:flex;align-items:center;gap:8px;font-size:14px}
+.eco-bmode-comandi select{min-height:44px;max-width:100%;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;padding:8px;font:inherit}
+#ecoMotoreStato{font-size:12px;color:var(--muted);max-width:100%}
+.eco-bmode-avanzati{font-size:14px;border:1px solid var(--line);border-radius:10px;padding:0 12px}
+.eco-bmode-avanzati summary{min-height:44px;display:list-item;align-content:center;cursor:pointer}
+.eco-bmode-avanzati p{line-height:1.5}
+.eco-bmode-check{min-height:44px;display:flex;align-items:center;gap:10px}
+.eco-tgc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.eco-tgc label{font-size:12px;display:flex;flex-direction:column;min-width:0}
+.eco-tgc input{width:100%;min-height:44px}
+#v-eco button{min-height:44px}
+#v-eco input[type=range]{min-height:44px}
+#ecoStrati button:disabled{opacity:.4;cursor:default}
