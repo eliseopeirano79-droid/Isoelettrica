@@ -1,7 +1,7 @@
-# Revisione F1 in corso; il manifest F0 resta riferito a v47.1 in reports/IMPRONTE-eco-f0-v47.1.sha256
+# Revisione F1 in corso; manifest F0 storico in reports/IMPRONTE-eco-f0-v47.1.sha256
 4044c0640fd3f24378e3b90c9390356819b51bd0f2ebed33b93bce42a5c12e03  ./AGENTS.md
 e15ee67bdc0539464101c4fb9f63bb368146604f4a53804abac36103dd218060  ./README.md
-b0e857ce262dbec83fd1ea342e55dec98202cdc9ee66ea7f0c4822e1662cd2e7  ./STATO.md
+515cb8b567e622078963b34241f595d50bf6d31526a999a961e9ce987bd8e72b  ./STATO.md
 04f89313a0381cf8579313961dc3dc03658c83cd792b8405d7d2bf5f40a43e79  ./anatomia.html
 d1a2cbf816708a613b6b3794ece119575ecfb1ad2a05925ffd1dc4a2db0fd5b2  ./app.js
 1f86e2147fbc5a805416f0cb164e72b39b01f2135419f80e037f9f5072aa02ea  ./atlante-digitale.js
@@ -11,7 +11,7 @@ df63992ef69bcceb695d7649cc5c97fa87396385a8d90819f64971ab96e29bb7  ./eco-bmode-sh
 93ad829274af69a596652428aa5f3000bd97bfec3a4fa88507e068a639318849  ./eco-bmode.js
 062fee39222c04058b2e55a0089c204a573f56719c14baa95847455e57c54ccb  ./eco-localizzatore2d.js
 b440d81c3f570a22390165da3b25a063dcbefd7fc6ec38c23bf226f8f2816d65  ./eco.css
-7d6d253db0e6e20f3919922cd730affa717b91625f267685d97b0fd886f17dcc  ./eco.js
+11d84498b5cf331bad41b0f4aa051b23b33ee6303d9466de5fa79e5e9c304783  ./eco.js
 f578675e70fd9f4d7f4e0e48c34fc6979b1010d461626ff6104f94d85b931dcd  ./engine.js
 1636d6024ed4e05e89aa048a2f5bb50efd2e45c68f00a4afc9247cfc3fa07bd7  ./index.html
 aa1f1377c6304fd009e21bdfa728dbf685a7dda0343b6fc9c7f3cd9a4a88a39d  ./ipertrofie.js
@@ -25,6 +25,8 @@ daf16af212043bf88d73e65eff8a57c8158fee2e8f9de4b7fdacb95655128419  ./reports/2026
 0403fac5aaf1e9edbdb1ed891b939629f8c1d1c6f74bd299ad75b123fb30a750  ./reports/2026-11-19-eco-f1-avanzamento.md
 f498822d68e7c30a2e5fad81cd8083d4549689a05db337483fd42d06d2b08643  ./reports/2026-11-19-eco-f1-npm-test.txt
 82203613ec9c90dff95559f8543b258dc83570a25894ea825c23a9fa33df00e6  ./reports/2026-11-19-eco-f1-piano.md
+ed5b9b5bbc2bda766d9adaf756cf71d782e6b3af1679399c5a2371016a26a416  ./reports/2026-11-20-eco-taglio-npm-test.txt
+2158190a67a24ac291cb0c05cc43a611b980bcfe84ff53ccef6f4aca08be984e  ./reports/2026-11-20-eco-taglio.md
 56fcd02f3d3ea41e709f5747844b475606f7c9c636073d4a6355c416c932224b  ./reports/IMPRONTE-eco-f0-v47.1.sha256
 262b02aa4e5d76066e4a85aa4dbddaca1f8e0acb5eaac4ccfa3a8ae20c827679  ./reports/eco-audit/contorni/a2c-td.jpg
 c2824b888461ed8109299b39664ab451adce097a84e115e5c2fedb66e250b763  ./reports/eco-audit/contorni/a2c-ts.jpg
@@ -62,10 +64,35 @@ eff04a77bbd7cbaed907e02939b79961490f3a529afe537e764e54ab123a0212  ./reports/eco-
 7552ad098928b7867f35ff543456afe3739b12b4425f1a27679fc1bf5c025e0c  ./reports/eco-audit/qa/psax-ao-nuovo-td.jpg
 6dc87e889aa9b44ff7bbe5cecfaf5a274614fbe5964c9cb89bfab523c223d402  ./reports/eco-audit/qa/psax-ao-nuovo-ts.jpg
 6453d189f18e64aef17bde454d78303534f3399240853304e298b38d29f3fd34  ./reports/eco-audit/qa/psax-mv-classico-td.jpg
+e002d01f91fba41ffa4efa7365b17030d97fd1e5dc569a8f77076c797ed137ac  ./reports/eco-audit/taglio-2026-11-20/a2c-td.jpg
+13a2ad2585bcaf0b778d5d4d5c067a175fda6b05b72295259e3a5c66cb23a11f  ./reports/eco-audit/taglio-2026-11-20/a2c-ts.jpg
+01b214a67ae56caf1c10918b61644c7aad4450c4c6dccff7af5b7860998d40b2  ./reports/eco-audit/taglio-2026-11-20/a3c-td.jpg
+ef0a365ca032f2521c70653f93e3281a469f0e45678bc1f2e31b69feee61bd73  ./reports/eco-audit/taglio-2026-11-20/a3c-ts.jpg
+9389f3302f16903a5cc719bcaffeb136c3d6a685bbc173163d394755039983a7  ./reports/eco-audit/taglio-2026-11-20/a4c-td.jpg
+02a68ecdb5201596bbb9e985c31eb0cd5b20ad18ba0099dc0ac660275411e5cb  ./reports/eco-audit/taglio-2026-11-20/a4c-ts.jpg
+1f72bc3bdc81b915ea037e2deb2b63f2cdb4d5d9c7f2799cb7050bd8fdf67139  ./reports/eco-audit/taglio-2026-11-20/audit-taglio.json
+48006e9e21ded5c3a3bf173b862d65674fed0dfb564c03232c20a60954534785  ./reports/eco-audit/taglio-2026-11-20/contatto-1.jpg
+9dc0ec7aeb47bfbcd4267356340690e72d977d0a017ae43d2b2bda54ae8c5e6e  ./reports/eco-audit/taglio-2026-11-20/contatto-2.jpg
+2d0bbe74ca866f67136457b4ec81deb7012b278b6bee5cd111747c1da1234900  ./reports/eco-audit/taglio-2026-11-20/contatto-3.jpg
+da113f89b8324914a073c46b431c4c1b74584cfc1afc7a596661db8a63a8af20  ./reports/eco-audit/taglio-2026-11-20/indice.json
+f5c0ccd0763c004a2d21968436bb2ea26e47f13f2d056b23498be56e2d1a3159  ./reports/eco-audit/taglio-2026-11-20/plax-td.jpg
+ff4872170295b022f926f80997e4ed5d9502afef309e140f8e46d000a4fdcc63  ./reports/eco-audit/taglio-2026-11-20/plax-ts.jpg
+35830196cd2c35b06cf2a56291161617291a7c74ce5918b6d17805992cff1b05  ./reports/eco-audit/taglio-2026-11-20/psax-ao-td.jpg
+fdf5279964aec8aa22a9a8760d5c24dc81ea6a8d2e358d51fad62362a5849167  ./reports/eco-audit/taglio-2026-11-20/psax-ao-ts.jpg
+70ba19a9424d07292405b028f6159e9dd068587e198894dab6177c7afd354571  ./reports/eco-audit/taglio-2026-11-20/psax-ap-td.jpg
+32566bf556c974854b2aedce38d1a0bb0e751e87ca4cab1d4656606e758be0aa  ./reports/eco-audit/taglio-2026-11-20/psax-ap-ts.jpg
+b047058446bec31ab26c844fd61da589c18accb5cee02a1afef1245ada559158  ./reports/eco-audit/taglio-2026-11-20/psax-mv-td.jpg
+4d01752c5c81196456629e8f21f0b4d5b786d56dad2bfd38d2db1128cacb1c3c  ./reports/eco-audit/taglio-2026-11-20/psax-mv-ts.jpg
+314a38ae8d380add5d404638b32415f3f98aacde5a824c3770666fe70f91ee0b  ./reports/eco-audit/taglio-2026-11-20/psax-pm-td.jpg
+5a111652b0ce48687e30ba8bcbe66a905a686352aa9f0523775a65db3aef0951  ./reports/eco-audit/taglio-2026-11-20/psax-pm-ts.jpg
+74496bcaf437befb384d64f783ab783764348a97389ec472791b04625c73be20  ./reports/eco-audit/taglio-2026-11-20/sub-td.jpg
+98dfef3fd6a9f98d9b839bc7477a681b4d5c9aff2dd04739ef9eb7fa05333010  ./reports/eco-audit/taglio-2026-11-20/sub-ts.jpg
 d7f2c11eee45c8c1d56079053dc768bd816ea527336e365873bad2b5e21562ad  ./sw.js
 02a51f2609ce9d4a248c3a2ce22cbe8b57c5bbdc2fdf670578096a77b3e13762  ./tests/eco-bmode.test.cjs
 ad4aad996aef399d3ee8a0ed7cba91e9fccab69e52b4b2e275a8bbf649b7b202  ./tests/eco-coerenza.test.cjs
 224af8ef3fd4b869307dd360ab5cde13a25e288463c844cc01ca55064e0bbf16  ./tests/eco-contorni.test.cjs
+e77b1bbb7596c239915458bd2ddfdd762b36bfdcce593920b8c088fa81d165fe  ./tests/eco-taglio.test.cjs
 05a51f4da7608be6fd2be36c4947918368016274f946d3a8ad4d59b0df9b0eb3  ./tests/eco.test.cjs
 fdbf86e225eb17afca359d7899cf580a8b574e62bed91d5f6d5601193eb7f23d  ./tests/update-banner.test.cjs
+23f7a66b39487459a2be4a8e323b9f37f63aaf4b7a9600e4aef424da38168ed6  ./tools/audit-eco-taglio.cjs
 d2efc701eb82df1181776afc5ec17890da37e519a7965528ee35191aeb5bc829  ./tools/qa-webgl.html

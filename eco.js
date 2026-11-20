@@ -30,37 +30,71 @@ function salda(pos, idx) {
 }
 /* Sezione di una mesh con il piano per o di normale nrm. Restituisce le catene di punti 3D: { p: Float32Array, chiusa }. */
 function taglia(m, o, nrm, grezzo) {
-  const pos = m.pos, tri = m.tri, nv = m.nv, d = m._d || (m._d = new Float32Array(nv));
-  let su = 0;
-  for (let i = 0, j = 0; i < nv; i++, j += 3) { d[i] = (pos[j] - o[0]) * nrm[0] + (pos[j + 1] - o[1]) * nrm[1] + (pos[j + 2] - o[2]) * nrm[2]; if (d[i] >= 0) su++; }
-  if (su === 0 || su === nv) return [];
-  const punti = new Map(), X = [], a0 = [], a1 = [];
+  const pos = m.pos, tri = m.tri, nv = m.nv, EPS = 1e-9;
+  if (!o.every(Number.isFinite) || !nrm.every(Number.isFinite) || Math.hypot(...nrm) < EPS) return [];
+  const d = m._d instanceof Float64Array && m._d.length === nv ? m._d : (m._d = new Float64Array(nv));
+  let minimo = Infinity, massimo = -Infinity;
+  for (let i = 0, j = 0; i < nv; i++, j += 3) {
+    d[i] = (pos[j] - o[0]) * nrm[0] + (pos[j + 1] - o[1]) * nrm[1] + (pos[j + 2] - o[2]) * nrm[2];
+    minimo = Math.min(minimo, d[i]); massimo = Math.max(massimo, d[i]);
+  }
+  if (minimo > EPS || massimo < -EPS) return [];
+  const punti = new Map(), X = [], adiacenti = [], segmenti = [], presenti = new Set(), coplanari = new Map(), faccePiane = new Set();
+  const vertice = a => {
+    const key = -a - 1; let i = punti.get(key);
+    if (i === undefined) { i = X.length / 3; punti.set(key, i); X.push(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2]); adiacenti.push([]); }
+    return i;
+  };
   const punto = (a, b) => {
+    if (Math.abs(d[a]) <= EPS) return vertice(a);
+    if (Math.abs(d[b]) <= EPS) return vertice(b);
     if (a > b) { const t = a; a = b; b = t; }
-    const k = a * nv + b; let i = punti.get(k);
+    const key = a * nv + b; let i = punti.get(key);
     if (i === undefined) {
       const t = d[a] / (d[a] - d[b]), ia = a * 3, ib = b * 3;
-      i = X.length / 3; punti.set(k, i); a0.push(-1); a1.push(-1);
+      i = X.length / 3; punti.set(key, i); adiacenti.push([]);
       X.push(pos[ia] + (pos[ib] - pos[ia]) * t, pos[ia + 1] + (pos[ib + 1] - pos[ia + 1]) * t, pos[ia + 2] + (pos[ib + 2] - pos[ia + 2]) * t);
     }
     return i;
   };
-  const lega = (i, j) => { if (a0[i] < 0) a0[i] = j; else if (a1[i] < 0) a1[i] = j; };
-  for (let t = 0; t < tri.length; t += 3) {
-    const a = tri[t], b = tri[t + 1], c = tri[t + 2], sa = d[a] >= 0, sb = d[b] >= 0, sc = d[c] >= 0;
-    if (sa === sb && sb === sc) continue;
-    let p, q;
-    if (sa === sb) { p = punto(a, c); q = punto(b, c); } else if (sa === sc) { p = punto(a, b); q = punto(c, b); } else { p = punto(b, a); q = punto(c, a); }
-    if (p !== q) { lega(p, q); lega(q, p); }
-  }
-  const n = a0.length, visto = new Uint8Array(n), catene = [];
-  const cammina = (inizio) => {
-    const c = []; let prec = -1, i = inizio;
-    while (i >= 0 && !visto[i]) { visto[i] = 1; c.push(X[i * 3], X[i * 3 + 1], X[i * 3 + 2]); const s = a0[i] !== prec && a0[i] >= 0 && !visto[a0[i]] ? a0[i] : (a1[i] >= 0 && !visto[a1[i]] ? a1[i] : -1); prec = i; i = s; }
-    return c;
+  const lega = (a, b) => {
+    if (a === b) return; const key = a < b ? a + ',' + b : b + ',' + a;
+    if (presenti.has(key)) return; presenti.add(key);
+    const e = segmenti.length; segmenti.push([a, b]); adiacenti[a].push(e); adiacenti[b].push(e);
   };
-  for (let i = 0; i < n; i++) if (!visto[i] && a1[i] < 0) { const c = cammina(i); if (c.length >= 6) catene.push({ p: new Float32Array(c), chiusa: false }); }
-  for (let i = 0; i < n; i++) if (!visto[i]) { const c = cammina(i); if (c.length >= 9) catene.push({ p: new Float32Array(c), chiusa: true }); }
+  for (let t = 0; t < tri.length; t += 3) {
+    const a = tri[t], b = tri[t + 1], c = tri[t + 2], da = d[a], db = d[b], dc = d[c];
+    if (Math.min(da, db, dc) > EPS || Math.max(da, db, dc) < -EPS) continue;
+    if (Math.abs(da) <= EPS && Math.abs(db) <= EPS && Math.abs(dc) <= EPS) {
+      const fk = [a, b, c].sort((x, y) => x - y).join(','); if (faccePiane.has(fk)) continue; faccePiane.add(fk);
+      for (const [u, v] of [[a, b], [b, c], [c, a]]) { const key = u < v ? u + ',' + v : v + ',' + u, e = coplanari.get(key); if (e) e.quante++; else coplanari.set(key, { u, v, quante: 1 }); }
+      continue;
+    }
+    const hits = [];
+    for (const [u, v] of [[a, b], [b, c], [c, a]]) {
+      if (Math.abs(d[u]) <= EPS) { const i = vertice(u); if (!hits.includes(i)) hits.push(i); }
+      if (Math.abs(d[v]) <= EPS) { const i = vertice(v); if (!hits.includes(i)) hits.push(i); }
+      if (d[u] > EPS && d[v] < -EPS || d[u] < -EPS && d[v] > EPS) { const i = punto(u, v); if (!hits.includes(i)) hits.push(i); }
+    }
+    if (hits.length === 2) lega(hits[0], hits[1]);
+  }
+  for (const e of coplanari.values()) if (e.quante === 1) lega(vertice(e.u), vertice(e.v));
+  /* Si percorrono gli archi, non i soli vertici: un nodo con tre o più rami non deve
+     perdere segmenti. Una catena è chiusa solo tornando al punto iniziale lungo un arco reale. */
+  const usati = new Uint8Array(segmenti.length), catene = [];
+  const cammina = (inizio, primo) => {
+    const p = [X[inizio * 3], X[inizio * 3 + 1], X[inizio * 3 + 2]]; let i = inizio, e = primo, chiusa = false;
+    while (e !== undefined && !usati[e]) {
+      usati[e] = 1; const s = segmenti[e], j = s[0] === i ? s[1] : s[0];
+      if (j === inizio) { chiusa = true; break; }
+      p.push(X[j * 3], X[j * 3 + 1], X[j * 3 + 2]); i = j;
+      if (adiacenti[i].length !== 2) break;
+      e = adiacenti[i].find(k => !usati[k]);
+    }
+    if (p.length >= 6) catene.push({ p: new Float32Array(p), chiusa });
+  };
+  for (let i = 0; i < adiacenti.length; i++) if (adiacenti[i].length !== 2) for (const e of adiacenti[i]) if (!usati[e]) cammina(i, e);
+  for (let e = 0; e < segmenti.length; e++) if (!usati[e]) cammina(segmenti[e][0], e);
   return grezzo ? catene : unisci(catene);
 }
 /* Le superfici anatomiche possono essere aperte agli orifizi. Non si devono chiudere per
