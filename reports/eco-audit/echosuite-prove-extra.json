@@ -1,0 +1,12 @@
+{
+  "webgl": "Avvio fallito con Error creating WebGL context, anche dopo Try again; trascinamento 3D non verificato.",
+  "catalogoAperto": 70,
+  "esempiNelCiclo": 68,
+  "esempioAtrioDestroProvatoPrimaDelCiclo": true,
+  "wmsi": "Clic primo segmento: 17/16 = 1,06; esclusione non visualizzato: 15/15 = 1,00; Clear ripristina.",
+  "validazione": "ESV superiore a EDV: avviso e nessuna EF valida.",
+  "ricerca": "Provate query con risultati e query senza risultati.",
+  "preferiti": "Aggiunta, filtro, riapertura e rimozione del calcolatore EF provati.",
+  "metodo3d": "Cambio 2D biplano / 3D misurato; selettori Both planes e Crop 3D display provati nella figura didattica.",
+  "fonti": "Aperte fonti/licenze, anatomia e video; licenze riportate dal sito, da verificare sulle fonti originali prima di riuso."
+}

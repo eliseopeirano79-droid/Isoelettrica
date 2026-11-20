@@ -1,0 +1,7042 @@
+{
+  "metodo": "Intersezioni dei triangoli contro contorni; coordinate quantizzate a 1e-4 unità del modello, non misura clinica",
+  "viste": 9,
+  "totali": {
+    "attuale": {
+      "attesi": 19004,
+      "prodotti": 19004,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 8
+    },
+    "precedente": {
+      "attesi": 19004,
+      "prodotti": 19004,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 8
+    }
+  },
+  "righe": [
+    {
+      "vista": "plax",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 153,
+      "prodotti": 153,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 153,
+      "prodotti": 153,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 363,
+      "prodotti": 363,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 363,
+      "prodotti": 363,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 174,
+      "prodotti": 174,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 174,
+      "prodotti": 174,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 551,
+      "prodotti": 551,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 551,
+      "prodotti": 551,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 40,
+      "prodotti": 40,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 40,
+      "prodotti": 40,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 56,
+      "prodotti": 56,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 56,
+      "prodotti": 56,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 190,
+      "prodotti": 190,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 190,
+      "prodotti": 190,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 49,
+      "prodotti": 49,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 49,
+      "prodotti": 49,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 86,
+      "prodotti": 86,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 86,
+      "prodotti": 86,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 220,
+      "prodotti": 220,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 220,
+      "prodotti": 220,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 37,
+      "prodotti": 37,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 37,
+      "prodotti": 37,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 104,
+      "prodotti": 104,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 104,
+      "prodotti": 104,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 88,
+      "prodotti": 88,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 88,
+      "prodotti": 88,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 31,
+      "prodotti": 31,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 31,
+      "prodotti": 31,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 167,
+      "prodotti": 167,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 167,
+      "prodotti": 167,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 78,
+      "prodotti": 78,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 78,
+      "prodotti": 78,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 18,
+      "prodotti": 18,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 18,
+      "prodotti": 18,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 45,
+      "prodotti": 45,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 45,
+      "prodotti": 45,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 25,
+      "prodotti": 25,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 25,
+      "prodotti": 25,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 28,
+      "prodotti": 28,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 28,
+      "prodotti": 28,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "plax",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 426,
+      "prodotti": 426,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 426,
+      "prodotti": 426,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 371,
+      "prodotti": 371,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 371,
+      "prodotti": 371,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 305,
+      "prodotti": 305,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 305,
+      "prodotti": 305,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 72,
+      "prodotti": 72,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 72,
+      "prodotti": 72,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 112,
+      "prodotti": 112,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 112,
+      "prodotti": 112,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 64,
+      "prodotti": 64,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 64,
+      "prodotti": 64,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 111,
+      "prodotti": 111,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 111,
+      "prodotti": 111,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 139,
+      "prodotti": 139,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 139,
+      "prodotti": 139,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 162,
+      "prodotti": 162,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 162,
+      "prodotti": 162,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 62,
+      "prodotti": 62,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 62,
+      "prodotti": 62,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 23,
+      "prodotti": 23,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 23,
+      "prodotti": 23,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 38,
+      "prodotti": 38,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 38,
+      "prodotti": 38,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 30,
+      "prodotti": 30,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 30,
+      "prodotti": 30,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ao",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 137,
+      "prodotti": 137,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 137,
+      "prodotti": 137,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 500,
+      "prodotti": 500,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 500,
+      "prodotti": 500,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 52,
+      "prodotti": 52,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 52,
+      "prodotti": 52,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 404,
+      "prodotti": 404,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 404,
+      "prodotti": 404,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 28,
+      "prodotti": 28,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 28,
+      "prodotti": 28,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 260,
+      "prodotti": 260,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 260,
+      "prodotti": 260,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 312,
+      "prodotti": 312,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 312,
+      "prodotti": 312,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 155,
+      "prodotti": 155,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 155,
+      "prodotti": 155,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 23,
+      "prodotti": 23,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 23,
+      "prodotti": 23,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 59,
+      "prodotti": 59,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 59,
+      "prodotti": 59,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 43,
+      "prodotti": 43,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 43,
+      "prodotti": 43,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 32,
+      "prodotti": 32,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 32,
+      "prodotti": 32,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-mv",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 415,
+      "prodotti": 415,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 415,
+      "prodotti": 415,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 427,
+      "prodotti": 427,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 427,
+      "prodotti": 427,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 101,
+      "prodotti": 101,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 101,
+      "prodotti": 101,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 63,
+      "prodotti": 63,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 63,
+      "prodotti": 63,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 71,
+      "prodotti": 71,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 71,
+      "prodotti": 71,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 87,
+      "prodotti": 87,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 87,
+      "prodotti": 87,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 116,
+      "prodotti": 116,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 116,
+      "prodotti": 116,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 64,
+      "prodotti": 64,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 64,
+      "prodotti": 64,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 58,
+      "prodotti": 58,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 58,
+      "prodotti": 58,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 66,
+      "prodotti": 66,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 66,
+      "prodotti": 66,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 65,
+      "prodotti": 65,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 65,
+      "prodotti": 65,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 43,
+      "prodotti": 43,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 43,
+      "prodotti": 43,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-pm",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 289,
+      "prodotti": 289,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 289,
+      "prodotti": 289,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 330,
+      "prodotti": 330,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 330,
+      "prodotti": 330,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 114,
+      "prodotti": 114,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 114,
+      "prodotti": 114,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 89,
+      "prodotti": 89,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 89,
+      "prodotti": 89,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 94,
+      "prodotti": 94,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 94,
+      "prodotti": 94,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 70,
+      "prodotti": 70,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 70,
+      "prodotti": 70,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 48,
+      "prodotti": 48,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 48,
+      "prodotti": 48,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 68,
+      "prodotti": 68,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 68,
+      "prodotti": 68,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 72,
+      "prodotti": 72,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 72,
+      "prodotti": 72,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 154,
+      "prodotti": 154,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 154,
+      "prodotti": 154,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 53,
+      "prodotti": 53,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 53,
+      "prodotti": 53,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 42,
+      "prodotti": 42,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 42,
+      "prodotti": 42,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "psax-ap",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 359,
+      "prodotti": 359,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 359,
+      "prodotti": 359,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 385,
+      "prodotti": 385,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 385,
+      "prodotti": 385,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 205,
+      "prodotti": 205,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 205,
+      "prodotti": 205,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 442,
+      "prodotti": 442,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 442,
+      "prodotti": 442,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 96,
+      "prodotti": 96,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 96,
+      "prodotti": 96,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 101,
+      "prodotti": 101,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 101,
+      "prodotti": 101,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 250,
+      "prodotti": 250,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 250,
+      "prodotti": 250,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 203,
+      "prodotti": 203,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 203,
+      "prodotti": 203,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 84,
+      "prodotti": 84,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 84,
+      "prodotti": 84,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 114,
+      "prodotti": 114,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 114,
+      "prodotti": 114,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 43,
+      "prodotti": 43,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 43,
+      "prodotti": 43,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 64,
+      "prodotti": 64,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 64,
+      "prodotti": 64,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 124,
+      "prodotti": 124,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 124,
+      "prodotti": 124,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 24,
+      "prodotti": 24,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 24,
+      "prodotti": 24,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 65,
+      "prodotti": 65,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 65,
+      "prodotti": 65,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 63,
+      "prodotti": 63,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 63,
+      "prodotti": 63,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a4c",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 302,
+      "prodotti": 302,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 302,
+      "prodotti": 302,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 561,
+      "prodotti": 561,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 561,
+      "prodotti": 561,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 25,
+      "prodotti": 25,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 25,
+      "prodotti": 25,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 225,
+      "prodotti": 225,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 225,
+      "prodotti": 225,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 42,
+      "prodotti": 42,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 42,
+      "prodotti": 42,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 44,
+      "prodotti": 44,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 44,
+      "prodotti": 44,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a2c",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 153,
+      "prodotti": 153,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 153,
+      "prodotti": 153,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 363,
+      "prodotti": 363,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 363,
+      "prodotti": 363,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 174,
+      "prodotti": 174,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 174,
+      "prodotti": 174,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 551,
+      "prodotti": 551,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 551,
+      "prodotti": 551,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 40,
+      "prodotti": 40,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 40,
+      "prodotti": 40,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 56,
+      "prodotti": 56,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 56,
+      "prodotti": 56,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 190,
+      "prodotti": 190,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 190,
+      "prodotti": 190,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 49,
+      "prodotti": 49,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 49,
+      "prodotti": 49,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 86,
+      "prodotti": 86,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 86,
+      "prodotti": 86,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 220,
+      "prodotti": 220,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 220,
+      "prodotti": 220,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 37,
+      "prodotti": 37,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 37,
+      "prodotti": 37,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 104,
+      "prodotti": 104,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 104,
+      "prodotti": 104,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 88,
+      "prodotti": 88,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 88,
+      "prodotti": 88,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 31,
+      "prodotti": 31,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 31,
+      "prodotti": 31,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 167,
+      "prodotti": 167,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 167,
+      "prodotti": 167,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 78,
+      "prodotti": 78,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 78,
+      "prodotti": 78,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 20,
+      "prodotti": 20,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 18,
+      "prodotti": 18,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 18,
+      "prodotti": 18,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 45,
+      "prodotti": 45,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 45,
+      "prodotti": 45,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 25,
+      "prodotti": 25,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 25,
+      "prodotti": 25,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 28,
+      "prodotti": 28,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 28,
+      "prodotti": 28,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "a3c",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right atrium.001",
+      "versione": "attuale",
+      "attesi": 406,
+      "prodotti": 406,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right atrium.001",
+      "versione": "precedente",
+      "attesi": 406,
+      "prodotti": 406,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right ventricle.001",
+      "versione": "attuale",
+      "attesi": 407,
+      "prodotti": 407,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right ventricle.001",
+      "versione": "precedente",
+      "attesi": 407,
+      "prodotti": 407,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left atrium.001",
+      "versione": "attuale",
+      "attesi": 135,
+      "prodotti": 135,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left atrium.001",
+      "versione": "precedente",
+      "attesi": 135,
+      "prodotti": 135,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left ventricle.001",
+      "versione": "attuale",
+      "attesi": 456,
+      "prodotti": 456,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left ventricle.001",
+      "versione": "precedente",
+      "attesi": 456,
+      "prodotti": 456,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 83,
+      "prodotti": 83,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 83,
+      "prodotti": 83,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Anterior papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "attuale",
+      "attesi": 10,
+      "prodotti": 10,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Septal papillary muscle of right ventricle.001",
+      "versione": "precedente",
+      "attesi": 10,
+      "prodotti": 10,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 58,
+      "prodotti": 58,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior papillary muscle of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 58,
+      "prodotti": 58,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 272,
+      "prodotti": 272,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Septal leaflet of right atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 272,
+      "prodotti": 272,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "attuale",
+      "attesi": 216,
+      "prodotti": 216,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Posterior leaflet of left atrioventricular valve.001",
+      "versione": "precedente",
+      "attesi": 216,
+      "prodotti": 216,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 32,
+      "prodotti": 32,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Non-coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 32,
+      "prodotti": 32,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right coronary leaflet.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Anterior semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right semilunar leaflet of pulmonary valve.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 46,
+      "prodotti": 46,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "attuale",
+      "attesi": 138,
+      "prodotti": 138,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "sub",
+      "mesh": "Circumflex artery of heart.001",
+      "versione": "precedente",
+      "attesi": 138,
+      "prodotti": 138,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 2
+    },
+    {
+      "vista": "sub",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left coronary artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left coronary artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "attuale",
+      "attesi": 72,
+      "prodotti": 72,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right inferolateral branch of right coronary artery.001",
+      "versione": "precedente",
+      "attesi": 72,
+      "prodotti": 72,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Septal branches of anterior interventricular artery.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Great cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Great cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 22,
+      "prodotti": 22,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "attuale",
+      "attesi": 123,
+      "prodotti": 123,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Middle cardiac vein.001",
+      "versione": "precedente",
+      "attesi": 123,
+      "prodotti": 123,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "attuale",
+      "attesi": 70,
+      "prodotti": 70,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior vein of left ventricle (//Posterior '').001",
+      "versione": "precedente",
+      "attesi": 70,
+      "prodotti": 70,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Coronary sinus.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Coronary sinus.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "attuale",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior vein of left ventricle.001",
+      "versione": "precedente",
+      "attesi": 26,
+      "prodotti": 26,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Ascending aorta.001",
+      "versione": "attuale",
+      "attesi": 17,
+      "prodotti": 17,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Ascending aorta.001",
+      "versione": "precedente",
+      "attesi": 17,
+      "prodotti": 17,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Aortic arch.001",
+      "versione": "attuale",
+      "attesi": 17,
+      "prodotti": 17,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Aortic arch.001",
+      "versione": "precedente",
+      "attesi": 17,
+      "prodotti": 17,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Pulmonary trunk.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Superior vena cava.001",
+      "versione": "attuale",
+      "attesi": 15,
+      "prodotti": 15,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Superior vena cava.001",
+      "versione": "precedente",
+      "attesi": 15,
+      "prodotti": 15,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Inferior vena cava (thoracic part).001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 123,
+      "prodotti": 123,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 123,
+      "prodotti": 123,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "attuale",
+      "attesi": 29,
+      "prodotti": 29,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right pulmonary artery.001",
+      "versione": "precedente",
+      "attesi": 29,
+      "prodotti": 29,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 35,
+      "prodotti": 35,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 35,
+      "prodotti": 35,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Left inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right superior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "attuale",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    },
+    {
+      "vista": "sub",
+      "mesh": "Right inferior pulmonary vein.001",
+      "versione": "precedente",
+      "attesi": 0,
+      "prodotti": 0,
+      "mancanti": 0,
+      "aggiunti": 0,
+      "entroTolleranza": 0
+    }
+  ]
+}

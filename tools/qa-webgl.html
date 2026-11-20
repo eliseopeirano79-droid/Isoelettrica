@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Isoelettrica · verifica grafica del browser</title>
+<style>
+body{font:16px/1.6 system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;background:#101923;color:#e7edf5}h1{line-height:1.2}button{font:inherit;border:0;border-radius:8px;background:#bfe3cf;color:#11261e;min-height:44px;padding:10px 20px;cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#1b2a38;padding:20px;border-radius:8px}a{color:#bfe3cf}.nota{color:#b8c7d5}
+</style>
+<h1>Verifica grafica del browser</h1>
+<p>Questa pagina di collaudo verifica Canvas 2D e la creazione di contesti WebGL, senza caricare il cuore o dipendere da Three.js. Non cambia le impostazioni del browser.</p>
+<button id="esegui">Esegui verifica</button>
+<pre id="risultato" aria-live="polite">Verifica non ancora eseguita.</pre>
+<p class="nota">Un contesto disponibile non certifica la qualità delle immagini, gli shader del simulatore o le prestazioni. Un errore qui, prima di caricare i modelli, distingue un limite del browser da un difetto delle sezioni anatomiche.</p>
+<p><a href="../">Torna a Isoelettrica</a></p>
+<script>
+'use strict';
+document.getElementById('esegui').addEventListener('click',()=>{
+  const prove=[];
+  for(const api of ['2d','webgl','webgl2']){
+    const canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;
+    const p={api,disponibile:false,messaggi:[]};
+    canvas.addEventListener('webglcontextcreationerror',e=>p.messaggi.push(e.statusMessage||'Errore senza dettaglio'));
+    try{
+      const ctx=canvas.getContext(api,api==='2d'?{}:{antialias:false,depth:false,stencil:false,failIfMajorPerformanceCaveat:false});
+      p.disponibile=!!ctx;
+      if(ctx&&api!=='2d'){
+        p.versione=ctx.getParameter(ctx.VERSION);p.renderer=ctx.getParameter(ctx.RENDERER);
+        p.textureMassima=ctx.getParameter(ctx.MAX_TEXTURE_SIZE);
+        const est=ctx.getExtension('WEBGL_lose_context');if(est)est.loseContext();
+      }
+    }catch(e){p.messaggi.push(String(e.message||e));}
+    prove.push(p);
+  }
+  document.getElementById('risultato').textContent=JSON.stringify({data:new Date().toISOString(),browser:navigator.userAgent,prove},null,2);
+});
+</script></html>

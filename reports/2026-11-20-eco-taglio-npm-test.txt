@@ -1,0 +1,383 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> isoelettrica@47.2.0 test
+> node validatore.js && node controllo-st.js && node audit.js && node --test tests/*.test.cjs && python3 -m unittest discover -s tests -p 'test_*.py'
+
+✓ normale
+✓ bradisinusale
+✓ tachisinusale
+✓ aritmiasinusale
+✓ esa
+✓ fa  — variabilità RR 21%
+✓ flutter
+✓ avnrt
+✓ bav1  — PR 280 ms
+✓ wenck  — PR del ciclo: 180 → 290 → 340 ms; incrementi 110, 50 ms; RR 796–1347 ms
+✓ mobitz2  — PR 170 ms costante
+✓ bav21
+✓ bav3  — atri 84/min, ventricoli 44/min
+✓ bbdx  — QRS 138 ms
+✓ bbsx  — QRS 152 ms
+✓ eas  — QRS 104 ms
+✓ eps  — QRS 102 ms
+✓ wpw  — PR 100 ms, QRS 130 ms
+✓ esv
+✓ tv  — QRS 170 ms
+✓ tdp
+✓ fv
+✓ stemi-inferiore
+✓ stemi-anteriore
+✓ stemi-laterale
+✓ stemi-posteriore
+✓ ivs  — Sokolow 41,7 mm, Cornell 29,6 mm
+✓ ivd  — Sokolow dx 15,3 mm, R/S V1 19,5
+✓ iperk
+✓ ipok
+✓ qtlungo
+✓ pericardite
+✓ bsa1
+✓ bsa2t1  — PP 857, 857, 858, 797, 1399, 855, 797, 1397 ms
+✓ bsa2t2
+✓ bsa3
+✓ arrestosinusale
+✓ braditachi
+✓ interatriale
+✓ ritmogiunzionale
+✓ idioventricolare
+✓ bavavanzato
+✓ dissociazioneav
+✓ bbdxinc
+✓ bbsxinc
+✓ bifascicolare
+✓ trifascicolare
+✓ ivcd
+✓ riva
+✓ pmvvi
+✓ pmddd
+✓ tachiatriale
+✓ tam
+✓ avrt
+✓ avrtanti
+✓ fapreeccitata
+✓ flutterv
+✓ asistolia
+✓ pea
+✓ wellens
+✓ dewinter
+✓ brugada
+✓ ipotermia
+✓ digitale
+✓ ipercalcemia
+✓ ipocalcemia
+✓ arvc
+✓ fa-bbdx
+✓ stemi-inf-bav3
+✓ ivs-eas
+✓ bav1-bbsx
+✓ ep-s1q3t3
+✓ stenosi-aortica
+✓ insufficienza-aortica
+✓ stenosi-mitralica
+✓ insufficienza-mitralica
+✓ prolasso-mitralico
+✓ insufficienza-tricuspidale
+✓ lgl
+✓ dae
+✓ icd
+✓ nstemi
+✓ angina-instabile
+✓ tamponamento
+✓ bpco
+✓ cmi
+✓ ripol-precoce
+✓ takotsubo
+✓ t-cerebrali
+✓ triciclici
+✓ ipotiroidismo
+✓ brugada2
+✓ qt-corto
+✓ inv-braccia
+✓ inv-braccio-gamba
+✓ inv-neutro
+✓ destrocardia
+✓ precordiali-scambiate
+✓ precordiali-alte
+✓ tremore
+✓ rete
+✓ staccato
+
+102 quadri conformi, 0 da rivedere.
+✓ normale {} — nessun ST ≥ 1 mm, T positive V2-V6, T negativa in aVR
+✓ takotsubo {"fase":"0"} — ST su in V3-V4, V1 risparmiata, aVR sotto, nessun altro sottoslivellamento
+✓ takotsubo {"fase":"1"} — T negative giganti V2-V5, positiva in aVR, QTc ≥ 500
+✓ stemi-anteriore {"fase":"1"} — ST su V2-V4, niente ST su in DIII
+✓ stemi-inferiore {"fase":"1"} — ST su DII-DIII-aVF, DIII > DII, reciprocità in aVL
+✓ stemi-laterale {"fase":"1"} — ST su DI, aVL, V5, V6; reciprocità in DIII
+✓ stemi-posteriore {"fase":"1"} — ST sotto V2-V3 con T positive
+✓ nstemi {"terr":"anteriore"} — sottoslivellamento senza sopraslivellamento speculare (tranne aVR e V1)
+✓ angina-instabile {"fase":"1","terr":"anteriore"} — come NSTEMI
+✓ nstemi {"terr":"laterale"} — sottoslivellamento senza sopraslivellamento speculare (tranne aVR e V1)
+✓ angina-instabile {"fase":"1","terr":"laterale"} — come NSTEMI
+✓ nstemi {"terr":"inferiore"} — sottoslivellamento senza sopraslivellamento speculare (tranne aVR e V1)
+✓ angina-instabile {"fase":"1","terr":"inferiore"} — come NSTEMI
+✓ nstemi {"terr":"diffuso"} — sottoslivellamento senza sopraslivellamento speculare (tranne aVR e V1)
+✓ angina-instabile {"fase":"1","terr":"diffuso"} — come NSTEMI
+✓ pericardite {} — ST su diffuso, aVR sotto, V1 risparmiata
+✓ wellens {"tipo":"a"} — T bifasica positiva-negativa in V2-V3
+✓ wellens {"tipo":"b"} — ST isoelettrico e T profonda in V2-V3
+✓ dewinter {} — J sotto V2-V4, T alte, aVR appena su
+✓ brugada {} — J ≥ 2 mm e T negativa in V1-V2, nulla in V4 e DI
+✓ brugada2 {} — J ≥ 2 mm in V1-V2 e T positiva in V2
+✓ ep-s1q3t3 {} — T negativa in DIII e in V1-V3
+✓ pmddd {} — T discordante: negativa in DI e V6
+✓ bbsx {} — T discordante: positiva in V1, negativa in V6
+✓ ivs {"strain":"1"} — strain: T negativa in DI e V6
+✓ digitale {} — ST a scodella sotto in V5-V6
+✓ iperk {} — T alta in V3-V4
+✓ ripol-precoce {} — J su in V4-V5
+
+28 regole rispettate, 0 violate.
+
+── 1. Intaccature del QRS senza corrispondente fisiologico (tutti i cursori) ──
+   nessuna
+
+── 2. Criteri diagnostici ──
+   329 controlli, 329 superati, 0 da rivedere.
+
+── 3. Tenuta dei parametri ──
+   522 combinazioni provate, 0 con anomalie.
+
+Tutto conforme.
+
+✔ Display reconstruction preserves source geometries and creates all three epiaortic origins (5088.308743ms)
+✔ Pulmonary venous ostia share exact atrial wall vertices throughout contraction (6201.300748ms)
+✔ Pulmonary trunk and both branches form the same smooth continuous arterial wall (1695.864107ms)
+✔ Both duct ends lie on the aortic isthmus and proximal left pulmonary artery in every state (1916.961064ms)
+✔ Semilunar pockets keep scalloped insertions fixed, coapt along shared rays and remain below the vessel opening (4.149462ms)
+✔ Congenital morphologies are reversible, have finite coordinates and restore baseline vessel geometry (2645.609872ms)
+✔ Septal previews cut actual communication through both target walls and reset cleanly (1917.644215ms)
+✔ Dependent anatomy modules load in order in the browser (2.481452ms)
+✔ Physiology reference heart geometry and materials remain unchanged (3.829049ms)
+✔ Venous outlets have circular inner and outer walls without a lumen cap (1529.681088ms)
+✔ Venous sleeves continue the actual inner and outer atrial cuff, without creating adjacent ostia (1966.57317ms)
+✔ Pulmonary venous lumens remain unobstructed through the myocardial sleeve (1313.785971ms)
+✔ Inferior caval and pulmonary roots share both myocardial rims at rest and during contraction (5283.310586ms)
+✔ Ventricular outflow reconstruction adds no holes or inverted seams to the source chamber (1754.656402ms)
+✔ All three anatomy entry points load the shared cuff and pulmonary geometry before use (3.972044ms)
+✔ App utilizzabile senza WebGL, modalità linee guida=false (723.322403ms)
+✔ App utilizzabile senza WebGL, modalità linee guida=true (363.322375ms)
+✔ Un parametro in attesa non sovrascrive il nuovo scenario o un ECG registrato (475.469692ms)
+✔ Scariche manuali e code ICD vengono annullate al cambio di caso (386.476778ms)
+✔ Il cambio PVC/PAC aggiorna lo schema ricorrente (302.970962ms)
+✔ La sede del blocco AV e la perdita del contesto grafico sono gestite (727.053017ms)
+✔ Apri nel Tracciato conserva esattamente il caso del quiz (416.874599ms)
+✔ Il confronto conserva parametri, tracciati e tempo durante scambio e ritorno (437.888296ms)
+✔ Il monoderivazione mostra solo II e non produce indici automatici (256.315333ms)
+✔ Le registrazioni PTB-XL in modalità file sono integrate senza fetch obbligatorio (188.429186ms)
+✔ La revisione ridisegna gli stessi record dopo filtro e resize (74.319073ms)
+✔ La libreria raggruppa tutti i casi una sola volta e combina filtro e ricerca (228.160625ms)
+✔ CardiacClock reads exact ECG events without changing engine events or configuration (35.734649ms)
+✔ Clock onset is immediate, RR comes from beats, and AV dissociation never creates a PR (2.294642ms)
+✔ Pulmonary arterial tree has a connected manifold wall and two proximal boundary rings (2422.52411ms)
+✔ ECG and Coronarie share the full atlas; all 17 existing territory controls remain renderable (6049.348138ms)
+✔ Navigation preserves the old vector laboratory and adds separate adult/fetal pages (517.685674ms)
+✔ Protected engine/data and original atlas hashes match the recorded baseline (4.06883ms)
+✔ Zero e impulso di calibrazione coincidono con righe principali a ogni formato e densità (2813.353639ms)
+✔ Striscia continua: ogni riga a zero coincide con una riga principale (395.831037ms)
+✔ Revisione dei tracciati: zero sulla griglia anche con registrazioni a 12 derivazioni (78.946093ms)
+✔ Tracciato e quiz partono senza rumore artificiale (234.453991ms)
+✔ Damped elastic response dissipates energy and preserves inertia (29.854344ms)
+✔ Mechanics are independent of display frame rate; pause and backward seek are deterministic (42.699985ms)
+✔ Every existing ECG remains finite and read-only under extreme elastic controls (907.870459ms)
+✔ Shared spatial deformation avoids folds at editable contraction bounds, including overlapping damage (66.735898ms)
+✔ Deformed normals stay perpendicular to the transformed surface (0.488445ms)
+✔ Valve hinges and commissures stay coincident; closed free edges coapt exactly (13.003048ms)
+✔ Free leaflet points cannot stretch their chord beyond the attached closed configuration (0.756808ms)
+✔ Picking follows the visible deformed surface and maps painting back to rest coordinates (3.658513ms)
+✔ Nearest papillary anchor lies on the actual attachment surface (3.915289ms)
+✔ Picking never selects an invisible conduction group through the heart (0.858912ms)
+✔ Localized stiffness changes do not invert the posterior wall at maximum contraction (69.253394ms)
+✔ Tutti i casi guidati (27) completano tutte le decisioni (116) e salvano il punteggio (4634.616845ms)
+✔ Verapamil nel caso di FA pre-eccitata mostra la conseguenza e permette di proseguire (520.044476ms)
+✔ Un ECG reale in caricamento o in errore non mostra il tracciato e gli avvisi del caso precedente (533.383449ms)
+✔ Un caricamento completato dopo l’uscita non sostituisce il nuovo caso guidato (286.03955ms)
+✔ L’assenza del corpo 3D viene dichiarata una volta e il caso resta utilizzabile (185.830477ms)
+✔ Senza WebGL la riapertura dei casi non duplica l’avviso (229.496605ms)
+✔ Il turno presenta dieci chiamate senza svelare la correzione e salva il risultato finale (310.208913ms)
+✔ Saltare tutte le chiamate produce dieci correzioni e un nuovo turno riparte senza avvisi residui (300.219494ms)
+✔ Scheda Guide: sette guide, apertura, collegamento a un caso (261.350972ms)
+✔ Ogni caso ha identificatore unico, paziente, introduzione e punti chiave (1.997434ms)
+✔ Ogni stato usa uno scenario esistente con parametri dentro i limiti del laboratorio (5.804931ms)
+✔ Ogni stato genera un tracciato finito su tutte le derivazioni (91.074165ms)
+✔ Il passaggio tra stati avviene in continuità sulla stessa striscia (15.759304ms)
+✔ La frequenza mostrata deriva dal tracciato ed è coerente con lo stato clinico (2.86568ms)
+✔ Gli stati senza polso dichiarano frequenza e pressione non rilevabili (0.393933ms)
+✔ Ogni domanda ha una sola risposta corretta, un commento per ogni opzione e una fonte nota (1.626516ms)
+✔ Il primo passo fissa lo stato iniziale e ogni stato dichiarato viene usato (0.543487ms)
+✔ Le fonti hanno titolo, riferimento e indirizzo (DOI o sito ufficiale), e sono tutte citate (0.633182ms)
+✔ Il modulo non modifica motore e dati: nessuna scrittura su ECG o ISO_DATA (1.744264ms)
+✔ Ogni ECG reale esiste nel catalogo PTB-XL, è validato, senza artefatti, con età e sesso uguali all’archivio (1.935491ms)
+✔ La diagnosi proposta coincide con il referto e nessun’altra affermazione diagnostica è presente (0.890269ms)
+✔ Ogni classe ha alternative esistenti, una sola risposta corretta e una fonte nota (0.730899ms)
+✔ Il corpo del paziente ha intestazione valida, quattro corporature e pesi normalizzati (6.067185ms)
+✔ I calcoli di dose danno il risultato esatto, una sola risposta corretta e quattro opzioni distinte (18.046044ms)
+✔ Ogni passo di ogni caso ha uno stato definito anche se estratto da solo (0.464739ms)
+✔ Guide: sezioni, fonti dichiarate, casi e tracciati collegati esistenti (0.316707ms)
+✔ Seconda serie: i casi nuovi non sostituiscono né duplicano quelli della prima (0.224878ms)
+✔ All existing ECG cases yield finite, read-only conduction plans (205.663435ms)
+✔ His travels before its own conducted QRS, never across an unrelated future beat (0.420893ms)
+✔ BAV III does not conduct atrial impulses to His; escape beats remain independent (0.350637ms)
+✔ AVNRT and AVRT use distinct limbs and opposite directions (1.007766ms)
+✔ Fascicular blocks do not animate an intact Purkinje branch downstream (4.466568ms)
+✔ Kent location changes added QRS data without mutating source presets; orthodromic remains narrow (1.08344ms)
+✔ James is opt-in and never adds a delta wave to LGL (0.752943ms)
+✔ Changing Kent reuses selectable mesh, disposes geometry and follows the common scale (96.001667ms)
+✔ Catalog includes every preexisting ECG scenario and labels unimplemented lesion geometry honestly (1.335309ms)
+✔ Pathology mechanics follow the ECG RR and AF/flutter have no organized atrial kick (4.318365ms)
+✔ Kent menu updates the actual ECG case and retains the position across scenario changes (1377.362189ms)
+✔ Pulmonary bifurcation retains a patent lumen with a rounded, uncollapsed roof and floor (1785.978826ms)
+✔ pm: BAV III stimolato e rimozione reversibile (642.036757ms)
+✔ icd: BAV III stimolato e rimozione reversibile (338.758032ms)
+✔ crtd: BAV III stimolato e rimozione reversibile (216.767609ms)
+✔ VVI: i ventricoli spontanei più rapidi inibiscono tutti gli spike (6.64816ms)
+✔ VVI: la frequenza minima copre le pause e non cancella le P native (12.06335ms)
+✔ CRT: morfologia diversa dal VVI e tracking atriale con limite superiore (1.368548ms)
+✔ DAE: asistolia resta non defibrillabile (181.752738ms)
+✔ DAE: pea resta non defibrillabile (251.703566ms)
+✔ DAE: bav3 resta non defibrillabile (264.850491ms)
+✔ DAE: fa resta non defibrillabile (247.104248ms)
+✔ DAE: FV → analisi → scarica → nuova analisi del ritmo risultante (225.918272ms)
+✔ DAE: TV con polso non autorizza la scarica; senza polso sì (241.611617ms)
+✔ icd: FV riceve una scarica automatica, asistolia/PEA nessuna (383.118597ms)
+✔ crtd: FV riceve una scarica automatica, asistolia/PEA nessuna (289.104461ms)
+✔ Rimozione, cambio dispositivo/caso/parametro e registrazioni annullano la terapia (623.54801ms)
+✔ Pausa e rallentamento: il tempo reale non fa partire la scarica (289.560727ms)
+✔ ATP limitata alla TV monomorfa: non converte artificialmente la FV (430.044442ms)
+✔ Tutti i quadri con i dispositivi producono segnali finiti e nessun errore UI (12225.019431ms)
+✔ B-mode: conversione polare, bordo e punti fuori settore (5.797881ms)
+✔ B-mode: guadagno e attenuazione a doppio percorso, nero e saturazione (0.306862ms)
+✔ B-mode: otto controlli TGC interpolano senza salti e rispettano gli estremi (0.249566ms)
+✔ B-mode: diffusori deterministici e continui in coordinate materiali (0.688535ms)
+✔ B-mode: PSF simmetrica normalizzata conserva un campo uniforme (0.261554ms)
+✔ B-mode: inversa recupera il riferimento e i diffusori lungo la sistole normale (5.543318ms)
+✔ B-mode: mancata convergenza viene dichiarata e non mascherata (1.159774ms)
+✔ Localizzatore 2D: superficie anteriore e coordinate di contatto sono coerenti (2.64662ms)
+✔ Renderer: assenza WebGL usa la riserva CPU; freeze deterministico e dispose (5.732482ms)
+✔ Scala: ventricolo sinistro di 8 cm fra apice endocardico e mitrale (1.230361ms)
+✔ Anelli valvolari nei limiti dell’adulto normale (misure indipendenti dalla scala scelta) (0.301253ms)
+✔ Parasternale asse lungo: misure telediastoliche lungo la linea standard (ASE/EACVI 2015) (31.385036ms)
+✔ Disposizione sullo schermo secondo le convenzioni ASE, vista per vista (592.740199ms)
+✔ Nessuna sonda appoggiata su un osso; il centro del settore arriva al cuore senza ombre costali (765.548658ms)
+✔ Sonda coerente: ruotando o inclinando di 1° alla volta l’immagine cambia con continuità, senza salti (1279.598808ms)
+✔ Assi corti perpendicolari al ventricolo: la sonda scivola fra le coste finché la sezione è rotonda (1.285684ms)
+✔ Sonda libera: rotazioni, scivolamento sulla cute e guida verso la proiezione (0.880585ms)
+✔ Sezioni: orifizi e frammenti distanti non diventano ponti di tessuto (12.295624ms)
+✔ Sezioni: un singolo bordo aperto non viene chiuso attraverso la cavità (0.206921ms)
+✔ Sezioni: raccordi entro la tolleranza numerica conservano un anello reale (0.404018ms)
+✔ Sezioni reali: nessun segmento inventato nelle nove proiezioni del cuore (1377.993913ms)
+✔ Taglio: un piano degenere non restituisce la superficie intera (7.380591ms)
+✔ Taglio: un bordo condiviso da tre facce conserva tutti i rami senza chiuderli (0.754786ms)
+✔ Taglio: facce duplicate non cancellano un segmento reale (1.144622ms)
+✔ Taglio: un vertice esattamente sul piano non genera NaN né un falso anello (0.350497ms)
+✔ Taglio: una faccia coplanare usa il perimetro senza la diagonale di triangolazione (0.35254ms)
+✔ Reperi del cuore: quattro camere, asse lungo, cavità di dimensioni plausibili (1.380016ms)
+✔ Anelli valvolari: quattro valvole, raggi entro limiti anatomici (0.991301ms)
+✔ Ogni proiezione taglia il ventricolo sinistro, con profondità da ecocardiogramma reale (109.10162ms)
+✔ Due camere senza camere destre; tre camere attraverso l’anello aortico; quattro camere con tutte e quattro (49.282295ms)
+✔ La sonda è sulla cute: l’origine del fascio sta sul bordo del torace (0.408614ms)
+✔ Ciclo: atrioventricolari chiuse in sistole e aperte nell’onda E; semilunari aperte in eiezione (0.340432ms)
+✔ Senza contrazione né quadri la deformazione è l’identità (0.736277ms)
+✔ Frazione d’eiezione simulata e classi ASE/EACVI 2015 (0.270346ms)
+✔ Quadri: casi collegati esistenti, versamento entro la classe dichiarata (6.957855ms)
+✔ Il modulo Eco non scrive su motore, dati o altre viste (0.99056ms)
+✔ Torace Z-Anatomy: stesso sistema di riferimento del cuore (sterno davanti, vertebre dietro, cuore a sinistra) (2.569014ms)
+✔ Finestra parasternale: sonda a sinistra dello sterno, all’altezza del cuore, per tutte le viste parasternali (0.396757ms)
+✔ ogni proiezione ha un esame reale di confronto (solo collegamento Radiopaedia) (1.177832ms)
+✔ Valvulopatie: le misure Doppler simulate cadono negli intervalli del grado (EACVI/ASE 2017, EAE/ASE 2009) (22.649367ms)
+✔ 1.260 casi di quiz generati senza errori, con criteri diagnostici stabili (1361.118771ms)
+✔ Mille ECG normali del quiz restano nei limiti dichiarati (355.299624ms)
+✔ Quiz clinici con dati pertinenti e immagini approvate senza figure teoriche (0.904891ms)
+✔ pvc: bigeminismo rispetta il numero di battiti (0.799403ms)
+✔ pvc: trigeminismo rispetta il numero di battiti (1.951365ms)
+✔ pvc: quadrigeminismo rispetta il numero di battiti (0.45203ms)
+✔ pvc: coppie rispetta il numero di battiti (4.021108ms)
+✔ pvc: triplette rispetta il numero di battiti (0.470968ms)
+✔ pvc: salve rispetta il numero di battiti (0.570147ms)
+✔ pac: bigeminismo rispetta il numero di battiti (0.60525ms)
+✔ pac: trigeminismo rispetta il numero di battiti (0.37224ms)
+✔ pac: quadrigeminismo rispetta il numero di battiti (0.361814ms)
+✔ pac: coppie rispetta il numero di battiti (0.280352ms)
+✔ pac: triplette rispetta il numero di battiti (0.274012ms)
+✔ pac: salve rispetta il numero di battiti (0.443888ms)
+✔ Voltaggi misurati sul segnale visualizzato: normale (0.95072ms)
+✔ Voltaggi misurati sul segnale visualizzato: precordiali-scambiate (0.45874ms)
+✔ Voltaggi misurati sul segnale visualizzato: inv-braccia (0.375104ms)
+✔ Voltaggi misurati sul segnale visualizzato: destrocardia (0.327973ms)
+✔ Tutti i 59 tracciati campionati distinguono canali assenti e zero reale (44.312005ms)
+✔ Indici indisponibili con derivazioni incomplete o QRS ignoto (1.021576ms)
+✔ Asse -60° è sinistro e la teoria a 50 mm/s usa i fattori corretti (0.505861ms)
+✔ Orbitali parte senza WebGL e rispetta Einthoven e Goldberger (734.755427ms)
+✔ Coronarie resta esplorabile senza WebGL (551.914346ms)
+✔ La carta del monoderivazione mantiene la velocità anche in modo monitor (300.649004ms)
+✔ Seven phases stay linked to sinus timing and preserve order (6.195589ms)
+✔ Both valve pairs are shut and ventricular shortening constant during isovolumetric phases (1.374427ms)
+✔ Atrial phase and conduction times round-trip at every editable bound (14.378136ms)
+✔ Valve aperture and coaptation edits never invert open and closed states (0.362635ms)
+✔ Complete AV block follows independent ECG events without inventing ventricular cycles (29.081352ms)
+✔ Asystole and VF have no organized pumping or valve cycle (1.56892ms)
+✔ Local damage retains passive tethered motion and leaves distant tissue unchanged (0.724921ms)
+✔ Configuration import validates bounds, colors, finite numbers, and GPU capacity atomically (8.60336ms)
+✔ Coronary point placement uses arc length rather than vertex indices (0.625631ms)
+✔ Atlas coronary network keeps all 41 branches and propagates proximal occlusion (28.765286ms)
+✔ Fetal network conserves every node in all presets and both duct directions (111.491474ms)
+✔ Neonatal preset excludes placenta and closes all three fetal shunts (4.501701ms)
+✔ PDA reverses the duct and adds pulmonary recirculation (6.254557ms)
+✔ Fetal imports are independent of adult settings and reject invalid data (0.734194ms)
+✔ Terminal conduction edits change ECG QRS duration as well as visual transit (1.319204ms)
+✔ Blocking both branches activates an independent ventricular escape (0.407583ms)
+✔ Preview heart keeps all named anatomical parts, no external asset dependencies (4.679839ms)
+✔ Preview contraction follows separate ECG atrial and ventricular events (9.628943ms)
+✔ BAV III animation retains atrial activity without inventing conducted ventricular beats (2.89883ms)
+✔ Asystole stays motionless and VF never acquires an organized contraction (11.064431ms)
+✔ Le quattro corporature producono superfici distinte, finite e vestite anche cambiando postura (12112.182748ms)
+✔ Il cambio del paziente sostituisce capelli e camice, e chiude gli occhi nell’incoscienza (7521.526923ms)
+✔ I controlli di zoom e ripristino modificano la camera e funzionano senza trascinare (1228.361313ms)
+✔ Il catalogo copre tutti i 21.799 ECG e conserva validazione, codici e provenienza (521.627943ms)
+✔ Un ECG originale conserva ogni campione di tutte le 12 derivazioni, tempi e microvolt (72.499497ms)
+✔ Calibrazione WFDB con baseline e derivazioni reali: nessuna ricostruzione o centratura (1.027946ms)
+✔ La ripetizione non interpola l’ultimo campione con il primo né collega i segmenti (670.524953ms)
+✔ Segmenti piatti e campioni WFDB mancanti non creano falsi picchi stimati (5.397358ms)
+✔ Segnali e referto validati si riaprono senza rete; una copia corrotta è rifiutata (316.493392ms)
+✔ Atlante completo: paginazione limitata, filtri combinati, ID esatto e apertura animata (661.316868ms)
+✔ Una registrazione lenta non riapre il Tracciato dopo la navigazione altrove (344.065442ms)
+✔ Installazione completa: tutte le risorse richieste sono in cache (16.425525ms)
+✔ Un download essenziale fallito annulla l’installazione e preserva la versione precedente (6.819758ms)
+✔ Aggiornamento migra le immagini e non elimina cache di altre app (23.292434ms)
+✔ Quota esaurita durante la migrazione conserva la vecchia cache e attiva l’app (2.549866ms)
+✔ Offline: pagina da cache, script assente mai sostituito da HTML (3.890101ms)
+✔ HTTP 503 usa la copia disponibile e la shell non mescola versioni (2.56621ms)
+✔ Archivio offline conta successi/errori e ignora risorse esterne (1.925446ms)
+✔ Ripristino elimina solo le cache Isoelettrica e conferma dopo il completamento (2.536064ms)
+✔ Anatomia adulta e fetale: geometria, controlli e attribuzioni disponibili offline (10.653975ms)
+✔ Menu: ricerca, selezione e cambio emessi una volta con il valore nativo (312.379243ms)
+✔ Menu: tastiera, annullamento, controlli disabilitati e opzioni dinamiche (110.574819ms)
+✔ Menu: dispositivi touch conservano il selettore della piattaforma (89.273676ms)
+✔ Teoria: schermo intero ed Escape non cambiano tema o capitolo (450.506604ms)
+✔ Cuore: focus reversibile senza Fullscreen API e senza ricreare la scena (65.992088ms)
+✔ Il worker della stessa versione della pagina non mostra il falso aggiornamento (320.908642ms)
+✔ Un worker più vecchio della pagina non produce un avviso (129.622475ms)
+✔ Più tardi ignora lo stesso rilascio ma non nasconde il successivo (71.029595ms)
+✔ Il controllo manuale può richiamare un aggiornamento rimandato (62.336129ms)
+ℹ tests 219
+ℹ suites 0
+ℹ pass 219
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31571.444445
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.067s
+
+OK

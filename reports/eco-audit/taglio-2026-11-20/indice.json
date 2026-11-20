@@ -1,0 +1,146 @@
+[
+  {
+    "vista": "a4c",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "a4c-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "a4c",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "a4c-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "plax",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "plax-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "plax",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "plax-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-ao",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-ao-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-ao",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-ao-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-mv",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-mv-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-mv",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-mv-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-pm",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-pm-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-pm",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-pm-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-ap",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-ap-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "psax-ap",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "psax-ap-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "a2c",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "a2c-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "a2c",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "a2c-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "a3c",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "a3c-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "a3c",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "a3c-ts.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "sub",
+    "fase": "td",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "sub-td.jpg",
+    "allineata": true
+  },
+  {
+    "vista": "sub",
+    "fase": "ts",
+    "motore": "classico",
+    "quadro": "normale",
+    "nome": "sub-ts.jpg",
+    "allineata": true
+  }
+]
