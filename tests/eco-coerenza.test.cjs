@@ -12,10 +12,11 @@ function glb(f) {
   const b = fs.readFileSync(path.join(root, f)), jl = b.readUInt32LE(12), J = JSON.parse(b.slice(20, 20 + jl)), B = b.slice(20 + jl + 8);
   const acc = i => { const a = J.accessors[i], bv = J.bufferViews[a.bufferView], off = (bv.byteOffset || 0) + (a.byteOffset || 0) + B.byteOffset, n = a.type === 'VEC3' ? 3 : 1;
     const C = { 5126: Float32Array, 5125: Uint32Array, 5123: Uint16Array }[a.componentType]; return new C(B.buffer.slice(off, off + a.count * n * C.BYTES_PER_ELEMENT)); };
-  return J.nodes.filter(n => n.mesh !== undefined).map(n => { const p = J.meshes[n.mesh].primitives[0], s = E.salda(acc(p.attributes.POSITION), acc(p.indices)); s.nome = n.name.replace(/_/g, ' '); s.layer = n.extras && n.extras.layer; s.tipo = E.tipoDi(s.nome); return s; });
+  return J.nodes.filter(n => n.mesh !== undefined).map(n => { const p = J.meshes[n.mesh].primitives[0], s = E.salda(acc(p.attributes.POSITION), acc(p.indices)); s.nome = n.extras?.sourceName || n.name.replace(/_/g, ' '); s.layer = n.extras && n.extras.layer; s.tipo = E.tipoDi(s.nome); return s; });
 }
-const M = glb('prototipo-cuore/heart-z-anatomy.glb'), TOR = glb('prototipo-cuore/torace-z-anatomy.glb');
+const M = glb('prototipo-cuore/heart-eco.glb'), TOR = glb('prototipo-cuore/torace-eco.glb');
 const G = E.reperi(M); E.correggiSetto(M, G); G.V = E.valvole(M, G); G.Tr = E.torace(G);
+G.ossa = TOR.filter(m => m.layer === 'osso' || m.layer === 'cartilagine');   // come nel browser: la sonda cerca lo spazio intercostale
 const cm = G.Tr.cm, A = E.assi(G);
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const scr = (P, p) => { const w = [p[0] - P.o[0], p[1] - P.o[1], p[2] - P.o[2]]; return [dot(w, P.u) / cm, dot(w, P.d) / cm]; };
@@ -49,7 +50,9 @@ test('Parasternale asse lungo: misure telediastoliche lungo la linea standard (A
     let pe = [-ax[1] / l, ax[0] / l]; if (pe[1] < 0) pe = [-pe[0], -pe[1]];
     const a = [c[0] - pe[0] * 8, c[1] - pe[1] * 8], b = [c[0] + pe[0] * 8, c[1] + pe[1] * 8];
     const xs = incroci(Pv, VS, a, b), xr = incroci(Pv, VD, a, b);
-    assert.ok(xs.length >= 4, 'z ' + z + ': ventricolo sinistro attraversato da parte a parte');
+    // Endocardio settale, endocardio posteriore, epicardio posteriore. La superficie settale
+    // destra si legge dal VD: un quarto incrocio non va inventato chiudendo una mesh aperta.
+    assert.ok(xs.length >= 3, 'z ' + z + ': presenti le tre interfacce reali necessarie alle misure');
     const endoSetto = xs[xs.length - 3], endoPost = xs[xs.length - 2], epiPost = xs[xs.length - 1], setttoVD = xr.filter(x => x < endoSetto).pop();
     const lvid = endoPost - endoSetto, pw = epiPost - endoPost, ivs = endoSetto - setttoVD;
     assert.ok(lvid >= 4.2 && lvid <= 5.8, 'z ' + z + ': diametro telediastolico ' + lvid.toFixed(2) + ' cm (normale 4,2–5,8)');
@@ -119,4 +122,30 @@ test('Sonda coerente: ruotando o inclinando di 1° alla volta l’immagine cambi
     }
   }
   assert.ok(peggiore > 0, 'la sezione cambia davvero con la sonda');
+});
+
+test('Assi corti perpendicolari al ventricolo: la sonda scivola fra le coste finché la sezione è rotonda', () => {
+  const cr = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], ao = G.V.find(v => v.nome === 'aortica');
+  for (const [id, max] of [['psax-ao', 20], ['psax-mv', 40], ['psax-pm', 15], ['psax-ap', 15]]) {
+    const Pv = P(id), n = cr(Pv.d, Pv.u), ax = id === 'psax-ao' ? ao.n : A.asse;
+    const g = Math.acos(Math.abs(dot(n, ax)) / Math.hypot(...n) / Math.hypot(...ax)) * 180 / Math.PI;
+    assert.ok(g <= max, id + ': piano inclinato di ' + g.toFixed(0) + '° sull’asse');
+  }
+});
+
+test('Sonda libera: rotazioni, scivolamento sulla cute e guida verso la proiezione', () => {
+  const T = E.piano(G, 'plax'), close = (a, b, e) => Math.abs(a - b) < e;
+  /* orienta3 coincide con orienta per rotazione e ventaglio, e mantiene la terna ortonormale */
+  const a = E.orienta(T, 0.4, 0.2), b = E.orienta3(T, 0.4, 0.2, 0);
+  for (let i = 0; i < 3; i++) { assert.ok(close(a.d[i], b.d[i], 1e-9)); assert.ok(close(a.u[i], b.u[i], 1e-9)); }
+  const c = E.orienta3(T, 0.3, -0.2, 0.25); assert.ok(close(dot(c.d, c.u), 0, 1e-9) && close(dot(c.d, c.d), 1, 1e-9));
+  /* scivolare di 3 cm verso i piedi: la sonda resta sulla cute e con lo stesso angolo rispetto alla superficie */
+  const ro = [T.o[0], T.o[1] - 3 * cm, T.o[2] + 30 * cm], p = E.suPelle(G.Tr, ro, [0, 0, -1]); assert.ok(p, 'raggio sulla cute');
+  const S2 = E.scivola(G.Tr, T, p), ang = P0 => dot(P0.d, E.normalePelle(G.Tr, P0.o));
+  assert.ok(close(ang(S2), ang(T), 1e-6), 'stesso angolo con la cute');
+  /* guida: allineata sul bersaglio; dopo lo scivolamento verso i piedi chiede di risalire verso la testa */
+  assert.equal(E.guida(T, T, G.Tr).ok, true);
+  const g = E.guida(S2, T, G.Tr); assert.equal(g.ok, false); assert.match(g.titolo, /verso la testa/);
+  const r = E.guida(E.orienta3(T, 0.6, 0, 0), T, G.Tr); assert.match(r.titolo, /Ruota la sonda in senso antiorario/);
+  const f = E.guida(E.orienta3(T, 0, 0.3, 0), T, G.Tr); assert.match(f.titolo, /Inclina il fascio/);
 });

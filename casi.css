@@ -120,3 +120,19 @@
 .casi-guida section.errori{border-left:3px solid var(--warn)}
 .casi-guida .casi-azioni{flex-wrap:wrap;gap:8px;margin:6px 0 2px}
 .casi-schede{flex-wrap:wrap}
+
+.ambulatorio{width:100%;box-sizing:border-box;max-width:1160px;margin:0 auto;line-height:1.5}.ambulatorio[hidden],.ambulatorio [hidden]{display:none!important}
+.ambulatorio h2{margin:.75em 0 .15em}.ambulatorio h3{margin:0 0 .5em}.ambulatorio p{max-width:74ch}
+.amb-tabs,.amb-controlli,.amb-palette,.amb-arti{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+.amb-tabs{border-bottom:1px solid var(--line);padding-bottom:14px}.ambulatorio .btn{min-height:44px}
+.ambulatorio [aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.amb-esame{padding:14px 0}.amb-msg{min-height:1.5em}.amb-sedi{font:inherit;padding:8px 10px;border-radius:8px}
+.amb-fig{position:relative;aspect-ratio:840/700;max-width:570px;background:#17232c url('ambulatorio-torace.webp?v=47.5') center/100% 100% no-repeat;border-radius:14px;touch-action:none;overflow:hidden;user-select:none}
+.amb-lato{position:absolute;top:12px;left:12px;color:white;font-weight:700}.amb-lato.sx{left:auto;right:12px}
+.amb-disco,.amb-elettrodo{position:absolute;transform:translate(-50%,-50%);pointer-events:none;border-radius:50%;display:grid;place-items:center}
+.amb-disco{width:31px;height:31px;border:4px solid #c5d8d3;background:#284850;box-shadow:0 1px 7px #101b23}
+.amb-elettrodo{width:26px;height:26px;font:700 12px system-ui;color:#10242c;background:#c7f4ed;border:2px solid #294853}
+.amb-palette [data-el]{touch-action:none}.amb-carta{position:relative;width:100%;margin-top:12px}.amb-carta canvas{display:block;width:100%}.amb-carta canvas+canvas{position:absolute;inset:0;height:100%}
+.amb-eco{display:block;border:1px solid var(--line);border-radius:12px;width:100%;height:min(740px,80vh);min-height:480px}.amb-fermo{max-width:100%;width:520px}
+
+.amb-in-mano{position:fixed;z-index:12;opacity:.88}

@@ -10,6 +10,10 @@ assert.ok(start >= 0 && end > start, 'Blocco aggiornamenti presente');
 const updateHandler = appCode.slice(start, end);
 const settle = async () => { for (let i = 0; i < 18; i++) await Promise.resolve(); };
 
+const currentVersion = require('../package.json').version.split('.').slice(0, 2).join('.');
+const nextVersion = currentVersion + '.1';
+const laterVersion = currentVersion + '.2';
+
 async function setup(waitingVersion) {
   const h = environment(), { w } = h;
   // Wait for JSDOM's initial load; the PWA handler is installed afterwards.
@@ -48,7 +52,7 @@ async function setup(waitingVersion) {
 }
 
 test('Il worker della stessa versione della pagina non mostra il falso aggiornamento', async t => {
-  const h = await setup('47.0'); t.after(h.close);
+  const h = await setup(currentVersion); t.after(h.close);
   assert.equal(h.w.document.getElementById('updBar'), null);
   assert.ok(h.reg.updates > 0, 'Il normale controllo aggiornamenti rimane attivo');
 });
@@ -59,12 +63,12 @@ test('Un worker più vecchio della pagina non produce un avviso', async t => {
 });
 
 test('Più tardi ignora lo stesso rilascio ma non nasconde il successivo', async t => {
-  const h = await setup('47.1'); t.after(h.close);
+  const h = await setup(nextVersion); t.after(h.close);
   const { w, reg, Worker } = h;
   assert.ok(w.document.getElementById('updBar'), 'Una versione nuova viene annunciata');
   w.document.getElementById('updNo').click();
   assert.equal(w.document.getElementById('updBar'), null);
-  assert.equal(w.sessionStorage.getItem('isoelettrica-aggiornamento-rimandato'), '47.1');
+  assert.equal(w.sessionStorage.getItem('isoelettrica-aggiornamento-rimandato'), nextVersion);
   // Another installed event must not resurrect the same update.
   reg.installing = reg.waiting;
   reg.emit('updatefound');
@@ -72,7 +76,7 @@ test('Più tardi ignora lo stesso rilascio ma non nasconde il successivo', async
   w.dispatchEvent(new w.Event('focus'));
   await settle();
   assert.equal(w.document.getElementById('updBar'), null);
-  const next = new Worker('47.2');
+  const next = new Worker(laterVersion);
   reg.waiting = next; reg.installing = next;
   reg.emit('updatefound'); next.emit('statechange');
   await settle();
@@ -82,7 +86,7 @@ test('Più tardi ignora lo stesso rilascio ma non nasconde il successivo', async
 });
 
 test('Il controllo manuale può richiamare un aggiornamento rimandato', async t => {
-  const h = await setup('47.1'); t.after(h.close);
+  const h = await setup(nextVersion); t.after(h.close);
   const { w } = h;
   w.document.getElementById('updNo').click();
   w.document.getElementById('credit').click();
