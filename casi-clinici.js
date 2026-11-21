@@ -79,6 +79,8 @@ function avvia() {
   let C = null;                       // caso in corso
   let precedente = 0, tEvento = 0; const vv = [0, 0, 0];
 
+  const ambHost = $('#ambulatorio');
+  const amb = ambHost && root.ISO_AMBULATORIO ? root.ISO_AMBULATORIO.crea(ambHost, APP, () => { home.hidden = false; elenco(); }) : null;
   function fonti(ids) { return (ids || []).map(id => FONTI[id]).filter(Boolean); }
   function cfgDi(stato) { const sc = APP.byId[stato.ecg[0]]; return APP.configura(sc, Object.assign(APP.defaultParams(sc), stato.ecg[1] || {})); }
 
@@ -92,6 +94,7 @@ function avvia() {
     let h = '<h2>Casi clinici</h2><p class="lead">Un paziente, un tracciato che cambia con le tue scelte. Leggi l’ECG, decidi, somministra: ogni decisione ha una conseguenza e una fonte.</p>' +
       '<p class="casi-avviso">Simulazione didattica. Criteri e dosi dell’adulto seguono le linee guida citate in ogni passaggio; non sostituiscono i protocolli locali né il giudizio clinico. I contenuti non sono stati certificati da un cardiologo.</p>';
     h += '<div class="casi-turno"><div><b>Turno di guardia</b><span>Dieci chiamate estratte a caso tra casi e calcoli di dose. Rispondi di seguito: la correzione arriva solo alla fine.' + (fatti._turno ? ' Migliore: ' + fatti._turno.ok + ' su 10.' : '') + '</span></div><button class="btn primary" id="casiTurno">Inizia il turno</button></div>';
+    if (amb) h += '<h3>Ambulatorio valvolare</h3><div class="casi-griglia">' + Object.entries(root.ISO_AMBULATORIO.casi).map(([k,c]) => '<button class="caso-card" data-amb="'+k+'"><h3>'+esc(c.titolo)+'</h3><span class="chi">Auscultazione · ECG · ecografia</span></button>').join('') + '</div>';
     const bt = (k, t) => '<button data-s="' + k + '" class="' + (scheda === k ? 'on' : '') + '">' + t + '</button>';
     if ((REALI && PTB) || GUIDE.length) h += '<div class="seg casi-schede" id="casiSchede">' + bt('guidati', 'Casi guidati · ' + CASI.length) + (REALI && PTB ? bt('reali', 'ECG reali · ' + REALI.CASI.length) : '') + (GUIDE.length ? bt('guide', 'Guide · ' + GUIDE.length) : '') + '</div>';
     if (scheda === 'guide' && GUIDE.length) {
@@ -105,6 +108,7 @@ function avvia() {
       h += '<div class="casi-griglia">' + CASI.map(c => carta(c.id, '<span class="riga"><span class="tag">' + esc(c.tag) + '</span><span>' + c.minuti + ' min</span><span class="livello" aria-label="Difficoltà ' + c.livello + ' su 3">' + [1, 2, 3].map(i => '<i class="' + (i <= c.livello ? 'on' : '') + '"></i>').join('') + '</span></span>', c.titolo, chi(c.paziente) + ' · ' + c.passi.length + ' decisioni', fatti[c.id])).join('') + '</div>';
     }
     home.innerHTML = h;
+    home.querySelectorAll('[data-amb]').forEach(b => b.onclick = () => { home.hidden = true; run.hidden = true; amb.apri(b.dataset.amb); vista.scrollTop = 0; });
     home.querySelectorAll('[data-caso]').forEach(b => b.addEventListener('click', () => { const id = b.dataset.caso; if (id[0] === 'r' && scheda === 'reali') apriReale(REALI.CASI[+id.slice(1)]); else apri(id); }));
     home.querySelectorAll('#casiSchede button').forEach(b => b.addEventListener('click', () => { scheda = b.dataset.s; elenco(); }));
     home.querySelectorAll('[data-guida]').forEach(b => b.addEventListener('click', () => guida(b.dataset.guida)));
@@ -199,6 +203,7 @@ function avvia() {
     if (paziente) paziente.vitali({ fc, pa: '—', spo2: null, fr: '—' });
   }
   function apriReale(riga) {
+    if (amb && amb.attivo()) amb.chiudi();
     const caso = casoReale(riga), tok = ++richiesta;
     C = { caso, i: 0, esiti: [], stato: 'reale', reale: true, rec: null };
     prepara(caso); stream = null; mostraVitali('—', '—', null, '—', true);
@@ -245,6 +250,7 @@ function avvia() {
   /* ---------- svolgimento ---------- */
   function apri(id) {
     const caso = CASI.find(c => c.id === id); if (!caso) return;
+    if (amb && amb.attivo()) amb.chiudi();
     richiesta++;
     C = { caso, i: 0, esiti: [], stato: null };
     prepara(caso); stream = null;
@@ -381,7 +387,8 @@ function avvia() {
   return {
     vista(on) {
       attiva = !!on;
-      if (on) { if (!C) { run.hidden = true; home.hidden = false; elenco(); } ultimo = 0; if (!raf) raf = root.requestAnimationFrame(ciclo); root.requestAnimationFrame(misura); }
+      if (amb) amb.vista(on);
+      if (on) { if (!C && !(amb && amb.attivo())) { run.hidden = true; home.hidden = false; elenco(); } ultimo = 0; if (!raf) raf = root.requestAnimationFrame(ciclo); root.requestAnimationFrame(misura); }
     },
     tema() { if (mon && attiva) mon.layout(); },
     apri, apriReale, turno, frequenza

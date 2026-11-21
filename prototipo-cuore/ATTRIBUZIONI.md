@@ -63,3 +63,9 @@ Dettagli della correzione di osti, infundibolo e biforcazione: `../reports/2026-
 `torace-z-anatomy.glb` deriva dalla stessa fonte e dalla stessa revisione (**Z-Anatomy**, CC BY-SA 4.0, a sua volta da **BodyParts3D**, CC BY-SA 2.1 Japan), file `Z-Anatomy/Startup.blend`. Lo genera `export-torace.py` con la stessa trasformazione di `export-source.py` (scala 20, traslazione fissa, conversione da Z-alto a Y-alto): coste, sterno e cuore conservano quindi i rapporti dell'atlante.
 
 Contenuto (157 oggetti, 52.513 vertici, 1,14 MB): 24 coste, 20 cartilagini costali, manubrio, corpo e processo xifoideo dello sterno, vertebre T1–T12, clavicole, scapole, cinque lobi polmonari, otto segmenti epatici, diaframma e le regioni cutanee di tronco, collo e testa. Modifiche: decimazione (riduzione dei poligoni) per l'uso su tablet, materiali e normali rimossi (ricalcolate nell'app). Inventario e numeri di vertici per oggetto in `torace-parts.json`. Licenza del modello adattato: CC BY-SA 4.0.
+
+La proiezione frontale `../ambulatorio-torace.webp` deriva da `torace-z-anatomy.glb`. Adattamento con proiezione ortografica, colore e trasparenza di cute, coste, cartilagini e sterno. Attribuzioni e licenza CC BY-SA 4.0 come sopra.
+
+## Atlante Eco 47.7
+
+`heart-eco.glb` e `torace-eco.glb` sono adattamenti Isoelettrica di Z-Anatomy, CC BY-SA 4.0, a sua volta da BodyParts3D, CC BY-SA 2.1 Japan. Si rigenerano con `node tools/build-echo-atlas.cjs`. Il cuore integra infundibolo, radice, biforcazione polmonare e rami, continuità dei manicotti vascolari e correzioni delle giunzioni fra pareti. Il torace corregge triangoli in eccesso sulla linea mediana e sulle ottave cartilagini costali. Le estremità dei vasi sono sezioni dell'atlante. Le superfici adattate sono distribuite con licenza CC BY-SA 4.0.

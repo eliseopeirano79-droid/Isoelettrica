@@ -2004,6 +2004,10 @@ function showView(v) {
   if (window.ISO_CASI) window.ISO_CASI.vista(v === 'casi');
 }
 $$('#nav button').forEach(b => b.addEventListener('click', () => showView(b.dataset.v)));
+window.addEventListener('DOMContentLoaded', () => {
+  const richiesta = new URLSearchParams(window.location.search).get('vista');
+  if (richiesta === 'eco' || richiesta === 'casi') showView(richiesta);
+}, { once: true });
 $('#themeBtn').addEventListener('click', () => {
   const r = document.documentElement; const dark = getComputedStyle(r).getPropertyValue('color-scheme').trim() === 'dark';
   r.setAttribute('data-theme', dark ? 'light' : 'dark'); store.theme = dark ? 'light' : 'dark'; save(); onTheme();
@@ -2170,7 +2174,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(loc
     cr.textContent = 'Controllo aggiornamenti…';
     const result = await controllaAggiornamenti(true);
     const messages = { ready: 'Aggiornamento disponibile', installing: 'Aggiornamento in download…', checked: 'Controllo completato', offline: 'Controllo non riuscito: verifica la rete', unavailable: 'Servizio aggiornamenti non disponibile' };
-    cr.textContent = 'Isoelettrica · v47.0 · ' + (messages[result] || 'Controllo completato');
+    cr.textContent = 'Isoelettrica · v47.7 · ' + (messages[result] || 'Controllo completato');
     if (result === 'ready') barraAggiornamento(true);
   });
   if (cr) cr.addEventListener('dblclick', () => {
