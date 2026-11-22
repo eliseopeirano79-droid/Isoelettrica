@@ -1065,7 +1065,14 @@ function avvia() {
        tessuti attorno al cuore a bassa intensità; sangue e versamento neri */
     for (let i = 0; i < n; i++) {
       let v;
-      if (buf[i]) v = (buf[i - 1] === 0 || buf[i + 1] === 0 || buf[i - w] === 0 || buf[i + w] === 0) ? 170 : 128;
+      if (buf[i]) {
+        // Non considerare il pixel finale di una riga adiacente al primo della successiva.
+        // Ai margini del canvas i vicini fuori immagine sono tessuto non campionato, non un foro.
+        const x = i % w, y = (i / w) | 0;
+        const bordo = (x > 0 && !buf[i - 1]) || (x + 1 < w && !buf[i + 1]) ||
+          (y > 0 && !buf[i - w]) || (y + 1 < h && !buf[i + w]);
+        v = bordo ? 170 : 128;
+      }
       else v = per[i] && !sil[i] ? 205 : sil[i] ? 0 : 40;
       D[i * 4] = D[i * 4 + 1] = D[i * 4 + 2] = v; D[i * 4 + 3] = 255;
     }
