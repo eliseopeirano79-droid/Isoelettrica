@@ -15,6 +15,10 @@ Aggiorna questa pagina alla fine di ogni sessione. Stati ammessi: `da fare` · `
 | 09 | Circolazione fetale e transizione neonatale | da fare | — | — |
 | 10 | Revisione clinica e tecnica (ricorrente) | in corso | 2026-09-23 | Revisione tecnica e limiti documentati. Nessuna certificazione indipendente di un cardiologo; verifica iPad non eseguita. |
 
+## Laboratorio Eco · 26 novembre 2026
+
+La 47.8 aggiunge taglio in fase, superfici valvolari condivise, cinque finestre, studio biplano anatomico, archivio delle acquisizioni con selettore 2D/3D, PW, TDI anulare e Simpson biplano. La validazione clinica e su dispositivo fisico resta aperta. [Verifiche e limiti](reports/2026-11-26-eco-47-8.md)
+
 ## Hash di riferimento del motore ECG
 
 Alla prima sessione registra qui il percorso e l'hash (sha256) di ogni file del motore ECG e di ogni file dell'app pubblicata che il prototipo condivide. Ogni sessione successiva li ricontrolla e riporta l'esito nel report.

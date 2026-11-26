@@ -11,7 +11,7 @@ function puntoCute(x, y, tr, w, h) {
   const py = Math.max(tr.basso, Math.min(tr.giugulo, tr.hc[1] + (h * 0.40 - y) / q[2]));
   return [tr.x0 + tr.a * px, py, tr.zc + tr.b * Math.sqrt(1 - px * px)];
 }
-function crea(canvas, stato, muovi, iniziaAngoli, trascinaAngoli) {
+function crea(canvas, stato, muovi, iniziaAngoli, trascinaAngoli, relativo) {
   const cx = canvas.getContext('2d'); if (!cx) return null;
   const base = canvas.ownerDocument.createElement('canvas'), bg = base.getContext('2d');
   const raster=root.EchoRaster.create();let heart=null,bones=[];
@@ -84,9 +84,9 @@ function crea(canvas, stato, muovi, iniziaAngoli, trascinaAngoli) {
   canvas.addEventListener('pointerdown', e => {
     const s = stato(); if (!s.G || !s.P || presa || e.button !== 0) return;
     const pt = coord(e), q = proietta(s.P.o, s.G.Tr, canvas.width, canvas.height);
-    const presaSonda = s.modo === 'auto' && Math.hypot(pt[0] - q[0], pt[1] - q[1]) < 42 * canvas.width / canvas.clientWidth;
+    const presaSonda = s.modo === 'auto' || s.modo === 'presa';
     presa = { id: e.pointerId, modo: s.modo, dx: presaSonda ? q[0] - pt[0] : 0, dy: presaSonda ? q[1] - pt[1] : 0,
-      angoli: iniziaAngoli(e.clientX, e.clientY) };
+      base:s.P.o.slice(), inizio:puntoCute(q[0],q[1],s.G.Tr,canvas.width,canvas.height), angoli: iniziaAngoli(e.clientX, e.clientY) };
     ultimo = null; canvas.setPointerCapture(e.pointerId); canvas.classList.add('presa');
   });
   canvas.addEventListener('pointermove', e => {
@@ -96,10 +96,11 @@ function crea(canvas, stato, muovi, iniziaAngoli, trascinaAngoli) {
       return;
     }
     const s = stato(), pt = coord(e), w = canvas.width, h = canvas.height;
+    if (e.clientX===presa.angoli.x && e.clientY===presa.angoli.y && !ultimo) return;
     const x = pt[0] + presa.dx, y = pt[1] + presa.dy, tr = s.G.Tr;
     const centro = proietta(tr.hc, tr, w, h), py = tr.hc[1] + (h * 0.40 - y) / centro[2];
     if (Math.abs(x - w / 2) > .98 * tr.a * centro[2] || py < tr.basso || py > tr.giugulo) return;
-    const p = puntoCute(x, y, tr, w, h);
+    const p = relativo(tr,presa.base,presa.inizio,puntoCute(x,y,tr,w,h));
     if (!ultimo || Math.hypot(...p.map((v, i) => v - ultimo[i])) > .01 * tr.cm) { ultimo = p; muovi(p); }
   });
   const up = e => { if (presa && e.pointerId === presa.id) { presa = null; ultimo = null; canvas.classList.remove('presa'); } };

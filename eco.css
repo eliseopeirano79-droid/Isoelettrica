@@ -101,3 +101,7 @@
 .eco-ispezione canvas { display:block; width:100%; height:min(60vh,560px); background:radial-gradient(ellipse,#253642,#101922 75%); touch-action:none; cursor:grab; }
 .eco-ispezione canvas:active { cursor:grabbing; }
 .eco-ispezione label { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; font-size:.9rem; }
+
+#ecoStudioTela{display:block;width:min(100%,32rem);height:auto;margin:.75rem auto;background:#091118;border-radius:.5rem}#ecoAcquisizioni{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:.6rem}#ecoAcquisizioni figure{margin:.5rem 0}#ecoAcquisizioni img{max-width:100%;display:block}#ecoAcquisizioni button,#ecoAcquisisci{min-height:44px}#ecoAcquisizioni figcaption{margin:.4rem 0}
+
+.eco-3dpane canvas[hidden], #ecoPWComandi[hidden]{display:none!important}
