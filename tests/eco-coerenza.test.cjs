@@ -203,6 +203,10 @@ test('Lembi ricostruiti: cerniere fisse rispetto all’anello e coaptazione anch
     for(const leaf of leaves){
       const cols=16, rows=5, mid=3*(rows*(cols+1)+cols/2);
       S.animaLembo(leaf,G,0,0,identity);
+      if(v.tipo==='sl') {
+        const quota=i=>dot(Array.from(leaf.pos.subarray(3*i,3*i+3)).map((x,k)=>x-v.c[k]),v.n);
+        assert.ok(quota(0)>quota(8)+.3*v.r && quota(16)>quota(8)+.3*v.r);
+      }
       const closed=leaf.pos.slice(mid,mid+3);
       S.animaLembo(leaf,G,0,1,identity);
       assert.ok(Math.hypot(...closed.map((x,k)=>x-leaf.pos[mid+k]))>v.r*.55);

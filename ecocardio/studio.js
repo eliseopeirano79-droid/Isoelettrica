@@ -66,13 +66,14 @@
       const i=s.valvole.findIndex(v=>v.nome===modo.value);if(i<0)return;
       const v=s.valvole[i],leaflets=s.lembi[i], forward=v.avanti || v.cus[0], delta=sub(forward,v.c);
       const y=unit(delta.map((x,i)=>x-dot(delta,v.n)*v.n[i])),x=unit(cross(y,v.n));
-      const k=Math.min(w,h)*.40/v.r, faces=[];
+      const k=Math.min(w,h)*.40/v.r, faces=[], margini=[];
       leaflets.forEach((leaf,id)=>{
         const pts=[];
         for(let j=0;j<leaf.pos.length;j+=3) {
           const d=sub(leaf.pos.subarray(j,j+3),v.c);
-          pts.push([w/2+k*dot(d,x),h/2-k*dot(d,y),dot(d,v.n)]);
+          pts.push([w/2+k*dot(d,x),h/2-k*dot(d,y),k*dot(d,v.n)]);
         }
+        margini.push(pts.slice(leaf.rows*(leaf.cols+1)));
         for(let j=0;j<leaf.tri.length;j+=3) {
           const a=pts[leaf.tri[j]],b=pts[leaf.tri[j+1]],c=pts[leaf.tri[j+2]];
           faces.push({a,b,c,id,z:a[2]+b[2]+c[2]});
@@ -80,11 +81,16 @@
       });
       // Vista dal lato di ingresso per le AV e dal vaso per le semilunari.
       faces.sort((a,b)=>v.tipo==='av'?b.z-a.z:a.z-b.z);
-      const colori=['#d29b75','#ecd1aa','#ae866e'];
+      const colori=[[201,150,116],[223,186,149],[174,129,103]];
+      const lamp=unit([-.30,-.45,.84]);
       for(const {a,b,c,id} of faces) {
-        g.fillStyle=g.strokeStyle=colori[id];g.lineWidth=.65;
+        const n=cross(sub(b,a),sub(c,a)),l=Math.hypot(...n);if(l<1e-7)continue;
+        const luce=.52+.53*Math.abs(dot(n,lamp)/l);
+        g.fillStyle=g.strokeStyle='rgb('+colori[id].map(v=>Math.min(255,Math.round(v*luce))).join(',')+')';g.lineWidth=.65;
         g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(c[0],c[1]);g.closePath();g.fill();g.stroke();
       }
+      g.strokeStyle='rgba(255,232,197,.65)';g.lineWidth=1.2;
+      for(const bordo of margini){g.beginPath();bordo.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();}
     }
     return {disegna};
   }

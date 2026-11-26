@@ -80,13 +80,17 @@
       for(let row=0;row<=rows;row++)for(let col=0;col<=cols;col++) {
         const u=col/cols,t=row/rows,a=left+(right-left)*u;
         const hinge=[Math.cos(a),Math.sin(a)], edge=u<=.5?left:right;
-        const side=Math.abs(2*u-1), belly=Math.sin(Math.PI*u), centerHeight=v.tipo==='sl'?.32:.20;
+        const side=Math.abs(2*u-1), belly=Math.sin(Math.PI*u);
         // Coaptazione mitralica lungo una linea, semilunari e tricuspide su tre raggi.
         const tip=[Math.cos(edge)*side,Math.sin(edge)*side];
         if(count===2)tip[0]-=.14*(1-side);
-        const hClosed=t*centerHeight*(1-side)+.12*Math.sin(Math.PI*t)*belly;
-        const hOpen=t*belly*(v.tipo==='sl'?.82:leaf===0?1.1:.87);
-        const openRad=1-(v.tipo==='sl'?.12:.23)*t*belly;
+        // Sospensione semilunare: nadir al centro della cuspide e
+        // commissure più alte. L'inserzione resta la stessa nelle due pose.
+        const semi=v.tipo==='sl', inserzione=semi?.47*side*side:.075*Math.cos(2*a);
+        const bordoChiuso=semi?.35+.12*side:.20*(1-side)+.075*side*Math.cos(2*edge);
+        const hClosed=(1-t)*inserzione+t*bordoChiuso+.18*Math.sin(Math.PI*t)*belly;
+        const hOpen=inserzione*(1-t*belly)+t*belly*(semi?.82:leaf===0?1.1:.87);
+        const openRad=1-(semi?.18:.23)*t*belly;
         for(let k=0;k<3;k++) {
           closed.push(center[k]+r*((hinge[0]*(1-t)+tip[0]*t)*ex[k]+(hinge[1]*(1-t)+tip[1]*t)*ey[k]+hClosed*n[k]));
           open.push(center[k]+r*(openRad*(hinge[0]*ex[k]+hinge[1]*ey[k])+hOpen*n[k]));
@@ -96,7 +100,7 @@
           tri.push(i,j,i+1,i+1,j,j+1);
         }
       }
-      leaves.push({chiuso:new Float32Array(closed),aperto:new Float32Array(open),pos:new Float32Array(open.length),tri:new Uint32Array(tri),nv:open.length/3});
+      leaves.push({cols,rows,chiuso:new Float32Array(closed),aperto:new Float32Array(open),pos:new Float32Array(open.length),tri:new Uint32Array(tri),nv:open.length/3});
     }
     return leaves;
   }
