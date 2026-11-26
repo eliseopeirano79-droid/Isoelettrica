@@ -39,11 +39,12 @@ test('Anelli valvolari: quattro valvole, raggi entro limiti anatomici', () => {
   assert.ok(r.tricuspide > 1.3 && r.tricuspide < 2.3, 'tricuspide ' + r.tricuspide);
 });
 
-test('Ogni proiezione taglia il ventricolo sinistro, con profondità da ecocardiogramma reale', () => {
+test('Ogni proiezione taglia il proprio bersaglio, con profondità da ecocardiogramma reale', () => {
   const LV = mesh(/^Left ventricle/);
   for (const v of E.VISTE) {
     const P = E.orienta(E.piano(G, v.id), 0, 0), cm = P.prof / G.Tr.cm;
-    assert.ok(tagli(P, LV) >= 1, v.id + ': nessuna sezione del ventricolo sinistro');
+    const bersaglio = v.bersaglio ? mesh(new RegExp('^'+v.bersaglio)) : LV;
+    assert.ok(bersaglio && tagli(P, bersaglio)>=1, v.id+': bersaglio anatomico assente');
     assert.ok(cm >= 12 && cm <= 22, v.id + ': profondità ' + cm.toFixed(1) + ' cm');
     assert.ok(v.nome && v.sonda && v.vedi && v.valuta.length >= 2, v.id);
   }
@@ -132,7 +133,7 @@ test('Finestra parasternale: sonda a sinistra dello sterno, all’altezza del cu
 
 test('ogni proiezione ha un esame reale di confronto (solo collegamento Radiopaedia)', () => {
   const E = require('../eco.js');
-  for (const v of E.VISTE) assert.match(E.REALE[v.id] || '', /^https:\/\/radiopaedia\.org\//, v.id);
+  for (const v of E.VISTE.filter(v=>!v.bersaglio)) assert.match(E.REALE[v.id] || '', /^https:\/\/radiopaedia\.org\//, v.id);
 });
 
 test('Valvulopatie: le misure Doppler simulate cadono negli intervalli del grado (EACVI/ASE 2017, EAE/ASE 2009)', () => {

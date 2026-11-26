@@ -104,16 +104,30 @@ test('Nessuna sonda appoggiata su un osso; il centro del settore arriva al cuore
 test('Sonda coerente: ruotando o inclinando di 1° alla volta l’immagine cambia con continuità, senza salti', () => {
   /* per ogni punto della sezione al nuovo angolo, distanza dal contorno all'angolo precedente: la mediana misura
      quanto si muove ciò che era già visibile (le parti che compaiono, come l'aorta che entra nel piano, non contano) */
-  const punti = Pv => { const q = []; for (const c of E.taglia(VS, Pv.o, Pv.n)) for (let i = 0; i < c.p.length; i += 9) q.push(scr(Pv, [c.p[i], c.p[i + 1], c.p[i + 2]])); return q; };
+  function segmenti(piano, m) {
+    const linee = [];
+    for (const c of E.taglia(m, piano.o, piano.n)) {
+      const q = [];
+      for (let i = 0; i < c.p.length; i += 3) q.push(scr(piano, [c.p[i],c.p[i+1],c.p[i+2]]));
+      for (let i = 1; i < q.length; i++) linee.push([q[i-1], q[i]]);
+      if (c.chiusa && q.length > 1) linee.push([q.at(-1), q[0]]);
+    }
+    return linee;
+  }
+  function distanza(p, [a,b]) {
+    const x=b[0]-a[0], y=b[1]-a[1];
+    const t=Math.max(0,Math.min(1,((p[0]-a[0])*x+(p[1]-a[1])*y)/(x*x+y*y || 1)));
+    return Math.hypot(p[0]-a[0]-t*x,p[1]-a[1]-t*y);
+  }
   let peggiore = 0;
   for (const v of E.VISTE) {
     const P0 = E.piano(G, v.id);
     for (const [nome, f] of [['rotazione', g => E.orienta(P0, g * Math.PI / 180, 0)], ['inclinazione', g => E.orienta(P0, 0, g * Math.PI / 180)]]) {
       let prima = null;
       for (let g = -10; g <= 10; g++) {
-        const q = punti(f(g)); if (!q.length) { prima = null; continue; }
+        const q = segmenti(f(g),v.bersaglio ? mesh(new RegExp('^'+v.bersaglio)) : VS); if (!q.length) { prima = null; continue; }
         if (prima) {
-          const d = q.map(a => Math.min(...prima.map(b => Math.hypot(a[0] - b[0], a[1] - b[1])))).sort((x, y) => x - y), med = d[Math.floor(d.length / 2)];
+          const d = q.filter((_, i) => i % 3 === 0).map(([a]) => Math.min(...prima.map(b => distanza(a,b)))).sort((x, y) => x - y), med = d[Math.floor(d.length / 2)];
           peggiore = Math.max(peggiore, med);
           assert.ok(med < 0.35, v.id + ' ' + nome + ' ' + g + '°: il contorno si sposta di ' + med.toFixed(2) + ' cm');
         }
@@ -148,4 +162,67 @@ test('Sonda libera: rotazioni, scivolamento sulla cute e guida verso la proiezio
   const g = E.guida(S2, T, G.Tr); assert.equal(g.ok, false); assert.match(g.titolo, /verso la testa/);
   const r = E.guida(E.orienta3(T, 0.6, 0, 0), T, G.Tr); assert.match(r.titolo, /Ruota la sonda in senso antiorario/);
   const f = E.guida(E.orienta3(T, 0, 0.3, 0), T, G.Tr); assert.match(f.titolo, /Inclina il fascio/);
+});
+
+test('Fasi intermedie: facce candidate e taglio integrale coincidono sul cuore mobile', () => {
+  const S=require('../ecocardio/sezioni.js');
+  const parete=mesh(/^Left ventricle/), q0=G.q;
+  try {
+    for (const quadro of E.QUADRI) {
+      G.q=quadro.p;
+      const field=S.movimento(parete,G,E.deforma);
+      for (const {id} of E.VISTE) {
+        const base=E.piano(G,id);
+        for (const ang of [[0,0,0],[87,-33,21],[-142,31,-41]]) {
+          const P=E.orienta3(base,...ang.map(a=>a*Math.PI/180));
+          const faces=field.candidati(P);
+          for(const fase of [0,.12,.25,.34,.415,.47,.905,.985]) {
+            const c=E.contrazione(fase)*quadro.p.contr, m=field.aggiorna(c);
+            for(let j=0;j<m.pos.length;j+=507) {
+              const p=E.deforma(G,parete.pos.subarray(j,j+3),c,[]);
+              assert.ok(Math.hypot(...p.map((x,k)=>x-m.pos[j+k]))<2e-6);
+            }
+            const cut=E.taglia({...m,tri:faces},P.o,P.n,true);
+            assert.deepEqual(cut,E.taglia(m,P.o,P.n,true),id+' '+quadro.id+' '+fase);
+            for(const ch of cut)for(let j=0;j<ch.p.length;j+=3) {
+              const w=[0,1,2].map(k=>ch.p[j+k]-P.o[k]);
+              assert.ok(Math.abs(dot(w,P.n))<1e-6);
+            }
+          }
+        }
+      }
+    }
+  } finally {G.q=q0;}
+});
+
+test('Lembi ricostruiti: cerniere fisse rispetto all’anello e coaptazione anche nelle fasi isovolumetriche',()=>{
+  const S=require('../ecocardio/sezioni.js'),identity=(_G,p,_c,q)=>{for(let i=0;i<3;i++)q[i]=p[i];return q;};
+  for(const v of G.V) {
+    const leaves=S.lembi(v);
+    assert.equal(leaves.length,v.nome==='mitrale'?2:3);
+    for(const leaf of leaves){
+      const cols=16, rows=5, mid=3*(rows*(cols+1)+cols/2);
+      S.animaLembo(leaf,G,0,0,identity);
+      const closed=leaf.pos.slice(mid,mid+3);
+      S.animaLembo(leaf,G,0,1,identity);
+      assert.ok(Math.hypot(...closed.map((x,k)=>x-leaf.pos[mid+k]))>v.r*.55);
+      for(let i=0;i<3*(cols+1);i++)assert.equal(leaf.pos[i],leaf.chiuso[i]);
+      assert.ok(leaf.pos.every(Number.isFinite));
+    }
+    const center=3*(5*17+8);
+    for(const leaf of leaves) for(let k=0;k<3;k++)
+      assert.ok(Math.abs(leaf.chiuso[center+k]-leaves[0].chiuso[center+k])<1e-5);
+  }
+  for(const f of [.025,.39])for(const type of ['sl','av'])assert.equal(E.apertura(type,f),0);
+});
+
+test('Il riempimento distingue i margini annidati da un lume isolato e da un orifizio aperto',()=>{
+  const S=require('../ecocardio/sezioni.js'), P={o:[0,0,0],u:[1,0,0],d:[0,1,0],prof:10};
+  const anello=r=>({chiusa:true,p:Float32Array.from([-r,-r,0,r,-r,0,r,r,0,-r,r,0])});
+  const outer=anello(4),inner=anello(3),open={...anello(2),chiusa:false};
+  assert.deepEqual(S.paretiAnnidate([outer,open],P),[]);
+  assert.deepEqual(S.paretiAnnidate([outer,inner,open],P),[outer,inner]);
+  assert.equal(S.visibile(0,4,P,Math.PI/4,[2,2]),false);
+  assert.equal(S.visibile(0,4,P,Math.PI/4,null),true);
+  assert.equal(S.visibile(6,3,P,Math.PI/4,null),false);
 });

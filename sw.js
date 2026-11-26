@@ -1,12 +1,12 @@
 /* Isoelettrica: shell coerente per versione e archivio offline separato. */
 'use strict';
-const VERSION = '47.7';
+const VERSION = '47.8';
 const PREFIX = 'isoelettrica-', CACHE = PREFIX + 'v' + VERSION, ASSETS = PREFIX + 'assets-v1';
 const BASE = new URL('./', self.location.href);
 const Q = '?v=' + VERSION;
 const CORE = ['./', './index.html', './anatomia.html', './ambulatorio-eco.html', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './manifest.webmanifest' + Q]
   .concat(['app.js', 'engine.js', 'quiz.js', 'ipertrofie.js', 'data.js', 'atlante-digitale.js', 'ptbxl.js', 'three.min.js', 'cuore3d.js', 'coronarie.js', 'gltfloader.js', 'atlas-geometry.js', 'heart-atlas.js', 'cardiac-clock.js', 'anatomy-host.js', 'lab-embed.js', 'atlas-theme.css','ui-surface.css','ui-surface.js','lab-ui.js','congenital-morphology.js','physiology-atlas.js','pulmonary-arteries.js', 'vascular-cuffs.js', 'anatomy-refinements.js','cardiac-attachments.js','cardiac-mechanics.js','conduction-model.js','conduction-view.js','pathology-catalog.js','casi-dati.js','casi-dati-2.js','casi-guide.js','eco.js','eco-anatomia.js','eco.css','eco-localizzatore2d.js','eco-bmode-core.js','eco-bmode-shaders.js','eco-bmode.js','casi-reali.js','casi-paziente-aspetto.js', 'casi-paziente.js','ambulatorio.js','ambulatorio-torace.webp','casi-clinici.js','casi.css','paziente-corpo.bin'].map(f => './' + f + Q))
-  .concat(['./ecocardio/core.js'+Q,'./ecocardio/raster.js'+Q])
+  .concat(['./ecocardio/core.js'+Q,'./ecocardio/raster.js'+Q,'./ecocardio/doppler-pw.js'+Q,'./ecocardio/sezioni.js'+Q,'./ecocardio/studio.js'+Q])
   .concat(['three.min.js','gltfloader.js','engine.js','data.js'].map(f=>'./'+f))
   .concat(['index.html','fetale.html','style.css','viewer.js','pathology-ui.js','lab-core.js','lab.js','motion.js','fetal-core.js','fetal.js','heart-z-anatomy.glb','torace-z-anatomy.glb','heart-eco.glb','torace-eco.glb','atlas-coronary-map.json','coronary-paths.json','ATTRIBUZIONI.md','SOURCE-LICENSE.txt'].map(f=>'./prototipo-cuore/'+f));
 const absolute = u => new URL(u, BASE).href;
