@@ -89,8 +89,8 @@ test('Nessuna sonda appoggiata su un osso; il centro del settore arriva al cuore
     for (const m of ms) for (const ch of E.taglia(m, Pv.o, Pv.n, grezzo)) { const p = ch.p, n = p.length / 3;
       for (let s = 0; s < n - 1 + (ch.chiusa ? 1 : 0); s++) { const q = (s + 1) % n, a = scr(Pv, [p[s * 3], p[s * 3 + 1], p[s * 3 + 2]]), b = scr(Pv, [p[q * 3], p[q * 3 + 1], p[q * 3 + 2]]);
         if (a[1] <= 0 || b[1] <= 0 || Math.hypot(a[0] - b[0], a[1] - b[1]) > 1) continue;
-        let b0 = Math.floor((Math.atan2(a[0], a[1]) + mz) / (2 * mz) * NB), b1 = Math.floor((Math.atan2(b[0], b[1]) + mz) / (2 * mz) * NB); if (b0 > b1) [b0, b1] = [b1, b0];
-        for (let k = Math.max(0, b0); k <= Math.min(NB - 1, b1); k++) { const rr = Math.hypot(...a) + (Math.hypot(...b) - Math.hypot(...a)) * (b1 > b0 ? (k - b0) / (b1 - b0) : 0); if (rr < r[k]) r[k] = rr; } } }
+        let b0 = Math.floor((Math.atan2(a[0], a[1]) + mz) / (2 * mz) * NB), b1 = Math.floor((Math.atan2(b[0], b[1]) + mz) / (2 * mz) * NB); let ra=Math.hypot(...a),rb=Math.hypot(...b); if (b0 > b1) { [b0,b1]=[b1,b0]; [ra,rb]=[rb,ra]; }
+        for (let k = Math.max(0, b0); k <= Math.min(NB - 1, b1); k++) { const rr = ra + (rb - ra) * (b1 > b0 ? (k - b0) / (b1 - b0) : 0); if (rr < r[k]) r[k] = rr; } } }
     return r; };
   for (const v of E.VISTE) {
     const Pv = P(v.id), ro = primo(Pv, ossa, true), rc = primo(Pv, cuore, false);

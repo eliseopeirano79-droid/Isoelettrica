@@ -38,23 +38,31 @@ test('Browser Eco: immagini e gesti sulla sonda nei localizzatori 3D e 2D',{skip
       args.push(...(mode==='3d'?['--use-angle=swiftshader','--enable-unsafe-swiftshader']:['--disable-webgl']));
       sid=(await request('/session','POST',{capabilities:{alwaysMatch:{browserName:'chrome','goog:chromeOptions':{args}}}})).sessionId;
       await api('/url','POST',{url:'http://127.0.0.1:'+port+'/index.html'});
-      await js("document.querySelector('#nav [data-v=eco]').click()");
+      await js("window.ecoErrors=[];window.addEventListener('error',e=>ecoErrors.push(e.message));window.addEventListener('unhandledrejection',e=>ecoErrors.push(String(e.reason)));document.querySelector('#nav [data-v=eco]').click()");
       await wait(()=>js("return document.querySelector('#v-eco').dataset.torace==='1' && !!window.ISO_ECO?.stato().pronto"));
       await js("document.querySelector('#ecoTD').click()");await frame();
       assert.equal(await js('return ISO_ECO.stato().localizzatore'),mode);
       const views=await js("return [...document.querySelectorAll('#ecoViste [data-v]')].map(b=>b.dataset.v)");
       assert.equal(views.length,15);
+      if(mode==='3d') {
+        const start=await js('return ISO_ECO._geo().mi');
+        await js("document.querySelector('#ecoMappa').click()");await frame();
+        assert.equal(await js('return ISO_ECO.stato().localizzatore'),'2d');
+        await js("document.querySelector('#ecoMappa').click()");await frame();
+        assert.equal(await js('return ISO_ECO.stato().localizzatore'),'3d');
+        assert.deepEqual(await js('return ISO_ECO._geo().mi'),start);
+      }
       let idx=0;
       for(const id of views){
         await js("ISO_ECO.vista(arguments[0]);const e=document.querySelector('#ecoCine');e.value=415;e.dispatchEvent(new Event('input'))",id);
         await frame();
         const rep=await js(`const e=document.querySelector('#ecoTela'), s=ISO_ECO.stato();
-          const small=document.createElement('canvas');small.width=112;small.height=84;const c=small.getContext('2d');c.drawImage(e,0,0,112,84);
-          if(!window.ecoMosaico){const m=document.createElement('canvas');m.width=560;m.height=306;window.ecoMosaico=m;}
-          const mc=ecoMosaico.getContext('2d'), ix=arguments[0]%5*112, iy=Math.floor(arguments[0]/5)*102;
-          mc.drawImage(small,ix,iy);mc.fillStyle='#fff';mc.font='11px sans-serif';mc.fillText(s.vista,ix+4,iy+96);
-          const rgb=c.getImageData(0,0,112,84).data;let lit=0;for(let k=0;k<rgb.length;k+=4)if(rgb[k]>45)lit++;
-          return [s.vista,s.fase,s.catene,lit];`,idx++);
+          const small=document.createElement('canvas');small.width=184;small.height=138;const c=small.getContext('2d');c.drawImage(e,0,0,184,138);
+          if(!window.ecoMosaico){const m=document.createElement('canvas');m.width=920;m.height=492;window.ecoMosaico=m;}
+          const mc=ecoMosaico.getContext('2d'), ix=arguments[0]%5*184, iy=Math.floor(arguments[0]/5)*164;
+          mc.drawImage(small,ix,iy);mc.fillStyle='#fff';mc.font='14px sans-serif';mc.fillText(arguments[1],ix+5,iy+155);
+          const rgb=c.getImageData(0,0,184,138).data;let lit=0;for(let k=0;k<rgb.length;k+=4)if(rgb[k]>45)lit++;
+          return [s.vista,s.fase,s.catene,lit];`,idx++,id.toUpperCase());
         assert.equal(rep[0],id);assert.ok(Math.abs(rep[1]-.415)<.001);assert.ok(rep[2]>0 && rep[3]>20,id+': '+rep);
       }
       if(mode==='3d')console.log('ECO_MOSAICO_JPEG '+await js("return ecoMosaico.toDataURL('image/jpeg',.49).split(',')[1]"));
@@ -78,6 +86,9 @@ test('Browser Eco: immagini e gesti sulla sonda nei localizzatori 3D e 2D',{skip
       await js("document.querySelector('#ecoAcquisisci').click()");assert.equal(await js("return document.querySelectorAll('#ecoAcquisizioni figure').length"),1);
       await js("document.querySelector('#ecoPW').click();document.querySelector('#ecoNyq').value=55;document.querySelector('#ecoNyq').dispatchEvent(new Event('input'))");
       assert.equal(await js("return document.querySelector('#ecoNyqV').textContent"),'55 cm/s');
+      await js("document.querySelector('#ecoPWSorgente').value='tessuto';document.querySelector('#ecoPWSorgente').dispatchEvent(new Event('change'));document.querySelector('#ecoColor').click();document.querySelector('#ecoPausa').click()");
+      await frame();await frame();assert.equal(await js("return document.querySelector('#ecoNyqV').textContent"),'15 cm/s');
+      await js("document.querySelector('#ecoTD').click();document.querySelector('#ecoPW').click()");
       if(mode==='3d') {
         for(const les of ['sa','ia','sm','im','it'])for(const grado of ['lieve','moderata','severa']){
           await js("document.querySelector('[data-l='+arguments[0]+']').click();document.querySelector('[data-g='+arguments[1]+']').click()",les,grado);
@@ -100,6 +111,7 @@ test('Browser Eco: immagini e gesti sulla sonda nei localizzatori 3D e 2D',{skip
         }
         assert.match(await js("return document.querySelector('#ecoSimRis').textContent"),/FE \d+%/);
       }
+      assert.deepEqual(await js('return window.ecoErrors'),[]);
       await api('/url','POST',{url:'http://127.0.0.1:'+port+'/standalone.html'});
       await wait(()=>js("return !!window.ISO_ECO?.stato().pronto && document.querySelector('#v-eco').dataset.torace==='1'"));
       assert.equal(await js("return [...document.querySelectorAll('#ecoViste [data-v]')].length"),15);

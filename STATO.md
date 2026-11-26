@@ -17,7 +17,7 @@ Aggiorna questa pagina alla fine di ogni sessione. Stati ammessi: `da fare` · `
 
 ## Laboratorio Eco · 26 novembre 2026
 
-La 47.8 aggiunge taglio in fase, superfici valvolari condivise, cinque finestre, studio biplano anatomico, archivio delle acquisizioni e PW didattico. La validazione clinica e su dispositivo fisico resta aperta. [Verifiche e limiti](reports/2026-11-26-eco-47-8.md)
+La 47.8 aggiunge taglio in fase, superfici valvolari condivise, cinque finestre, studio biplano anatomico, archivio delle acquisizioni con selettore 2D/3D, PW, TDI anulare e Simpson biplano. La validazione clinica e su dispositivo fisico resta aperta. [Verifiche e limiti](reports/2026-11-26-eco-47-8.md)
 
 ## Hash di riferimento del motore ECG
 
