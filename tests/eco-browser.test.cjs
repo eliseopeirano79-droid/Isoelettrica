@@ -95,6 +95,17 @@ test('Browser Eco: immagini e gesti sulla sonda nei localizzatori 3D e 2D',{skip
         await js("const e=document.querySelector('#ecoStudioModo');e.value=arguments[0];e.dispatchEvent(new Event('change'))",v);await frame();
         assert.ok(await js("return document.querySelector('#ecoStudioTela').toDataURL('image/png').length>1900"),v);
       }
+      if(mode==='3d'){
+        for(const [i,val] of ['mitrale','tricuspide','aortica','polmonare'].entries())for(const [j,phase] of [180,540].entries()){
+          await js("const c=document.querySelector('#ecoCine'),e=document.querySelector('#ecoStudioModo');e.value=arguments[0];e.dispatchEvent(new Event('change'));c.value=arguments[1];c.dispatchEvent(new Event('input'))",val,phase);
+          await frame();
+          await js(`if(!window.valveGrid){const m=document.createElement('canvas');m.width=800;m.height=320;window.valveGrid=m;}
+            const m=window.valveGrid.getContext('2d'),x=arguments[0]*200,y=arguments[1]*160;
+            m.drawImage(document.querySelector('#ecoStudioTela'),x,y,200,126);m.fillStyle='#fff';m.font='14px sans-serif';
+            m.fillText(arguments[2],x+8,y+147);`,i,j,val+' · '+(j?'diastole':'sistole'));
+        }
+        console.log('ECO_VALVOLE_JPEG '+await js("return valveGrid.toDataURL('image/jpeg',.72).split(',')[1]"));
+      }
       await js("document.querySelector('#ecoIspeziona').click()"); await frame();
       for(const val of ['polmonare','valvola-mitrale','valvola-tricuspide','valvola-aortica','valvola-polmonare']){
         await js("const dlg=document.querySelector('.eco-ispezione'), e=dlg.querySelector('select'),p=dlg.querySelector('input');e.value=arguments[0];e.dispatchEvent(new Event('change'));p.value=475;p.dispatchEvent(new Event('input'))",val);await frame();
