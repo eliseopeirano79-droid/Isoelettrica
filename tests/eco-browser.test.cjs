@@ -2,12 +2,16 @@
    Per eseguirla in locale: ECO_BROWSER_TEST=1 node --test tests/eco-browser.test.cjs */
 const test=require('node:test'), assert=require('node:assert/strict');
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
-const {spawn}=require('node:child_process');
+const {spawn,execFileSync}=require('node:child_process');
+const os=require('node:os');
 const radice=path.join(__dirname,'..');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const listen=s=>new Promise((ok,no)=>s.once('error',no).listen(0,'127.0.0.1',()=>ok(s.address().port)));
 test('Browser Eco: immagini e gesti sulla sonda nei localizzatori 3D e 2D',{skip:!process.env.GITHUB_ACTIONS && !process.env.ECO_BROWSER_TEST,timeout:300000},async()=>{
+  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'iso-eco-')), standalone=path.join(temp,'eco.html');
+  execFileSync('python3',[path.join(radice,'tools/esporta-eco-offline.py'),standalone]);
   const server=http.createServer((req,res)=>{
+    if(req.url==='/standalone.html'){res.setHeader('Content-Type','text/html');fs.createReadStream(standalone).pipe(res);return;}
     const file=path.resolve(radice,'.'+new URL(req.url,'http://localhost').pathname);
     if(!file.startsWith(radice+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404).end();return;}
     const tipi={'.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.glb':'model/gltf-binary'};
@@ -74,7 +78,33 @@ test('Browser Eco: immagini e gesti sulla sonda nei localizzatori 3D e 2D',{skip
       await js("document.querySelector('#ecoAcquisisci').click()");assert.equal(await js("return document.querySelectorAll('#ecoAcquisizioni figure').length"),1);
       await js("document.querySelector('#ecoPW').click();document.querySelector('#ecoNyq').value=55;document.querySelector('#ecoNyq').dispatchEvent(new Event('input'))");
       assert.equal(await js("return document.querySelector('#ecoNyqV').textContent"),'55 cm/s');
+      if(mode==='3d') {
+        for(const les of ['sa','ia','sm','im','it'])for(const grado of ['lieve','moderata','severa']){
+          await js("document.querySelector('[data-l='+arguments[0]+']').click();document.querySelector('[data-g='+arguments[1]+']').click()",les,grado);
+          for(const [r,f,b,z] of [[-180,-45,45,8],[180,45,-45,24],[0,0,0,16]]) {
+            await js("for(const [i,id] of ['ecoRot','ecoFan','ecoInc','ecoProf'].entries()){const e=document.getElementById(id);e.value=arguments[i];e.dispatchEvent(new Event('input'))}",r,f,b,z);
+            await frame();assert.ok(await js("return ISO_ECO._geo().mi.every(Number.isFinite)"),les+' '+grado);
+          }
+        }
+        await js("document.querySelector('#ecoValv [data-l=\"\"]').click();document.querySelector('#ecoZero').click()");
+        await frame();
+        for(const k of ['a4c-d','a2c-d','a4c-s','a2c-s']) {
+          await js("document.querySelector('#ecoSimScelta').value=arguments[0];document.querySelector('#ecoSimInizia').click()",k);await frame();
+          const total=await js(`const e=document.querySelector('#ecoTela'),box=e.getBoundingClientRect(),g=ISO_ECO._geo();
+            const x=e.width/2,y=e.height*.57,scale=arguments[0].endsWith('s')?.70:1;
+            for(let i=0;i<=16;i++){const a=Math.PI*i/16;
+              const u=x+scale*e.width*.09*Math.cos(a),v=y-scale*e.height*.18*Math.sin(a);
+              e.dispatchEvent(new PointerEvent('pointerdown',{clientX:box.left+u*box.width/e.width,clientY:box.top+v*box.height/e.height,bubbles:true}));}
+            document.querySelector('#ecoSimFine').click();return document.querySelector('#ecoSimRis').textContent;`,k);
+          assert.ok(total.includes(k.toUpperCase()),k+': '+total);
+        }
+        assert.match(await js("return document.querySelector('#ecoSimRis').textContent"),/FE \d+%/);
+      }
+      await api('/url','POST',{url:'http://127.0.0.1:'+port+'/standalone.html'});
+      await wait(()=>js("return !!window.ISO_ECO?.stato().pronto && document.querySelector('#v-eco').dataset.torace==='1'"));
+      assert.equal(await js("return [...document.querySelectorAll('#ecoViste [data-v]')].length"),15);
+      assert.deepEqual(await js("return performance.getEntriesByType('resource').map(e=>e.name).filter(n=>/^https?:/.test(n) && !n.endsWith('favicon.ico'))"),[]);
       await api('','DELETE');sid=null;
     }
-  } finally {if(sid)await api('','DELETE').catch(()=>{});driver.kill();server.closeAllConnections();await new Promise(r=>server.close(r));}
+  } finally {if(sid)await api('','DELETE').catch(()=>{});driver.kill();server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(temp,{recursive:true,force:true});}
 });

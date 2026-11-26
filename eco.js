@@ -827,6 +827,7 @@ function avvia() {
         '<div class="eco-ctl" id="ecoPWComandi" hidden><label>Profondità campione PW <output id="ecoGateV">8 cm</output><input id="ecoGate" type="range" min="0.5" max="24" step="0.1" value="8"></label><label>Limite di Nyquist <output id="ecoNyqV">100 cm/s</output><input id="ecoNyq" type="range" min="20" max="200" step="5" value="100"></label></div>' +
         '<div class="eco-ctl"><label>Ciclo cardiaco <output id="ecoCineV">0%</output><input id="ecoCine" type="range" min="0" max="999" step="1" value="0" aria-label="Fotogramma del ciclo cardiaco"></label></div>' +
         '<details id="ecoStudio" class="eco-bmode-avanzati"><summary>Secondo piano e studio delle valvole</summary><label>Vista <select id="ecoStudioModo" data-native><option value="biplano">Piano anatomico ortogonale</option><option value="mitrale">Mitrale dal lato atriale</option><option value="tricuspide">Tricuspide dal lato atriale</option><option value="aortica">Aortica dal vaso</option><option value="polmonare">Polmonare dal vaso</option></select></label><canvas id="ecoStudioTela" width="420" height="260" aria-label="Vista anatomica sincronizzata con il ciclo"></canvas><p>Usa il cursore del ciclo per fermare il movimento dei lembi ricostruiti. Il secondo piano passa dallo stesso punto di appoggio della sonda e interseca il primo a 90°.</p></details>' +
+        '<details class="eco-bmode-avanzati" id="ecoSimpson"><summary>Volume del VS e frazione di eiezione · Simpson biplano</summary><p>Parti da un’inserzione mitralica. Traccia l’endocardio fino all’apice e risali all’altra inserzione. Segui il bordo endocardico del miocardio compatto. Acquisisci quattro contorni per calcolare la FE. <a href="https://www.asecho.org/wp-content/uploads/2015/01/ChamberQuantification2015.pdf" target="_blank" rel="noopener">Metodo ASE/EACVI</a></p><label>Contorno <select id="ecoSimScelta" data-native><option value="a4c-d">Quattro camere · telediastole</option><option value="a2c-d">Due camere · telediastole</option><option value="a4c-s">Quattro camere · telesistole</option><option value="a2c-s">Due camere · telesistole</option></select></label><div class="eco-riga"><button id="ecoSimInizia">Inizia traccia</button><button id="ecoSimIndietro" disabled>Annulla ultimo punto</button><button id="ecoSimFine" disabled>Completa contorno</button><button id="ecoSimCancella">Azzera misure</button></div><div id="ecoSimStato" role="status"></div><output id="ecoSimRis"></output></details>' +
         '<details id="ecoArchivio" class="eco-bmode-avanzati"><summary>Acquisizioni e confronto</summary><button type="button" id="ecoAcquisisci">Acquisisci fotogramma</button><span id="ecoAcqStato" role="status"></span><div id="ecoAcquisizioni"></div></details>' +
         '<p class="eco-aiuto" id="ecoAiuto"></p>' +
         '<div class="eco-ctl">' +
@@ -1150,7 +1151,7 @@ function avvia() {
     cx.restore(); cx.globalCompositeOperation = 'source-over';
     if (mmodo && !pausa) campionaMM(dtUltimo);      // prima delle sovrimpressioni: si campiona solo l'immagine
     if (doppler && !pausa) campionaCW(dtUltimo);
-    disegnaMisure(); if (mmodo || doppler) lineaM();
+    disegnaMisure(); simpson.disegna(cx,aPx); if (mmodo || doppler) lineaM();
     /* scala di profondità: una tacca ogni decimo della profondità */
     const px = Math.max(11, Math.round(W / 58)), cmS = G.Tr.cm * S, profCm = P.prof / G.Tr.cm;
     cx.strokeStyle = 'rgba(255,255,255,.45)'; cx.lineWidth = 1; cx.beginPath();
@@ -1479,6 +1480,11 @@ function avvia() {
   }
   tela.addEventListener('pointerdown', ev => {
     if (!G || !P) return;
+    if(simpson.attivo()) {
+      const c=aCm(ev);
+      if(c[1]>0 && Math.abs(Math.atan2(c[0],c[1]))<MEZZO && Math.hypot(...c)*G.Tr.cm<=P.prof)simpson.punto(c);
+      return;
+    }
     if (calibro) {
       const c = aCm(ev), u = misure[misure.length - 1];
       if (u && !u[1]) u[1] = c; else { if (misure.length >= 2) misure = []; misure.push([c, null]); }
@@ -1811,6 +1817,15 @@ function avvia() {
   $('#ecoGradi').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; grado = b.dataset.g; scegliLesione(lesione ? lesione.id : ''); });
   $('#ecoGradi').hidden = true;
   $('#ecoZero').addEventListener('click', () => { posiziona(); testo(); aggiorna(); });
+  const simpson=root.EcoSimpson.collega(vista,{
+    caso:()=>[idQuadro,lesione?.id,grado,contr,fc].join('/'),
+    stato:()=>[idVista,fase,rot,fan,incl,posa?.o,posa?.d,posa?.u,pausa].join('/'),
+    prepara(id,f) {
+      if(!P || casoAvviato || sporcoP)return false;
+      if(idVista!==id){idVista=id;posiziona();testo();aggiorna();inquadra();sporcoP=false;}
+      fermaFase(f);tela.scrollIntoView({block:'nearest'});return true;
+    }
+  });
   const studio = root.EcoStudio.collega(vista, {
     taglia, ortogonale: p=>orienta3(p,Math.PI/2,0,0), ferma:fermaFase,
     acquisisci() {
