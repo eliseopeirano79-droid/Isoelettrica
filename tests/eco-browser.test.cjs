@@ -78,11 +78,29 @@ test('Browser Eco: immagini e gesti sulla sonda nei localizzatori 3D e 2D',{skip
           await frame();assert.notDeepEqual(await pose(),before,mode+' '+man+' '+dir);
         }
       }
+      if(mode==='3d'){
+        await api('/window/rect','POST',{width:430,height:880});await frame();
+        await js("document.querySelector('#ecoZero').click();document.querySelector('#ecoManovra').value='auto';document.querySelector('#eco3d').scrollIntoView({block:'center'})");await frame();
+        const [x,y]=await js("const b=document.querySelector('#eco3d').getBoundingClientRect();return [Math.round(b.left+b.width*.52),Math.round(b.top+b.height*.55)]");
+        const ecoIniziale=await js('return ISO_ECO._geo().mi');
+        const touch=(id,verso)=>({type:'pointer',id,parameters:{pointerType:'touch'},actions:[
+          {type:'pointerMove',duration:0,x:x+verso*20,y},{type:'pointerDown',button:0},
+          {type:'pointerMove',duration:130,x:x+verso*40,y:y+4},{type:'pointerUp',button:0}]});
+        await api('/actions','POST',{actions:[touch('indice',-1),touch('medio',1)]});await frame();
+        assert.deepEqual(await js('return ISO_ECO._geo().mi'),ecoIniziale,'Il pinch cambia lo zoom del localizzatore mantenendo la posa');
+        await api('/window/rect','POST',{width:1280,height:980});await frame();
+      }
       await js("document.querySelector('#ecoZero').click();document.querySelector('#ecoStudio').open=true; document.querySelector('#ecoArchivio').open=true;");
       for(const v of ['biplano','mitrale','tricuspide','aortica','polmonare']){
         await js("const e=document.querySelector('#ecoStudioModo');e.value=arguments[0];e.dispatchEvent(new Event('change'))",v);await frame();
         assert.ok(await js("return document.querySelector('#ecoStudioTela').toDataURL('image/png').length>1900"),v);
       }
+      await js("document.querySelector('#ecoIspeziona').click()"); await frame();
+      for(const val of ['polmonare','valvola-mitrale','valvola-tricuspide','valvola-aortica','valvola-polmonare']){
+        await js("const dlg=document.querySelector('.eco-ispezione'), e=dlg.querySelector('select'),p=dlg.querySelector('input');e.value=arguments[0];e.dispatchEvent(new Event('change'));p.value=475;p.dispatchEvent(new Event('input'))",val);await frame();
+        assert.ok(await js("const e=document.querySelector('.eco-ispezione canvas'),c=e.getContext('2d'),px=c.getImageData(0,0,e.width,e.height).data;let n=0;for(let i=3;i<px.length;i+=16)if(px[i])n++;return n>150"),val);
+      }
+      await js("document.querySelector('.eco-ispezione').close()");
       await js("document.querySelector('#ecoAcquisisci').click()");assert.equal(await js("return document.querySelectorAll('#ecoAcquisizioni figure').length"),1);
       await js("document.querySelector('#ecoPW').click();document.querySelector('#ecoNyq').value=55;document.querySelector('#ecoNyq').dispatchEvent(new Event('input'))");
       assert.equal(await js("return document.querySelector('#ecoNyqV').textContent"),'55 cm/s');

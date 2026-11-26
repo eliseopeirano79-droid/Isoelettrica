@@ -1772,7 +1772,16 @@ function avvia() {
         G = reperi(M); if (!G) throw new Error('modello senza le quattro camere'); correggiSetto(M, G); V = valvole(M, G); G.V = V; G.Tr = torace(G); G.ossa = ossaM;
         superfici=V.map(sezioni.lembi); superfici.flat().forEach(m=>{m.valvola=true;});
         scegliQuadro(idQuadro); aggiorna();
-        root.ISO_ECO_ANATOMIA.collega($('#ecoIspeziona'), gltf.scene.clone(true));
+        root.ISO_ECO_ANATOMIA.collega($('#ecoIspeziona'), {
+          fase:()=>fase,
+          modelli(f) {
+            fermaFase(f);
+            const c=contrazione(f)*contr;
+            aggiornaTessuti(c);aggiornaValvole(c);
+            return materiali.map(({mesh,campo})=>({nome:mesh.nome,layer:mesh.layer,m:campo.aggiorna(c)}))
+              .concat(superfici.flatMap((foglie,i)=>foglie.map((m,j)=>({nome:V[i].nome+' leaflet '+(j+1),layer:'valvole',valvola:V[i].nome,m}))));
+          }
+        });
         try { crea3d(gltf); }
         catch (e) {
           r3 = null; cam = null; ventaglio = null;
